@@ -26,7 +26,7 @@ back: ## Inicia o servidor backend
 
 # Rodar o frontend (servidor Python)
 front: ## Inicia o servidor frontend
-	cd .frontend/public && (python -m http.server 8501 || python3 -m http.server 8501)
+	cd frontend/public && (python -m http.server 8501 || python3 -m http.server 8501)
 	@echo "\n---"
 	@echo "Frontend rodando!"
 	@echo "Acesse o chat em: http://localhost:8501/index.html"

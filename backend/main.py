@@ -47,12 +47,12 @@ def extract_text_from_file(uploaded_file: UploadFile) -> str:
     return uploaded_file.file.read().decode("utf-8")
 
 # Prompt template loaders
-def load_openai_prompt_template(path: str = "config/prompt_template_open_ai.txt") -> str:
+def load_openai_prompt_template(path: str = "config/prompts/prompt_template_open_ai.txt") -> str:
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
 
-def load_stackspot_prompt_template(path: str = "config/prompt_template_stackspot_ai.txt") -> str:
+def load_stackspot_prompt_template(path: str = "config/prompts/prompt_template_stackspot_ai.txt") -> str:
     with open(path, "r", encoding="utf-8") as f:
         return f.read()
 
