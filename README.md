@@ -32,22 +32,49 @@
 ---
 
 ## 📁 Estrutura do Projeto
+
 ```
-├── backend/
+BSQA-card-Writer/
+├── 📁 backend/
 │   └── main.py                    # Backend FastAPI
-├── .frontend/
-│   └── public/
-│       ├── index.html             # Frontend principal
+├── 📁 frontend/
+│   ├── 📁 public/
+│   │   ├── index.html             # Interface principal
+│   │   ├── config.html            # Página de configurações
+│   │   └── assets/                # Recursos estáticos
+│   └── 📁 docs/
 │       └── software-requirements.md # Documentação técnica
-├── config/
-│   ├── .env                       # Chaves das APIs
+├── 📁 config/
 │   ├── requirements.txt           # Dependências Python
-│   ├── prompt_template_open_ai.txt
-│   └── prompt_template_stackspot_ai.txt
-├── README.md
-├── Makefile
-└── .gitignore
+│   ├── env.example               # Exemplo de variáveis de ambiente
+│   ├── user_config.example.json  # Exemplo de configurações
+│   └── 📁 prompts/
+│       ├── prompt_template_open_ai.txt
+│       └── prompt_template_stackspot_ai.txt
+├── README.md                      # Documentação principal
+├── Makefile                       # Automação de comandos
+└── .gitignore                     # Arquivos ignorados pelo Git
 ```
+
+### **🎯 Organização e Benefícios**
+
+#### **📁 Separação Clara de Responsabilidades**
+- **`backend/`**: Lógica do servidor e API
+- **`frontend/`**: Interface do usuário e documentação
+- **`config/`**: Configurações, templates e dependências
+- **`README.md`**: Documentação principal na raiz
+
+#### **📋 Estrutura Lógica**
+- **`frontend/public/`**: Arquivos servidos pelo servidor web
+- **`frontend/docs/`**: Documentação específica do frontend
+- **`config/prompts/`**: Templates de IA organizados
+- **`config/`**: Configurações centralizadas
+
+#### **🚀 Vantagens da Organização**
+- ✅ **Clareza**: Cada pasta tem propósito específico
+- ✅ **Manutenibilidade**: Fácil navegação e manutenção
+- ✅ **Escalabilidade**: Estrutura preparada para crescimento
+- ✅ **Padrões**: Segue convenções da indústria
 
 ---
 
@@ -67,6 +94,11 @@ Client_Key_stackspot=xxxxxxxx
 Realm_stackspot=xxxxxxxx
 STACKSPOT_AGENT_ID=xxxxxxxx
 ```
+
+### **📋 Arquivos de Configuração**
+- **`config/env.example`**: Exemplo de variáveis de ambiente
+- **`config/user_config.example.json`**: Exemplo de configurações do usuário
+- **`config/prompts/`**: Templates de prompts para as IAs
 
 ---
 
@@ -105,7 +137,7 @@ pip install -r config/requirements.txt
 uvicorn backend.main:app --reload
 
 # Rodar frontend (novo terminal)
-cd .frontend/public
+cd frontend/public
 python -m http.server 8501
 ```
 
@@ -153,6 +185,7 @@ O sistema agora utiliza um arquivo JSON local para persistir as configurações 
 - **Formato**: JSON
 - **Backup**: Incluído no `.gitignore` (dados pessoais)
 - **Exemplo**: `config/user_config.example.json`
+- **Documentação**: `frontend/docs/software-requirements.md`
 
 ### **🔄 Sistema Híbrido**
 - **Servidor**: Fonte da verdade (persistente)
@@ -236,7 +269,7 @@ Para informações detalhadas sobre:
 - **Requisitos técnicos**
 - **Testes realizados**
 
-📋 **[Ver Documentação Completa](.frontend/public/software-requirements.md)**
+📋 **[Ver Documentação Completa](frontend/docs/software-requirements.md)**
 
 ---
 
@@ -252,7 +285,7 @@ make stop-all      # Parar todos os processos
 
 ### **Arquivos Importantes**
 - **Backend**: `backend/main.py`
-- **Frontend**: `.frontend/public/index.html`
+- **Frontend**: `frontend/public/index.html`
 - **Configuração**: `config/.env`
 - **Dependências**: `config/requirements.txt`
 
