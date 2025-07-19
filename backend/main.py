@@ -160,6 +160,37 @@ async def analyze(
 
 # Configurações do usuário
 CONFIG_FILE = "config/user_config.json"
+ENV_FILE = "config/.env"
+
+def load_env_config():
+    """Carrega configurações do arquivo .env"""
+    try:
+        env_config = {}
+        if os.path.exists(ENV_FILE):
+            with open(ENV_FILE, 'r', encoding='utf-8') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#') and '=' in line:
+                        key, value = line.split('=', 1)
+                        env_config[key.strip()] = value.strip()
+        return env_config
+    except Exception as e:
+        print(f"Erro ao carregar configurações .env: {e}")
+        return {}
+
+def save_env_config(env_config):
+    """Salva configurações no arquivo .env"""
+    try:
+        # Garantir que o diretório existe
+        os.makedirs(os.path.dirname(ENV_FILE), exist_ok=True)
+        
+        with open(ENV_FILE, 'w', encoding='utf-8') as f:
+            for key, value in env_config.items():
+                f.write(f"{key}={value}\n")
+        return True
+    except Exception as e:
+        print(f"Erro ao salvar configurações .env: {e}")
+        return False
 
 def load_user_config():
     """Carrega configurações do usuário do arquivo JSON"""
@@ -213,3 +244,74 @@ async def update_config(config: dict):
         return {"success": True, "message": "Configurações salvas com sucesso"}
     else:
         raise HTTPException(status_code=500, detail="Erro ao salvar configurações")
+
+@app.get("/api-config")
+async def get_api_config():
+    """Endpoint para obter configurações de API do arquivo .env"""
+    return load_env_config()
+
+@app.post("/api-config")
+async def update_api_config(api_config: dict):
+    """Endpoint para atualizar configurações de API no arquivo .env"""
+    current_config = load_env_config()
+    current_config.update(api_config)
+    
+    if save_env_config(current_config):
+        return {"success": True, "message": "Configurações de API salvas com sucesso"}
+    else:
+        raise HTTPException(status_code=500, detail="Erro ao salvar configurações de API")
+
+@app.post("/test-api-config")
+async def test_api_config():
+    """Endpoint para testar as configurações de API"""
+    try:
+        # Recarrega as variáveis de ambiente
+        load_dotenv(env_path, override=True)
+        
+        # Verifica quais APIs estão configuradas
+        openai_api_key = os.getenv("OPENAI_API_KEY")
+        stackspot_client_id = os.getenv("Client_ID_stackspot")
+        stackspot_client_secret = os.getenv("Client_Key_stackspot")
+        stackspot_realm = os.getenv("Realm_stackspot")
+        stackspot_agent_id = os.getenv("STACKSPOT_AGENT_ID")
+        
+        # Lista para armazenar resultados dos testes
+        test_results = []
+        
+        # Testa OpenAI
+        if openai_api_key:
+            try:
+                client = OpenAI(api_key=openai_api_key)
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[
+                        {"role": "user", "content": "Teste de configuração - responda apenas 'OK' se receber esta mensagem."},
+                    ],
+                    max_tokens=10,
+                    temperature=0,
+                )
+                test_results.append({"service": "OpenAI", "status": "success", "message": "Configurações OpenAI testadas com sucesso"})
+            except Exception as e:
+                test_results.append({"service": "OpenAI", "status": "error", "message": f"Erro ao testar OpenAI: {str(e)}"})
+         
+        # Testa StackSpot
+        if all([stackspot_client_id, stackspot_client_secret, stackspot_realm, stackspot_agent_id]):
+            try:
+                jwt = get_stackspot_jwt()
+                test_results.append({"service": "StackSpot", "status": "success", "message": "Configurações StackSpot testadas com sucesso"})
+            except Exception as e:
+                test_results.append({"service": "StackSpot", "status": "error", "message": f"Erro ao testar StackSpot: {str(e)}"})
+         
+        # Se não há configurações, retorna erro
+        if not test_results:
+            return {"success": False, "message": "Nenhuma API configurada", "results": []}
+        
+        # Verifica se pelo menos uma API passou no teste
+        successful_tests = [r for r in test_results if r["status"] == "success"]
+        if successful_tests:
+            return {"success": True, "message": f"Testes concluídos: {len(successful_tests)}/{len(test_results)} APIs funcionando", "results": test_results}
+        else:
+            return {"success": False, "message": "Todas as APIs configuradas falharam no teste", "results": test_results}
+         
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao testar configurações: {str(e)}")
