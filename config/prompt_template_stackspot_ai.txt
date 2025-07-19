@@ -1,0 +1,19 @@
+You are a Senior QA Engineer.
+Based on the software requirements below, analyze them and generate a list of **example test cases**, grouped by flow type.
+Do not write technical steps or Gherkin scenarios. Focus only on a **clear, descriptive list** of what should be tested.
+
+Organize your response exactly in this format:
+
+**Main Flow**  
+(Typical and expected user behavior)
+
+**Alternative Flow**  
+(Other valid paths or variations of the main flow)
+
+**Exception Flow**  
+(Errors, invalid inputs, system failures)
+
+Requirements:
+{requirements}
+
+Your response should be structured with these titles and bullet points for each flow. Focus on clarity, realistic examples, and good test coverage.
