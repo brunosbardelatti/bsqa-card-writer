@@ -104,7 +104,7 @@
     }
     .result-container {
       position: relative;
-      background: #333;
+      background: var(--result-bg);
       padding: 1rem;
       border-radius: 6px;
       white-space: pre-wrap;
@@ -120,7 +120,7 @@
       right: 0.5rem;
       width: 32px;
       height: 32px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.15);
       border: none;
       color: var(--text-color);
       border-radius: 4px;
@@ -132,19 +132,25 @@
       float: right;
       margin: 0.5rem;
       z-index: 10;
+      padding: 0;
+      line-height: 1;
     }
     .copy-btn:hover {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.25);
+      transform: scale(1.05);
     }
     .copy-btn.copied {
-      background: rgba(76, 175, 80, 0.2);
-      color: #4caf50;
+      background: rgba(76, 175, 80, 0.3);
+      color: #4caf50 !important;
+      transform: scale(1.1);
     }
     .copy-btn svg {
       width: 16px;
       height: 16px;
+      display: block;
     }
     .result {
+      color: var(--result-text);
       padding-right: 3rem;
     }
     .error {
@@ -264,10 +270,10 @@
       top: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.8);
+      background-color: var(--modal-bg);
     }
     .modal-content {
-      background-color: var(--card-bg);
+      background-color: var(--modal-content-bg);
       margin: 2% auto;
       padding: 2rem;
       border-radius: 10px;
@@ -275,7 +281,7 @@
       max-width: 800px;
       max-height: 90vh;
       overflow-y: auto;
-      color: var(--text-color);
+      color: var(--modal-text);
     }
     .modal-close-btn {
       position: sticky;
@@ -317,7 +323,7 @@
     }
     .modal-content h3 {
       font-size: 1.2em;
-      color: var(--text-color);
+      color: var(--modal-text);
     }
     .modal-content ul, .modal-content ol {
       margin: 1rem 0;
@@ -328,17 +334,19 @@
       line-height: 1.5;
     }
     .modal-content pre {
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--code-bg);
       padding: 1rem;
       border-radius: 6px;
       overflow-x: auto;
       margin: 1rem 0;
+      color: var(--code-text);
     }
     .modal-content code {
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--code-bg);
       padding: 0.2rem 0.4rem;
       border-radius: 3px;
       font-family: 'Courier New', monospace;
+      color: var(--code-text);
     }
     .modal-content hr {
       border: none;
@@ -348,6 +356,7 @@
     .modal-content p {
       margin: 1rem 0;
       line-height: 1.6;
+      color: var(--modal-text);
     }
     .modal-content strong {
       color: var(--accent-color);
@@ -504,12 +513,12 @@
           // Garante que quebras de linha sejam preservadas
           output.innerHTML = `
             <div class="result-container">
-              <div class="result">${message.replace(/\n/g, '<br>')}</div>
-              <button class="copy-btn" onclick="copyToClipboard(this, \`${message.replace(/`/g, '\\`')}\`)" title="Copiar resposta">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+              <button class="copy-btn" onclick="copyToClipboard(this)" data-text="${encodeURIComponent(message)}" title="Copiar resposta">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h6a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z"/>
                 </svg>
               </button>
+              <div class="result">${message.replace(/\n/g, '<br>')}</div>
             </div>
           `;
           // Limpar seleção de arquivo e campo de texto após sucesso
@@ -524,18 +533,47 @@
       }
     };
 
-    function copyToClipboard(button, text) {
+    function copyToClipboard(button) {
+      const text = decodeURIComponent(button.getAttribute('data-text'));
+      
+      console.log('Tentando copiar texto:', text.substring(0, 100) + '...');
+      
       navigator.clipboard.writeText(text).then(() => {
+        console.log('Texto copiado com sucesso!');
         const originalHTML = button.innerHTML;
-        button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>';
+        button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>'; // Mostrar check quando copiado
         button.classList.add('copied');
+        button.title = 'Copiado!';
         setTimeout(() => {
           button.innerHTML = originalHTML;
           button.classList.remove('copied');
+          button.title = 'Copiar resposta';
         }, 2000);
       }).catch(err => {
         console.error('Erro ao copiar:', err);
-        alert('Erro ao copiar texto. Tente novamente.');
+        // Fallback para navegadores mais antigos
+        try {
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          document.body.appendChild(textArea);
+          textArea.select();
+          document.execCommand('copy');
+          document.body.removeChild(textArea);
+          
+          console.log('Texto copiado usando fallback!');
+          const originalHTML = button.innerHTML;
+          button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
+          button.classList.add('copied');
+          button.title = 'Copiado!';
+          setTimeout(() => {
+            button.innerHTML = originalHTML;
+            button.classList.remove('copied');
+            button.title = 'Copiar resposta';
+          }, 2000);
+        } catch (fallbackErr) {
+          console.error('Erro no fallback:', fallbackErr);
+          alert('Erro ao copiar texto. Tente novamente.');
+        }
       });
     }
 
@@ -543,8 +581,14 @@
       const modal = document.getElementById('helpModal');
       const content = document.getElementById('helpContent');
       
+      // Aplicar tema ao modal
+      const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
+      if (config.theme) {
+        applyTheme(config.theme);
+      }
+      
       // Carregar conteúdo do software-requirements.md
-      fetch('docs/software-requirements.md')
+      fetch('software-requirements.md')
         .then(response => response.text())
         .then(text => {
           // Converter markdown para HTML básico
@@ -567,7 +611,7 @@
     }
 
     function openConfig() {
-      window.open('config.html', '_blank');
+      window.location.href = 'config.html';
     }
 
     function convertMarkdownToHtml(markdown) {
@@ -581,8 +625,11 @@
       html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
       html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
       
-      // Blocos de código
-      html = html.replace(/```(\w+)?\n([\s\S]*?)```/gim, '<pre><code>$2</code></pre>');
+      // Blocos de código com linguagem específica
+      html = html.replace(/```(\w+)?\n([\s\S]*?)```/gim, function(match, lang, code) {
+        const language = lang || '';
+        return `<pre><code class="language-${language}">${code.trim()}</code></pre>`;
+      });
       
       // Código inline
       html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
@@ -626,6 +673,86 @@
         closeHelp();
       }
     }
+
+    // Aplicar tema baseado nas configurações
+    function applyTheme(theme) {
+      const root = document.documentElement;
+      
+      if (theme === 'light') {
+        root.style.setProperty('--bg-color', '#ffffff');
+        root.style.setProperty('--text-color', '#333333');
+        root.style.setProperty('--card-bg', '#f5f5f5');
+        root.style.setProperty('--muted-text', '#666666');
+        root.style.setProperty('--accent-color', '#2196f3');
+        root.style.setProperty('--border-color', '#e0e0e0');
+        // Cores específicas para tema claro
+        root.style.setProperty('--result-bg', '#f8f9fa');
+        root.style.setProperty('--result-text', '#333333');
+        root.style.setProperty('--modal-bg', 'rgba(0, 0, 0, 0.5)');
+        root.style.setProperty('--modal-content-bg', '#ffffff');
+        root.style.setProperty('--modal-text', '#333333');
+        root.style.setProperty('--code-bg', '#f1f3f4');
+        root.style.setProperty('--code-text', '#333333');
+      } else if (theme === 'dark') {
+        root.style.setProperty('--bg-color', '#1a1a1a');
+        root.style.setProperty('--text-color', '#ffffff');
+        root.style.setProperty('--card-bg', '#2d2d2d');
+        root.style.setProperty('--muted-text', '#cccccc');
+        root.style.setProperty('--accent-color', '#4caf50');
+        root.style.setProperty('--border-color', '#444444');
+        // Cores específicas para tema escuro
+        root.style.setProperty('--result-bg', '#333333');
+        root.style.setProperty('--result-text', '#ffffff');
+        root.style.setProperty('--modal-bg', 'rgba(0, 0, 0, 0.8)');
+        root.style.setProperty('--modal-content-bg', '#2d2d2d');
+        root.style.setProperty('--modal-text', '#ffffff');
+        root.style.setProperty('--code-bg', '#1a1a1a');
+        root.style.setProperty('--code-text', '#ffffff');
+      } else if (theme === 'auto') {
+        // Detectar preferência do sistema
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        applyTheme(prefersDark ? 'dark' : 'light');
+        return;
+      }
+    }
+
+    // Carregar tema das configurações
+    function loadTheme() {
+      try {
+        const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
+        if (config.theme) {
+          applyTheme(config.theme);
+        }
+      } catch (error) {
+        console.log('Erro ao carregar tema:', error);
+      }
+    }
+
+    // Carregar IA padrão das configurações
+    function loadDefaultAI() {
+      try {
+        const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
+        console.log('Configurações carregadas:', config);
+        if (config.defaultAI) {
+          console.log('Aplicando IA padrão:', config.defaultAI);
+          document.getElementById('service').value = config.defaultAI;
+        }
+      } catch (error) {
+        console.log('Erro ao carregar IA padrão:', error);
+      }
+    }
+
+    // Sincronizar configurações quando a página é carregada
+    function syncConfigurations() {
+      loadTheme();
+      loadDefaultAI();
+    }
+
+    // Sincronizar quando a página ganha foco (usuário volta das configurações)
+    window.addEventListener('focus', syncConfigurations);
+
+    // Sincronizar quando a página é carregada
+    document.addEventListener('DOMContentLoaded', syncConfigurations);
   </script>
   <footer style="margin-top:2rem; text-align:center; color: var(--text-color); font-size:0.9rem;">
     <div>
