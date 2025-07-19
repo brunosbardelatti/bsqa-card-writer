@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>⚙️ Configurações - BSQA Card Writer</title>
+  <style>
+    :root {
+      --bg-color: #1e1e1e;
+      --card-bg: #2a2a2a;
+      --accent-color: #ffffff;
+      --text-color: #f4f4f4;
+      --muted-text: #bbbbbb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+      min-height: 100vh;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 800px;
+      margin-bottom: 2rem;
+    }
+    .back-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: var(--text-color);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .3s;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+    h1 {
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+    }
+    .config-container {
+      background: var(--card-bg);
+      padding: 2rem;
+      border-radius: 10px;
+      max-width: 800px;
+      width: 100%;
+    }
+    .config-section {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--muted-text);
+    }
+    .config-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+    .config-section h2 {
+      color: var(--accent-color);
+      margin-bottom: 1rem;
+      font-size: 1.4em;
+    }
+    .config-item {
+      margin-bottom: 1rem;
+    }
+    .config-item label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-color);
+      font-weight: 500;
+    }
+    input[type="text"], input[type="email"], select, textarea {
+      background: var(--bg-color);
+      color: var(--text-color);
+      border: 1px solid var(--muted-text);
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-size: 1rem;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    input[type="checkbox"] {
+      margin-right: 0.5rem;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+    .checkbox-item.disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .checkbox-item.disabled label {
+      cursor: not-allowed;
+    }
+    .save-btn {
+      background: var(--accent-color);
+      color: var(--bg-color);
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background .3s;
+      margin-top: 1rem;
+    }
+    .save-btn:hover {
+      background: var(--muted-text);
+    }
+    .status-message {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 6px;
+      display: none;
+    }
+    .status-success {
+      background: rgba(76, 175, 80, 0.2);
+      color: #4caf50;
+      border: 1px solid #4caf50;
+    }
+    .status-error {
+      background: rgba(244, 67, 54, 0.2);
+      color: #f44336;
+      border: 1px solid #f44336;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="back-btn">← Voltar</a>
+    <h1>⚙️ Configurações do Usuário</h1>
+    <div></div> <!-- Espaçador para centralizar o título -->
+  </div>
+
+  <div class="config-container">
+    <div class="config-section">
+      <h2>👤 Informações Pessoais</h2>
+      <div class="config-item">
+        <label for="userName">Nome do Usuário <span title="Seu nome completo para identificação nos documentos gerados" style="color: var(--accent-color); cursor: help;">ⓘ</span></label>
+        <input type="text" id="userName" placeholder="Seu nome completo">
+      </div>
+      <div class="config-item">
+        <label for="userEmail">Email <span title="Seu email para contato e identificação" style="color: var(--accent-color); cursor: help;">ⓘ</span></label>
+        <input type="email" id="userEmail" placeholder="seu@email.com">
+      </div>
+      <div class="config-item">
+        <label for="userCompany">Empresa <span title="Nome da sua empresa para personalização dos documentos" style="color: var(--accent-color); cursor: help;">ⓘ</span></label>
+        <input type="text" id="userCompany" placeholder="Nome da empresa">
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h2>🤖 Configurações de IA</h2>
+      <div class="config-item">
+        <label for="defaultAI">IA Padrão <span title="Selecione qual IA será usada por padrão: OpenAI ou StackSpot AI" style="color: var(--accent-color); cursor: help;">ⓘ</span></label>
+        <select id="defaultAI">
+          <option value="openai">OpenAI</option>
+          <option value="stackspot">StackSpot AI</option>
+        </select>
+      </div>
+      <div class="config-item">
+        <label for="maxTokens">Máximo de Tokens <span title="Número máximo de tokens para gerar a resposta. Valores maiores geram respostas mais detalhadas" style="color: var(--accent-color); cursor: help;">ⓘ</span></label>
+        <input type="text" id="maxTokens" placeholder="1000" value="1000">
+      </div>
+      <div class="config-item">
+        <label>Configurações StackSpot AI <span title="Configurações específicas para o StackSpot AI" style="color: var(--accent-color); cursor: help;">ⓘ</span></label>
+        <div class="checkbox-item">
+          <input type="checkbox" id="streaming">
+          <label for="streaming">Streaming (resposta em tempo real) <span title="Ativa o modo streaming para receber respostas em tempo real do StackSpot AI" style="color: var(--accent-color); cursor: help;">ⓘ</span></label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="stackspotKnowledge">
+          <label for="stackspotKnowledge">Usar conhecimento StackSpot <span title="Utiliza o conhecimento específico do StackSpot para melhorar as respostas" style="color: var(--accent-color); cursor: help;">ⓘ</span></label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="returnKsInResponse">
+          <label for="returnKsInResponse">Retornar KS na resposta <span title="Inclui informações do Knowledge Source (KS) na resposta gerada" style="color: var(--accent-color); cursor: help;">ⓘ</span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h2>📋 Preferências de Saída</h2>
+      <div class="checkbox-item">
+        <input type="checkbox" id="autoCopy">
+        <label for="autoCopy">Copiar resultado automaticamente <span title="Copia automaticamente o resultado para a área de transferência após a geração" style="color: var(--accent-color); cursor: help;">ⓘ</span></label>
+      </div>
+      <div class="checkbox-item">
+        <input type="checkbox" id="clearAfterSuccess" checked>
+        <label for="clearAfterSuccess">Limpar campos após sucesso <span title="Limpa automaticamente os campos de entrada após gerar uma resposta com sucesso" style="color: var(--accent-color); cursor: help;">ⓘ</span></label>
+      </div>
+      <div class="checkbox-item disabled">
+        <input type="checkbox" id="showHistory" disabled>
+        <label for="showHistory" title="Funcionalidade em desenvolvimento - Em breve disponível">Mostrar histórico de análises <span title="Permite visualizar e reutilizar análises anteriores (funcionalidade em desenvolvimento)" style="color: var(--accent-color); cursor: help;">ⓘ</span></label>
+        <span style="color: var(--muted-text); font-size: 0.8em; margin-left: 0.5rem;">(Em desenvolvimento)</span>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h2>🎨 Configurações de Interface</h2>
+      <div class="config-item">
+        <label for="theme">Tema <span title="Escolha entre tema escuro, claro ou automático baseado nas configurações do sistema" style="color: var(--accent-color); cursor: help;">ⓘ</span></label>
+        <select id="theme">
+          <option value="dark">Escuro (Padrão)</option>
+          <option value="light">Claro</option>
+          <option value="auto">Automático</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="save-btn" id="saveBtn" onclick="saveConfig()">💾 Salvar Configurações</button>
+    <div id="statusMessage" class="status-message"></div>
+  </div>
+
+  <script>
+    // Carregar configurações salvas
+    async function loadConfig() {
+      try {
+        // Primeiro tenta carregar do localStorage (cache)
+        const localConfig = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
+        
+        // Depois busca do servidor (fonte da verdade)
+        const response = await fetch('http://localhost:8000/config');
+        if (response.ok) {
+          const serverConfig = await response.json();
+          
+          // Mescla configurações (servidor tem prioridade)
+          const mergedConfig = { ...localConfig, ...serverConfig };
+          
+          // Aplica valores aos campos
+          applyConfigToFields(mergedConfig);
+          
+          // Atualiza cache local
+          localStorage.setItem('bsqaConfig', JSON.stringify(mergedConfig));
+        } else {
+          // Se servidor não disponível, usa cache local
+          applyConfigToFields(localConfig);
+        }
+      } catch (error) {
+        console.log('Erro ao carregar configurações do servidor, usando cache local:', error);
+        const localConfig = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
+        applyConfigToFields(localConfig);
+      }
+    }
+
+    // Aplicar configurações aos campos
+    function applyConfigToFields(config) {
+      if (config.userName) document.getElementById('userName').value = config.userName;
+      if (config.userEmail) document.getElementById('userEmail').value = config.userEmail;
+      if (config.userCompany) document.getElementById('userCompany').value = config.userCompany;
+      if (config.defaultAI) document.getElementById('defaultAI').value = config.defaultAI;
+      if (config.maxTokens) document.getElementById('maxTokens').value = config.maxTokens;
+      if (config.autoCopy !== undefined) document.getElementById('autoCopy').checked = config.autoCopy;
+      else document.getElementById('autoCopy').checked = false; // Default false
+      if (config.clearAfterSuccess !== undefined) document.getElementById('clearAfterSuccess').checked = config.clearAfterSuccess;
+      // showHistory sempre desabilitado por enquanto
+      if (config.theme) document.getElementById('theme').value = config.theme;
+      // Configurações StackSpot
+      if (config.streaming !== undefined) document.getElementById('streaming').checked = config.streaming;
+      else document.getElementById('streaming').checked = false; // Default false
+      if (config.stackspotKnowledge !== undefined) document.getElementById('stackspotKnowledge').checked = config.stackspotKnowledge;
+      else document.getElementById('stackspotKnowledge').checked = false; // Default false
+      if (config.returnKsInResponse !== undefined) document.getElementById('returnKsInResponse').checked = config.returnKsInResponse;
+      else document.getElementById('returnKsInResponse').checked = false; // Default false
+    }
+
+    // Salvar configurações
+    async function saveConfig() {
+      const saveBtn = document.getElementById('saveBtn');
+      const originalText = saveBtn.textContent;
+      
+      try {
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Salvando...';
+        
+        const config = {
+          userName: document.getElementById('userName').value,
+          userEmail: document.getElementById('userEmail').value,
+          userCompany: document.getElementById('userCompany').value,
+          defaultAI: document.getElementById('defaultAI').value,
+          maxTokens: parseInt(document.getElementById('maxTokens').value) || 1000,
+          autoCopy: document.getElementById('autoCopy').checked,
+          clearAfterSuccess: document.getElementById('clearAfterSuccess').checked,
+          theme: document.getElementById('theme').value,
+          // Configurações StackSpot
+          streaming: document.getElementById('streaming').checked,
+          stackspotKnowledge: document.getElementById('stackspotKnowledge').checked,
+          returnKsInResponse: document.getElementById('returnKsInResponse').checked
+        };
+
+        // Salva no servidor
+        const response = await fetch('http://localhost:8000/config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(config)
+        });
+
+        if (response.ok) {
+          // Salva também no localStorage como cache
+          localStorage.setItem('bsqaConfig', JSON.stringify(config));
+          
+          saveBtn.textContent = 'Salvo! ✅';
+          setTimeout(() => {
+            saveBtn.textContent = originalText;
+            saveBtn.disabled = false;
+          }, 2000);
+        } else {
+          throw new Error('Erro ao salvar no servidor');
+        }
+      } catch (error) {
+        console.error('Erro ao salvar configurações:', error);
+        
+        // Fallback: salva apenas no localStorage
+        localStorage.setItem('bsqaConfig', JSON.stringify(config));
+        
+        saveBtn.textContent = 'Salvo (local) ⚠️';
+        setTimeout(() => {
+          saveBtn.textContent = originalText;
+          saveBtn.disabled = false;
+        }, 2000);
+      }
+    }
+
+    // Carregar configurações ao abrir a página
+    document.addEventListener('DOMContentLoaded', loadConfig);
+  </script>
+</body>
+</html> 

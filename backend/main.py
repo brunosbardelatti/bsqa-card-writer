@@ -7,6 +7,8 @@ import requests
 import PyPDF2
 import io
 import os
+import json
+from pathlib import Path
 
 # Load environment variables
 env_path = os.getenv('DOTENV_PATH', 'config/.env')
@@ -88,14 +90,14 @@ def get_stackspot_jwt() -> str:
     return resp.json()["access_token"]
 
 
-def call_stackspot(prompt: str) -> dict:
+def call_stackspot(prompt: str, streaming: bool = False, stackspot_knowledge: bool = False, return_ks_in_response: bool = False) -> dict:
     jwt = get_stackspot_jwt()
     chat_url = f"https://genai-inference-app.stackspot.com/v1/agent/{stackspot_agent_id}/chat"
     payload = {
-        "streaming": False,
+        "streaming": streaming,
         "user_prompt": prompt,
-        "stackspot_knowledge": False,
-        "return_ks_in_response": False,
+        "stackspot_knowledge": stackspot_knowledge,
+        "return_ks_in_response": return_ks_in_response,
     }
     headers = {
         "Content-Type": "application/json",
@@ -110,7 +112,10 @@ def call_stackspot(prompt: str) -> dict:
 async def analyze(
     requirements: str = Form(None),
     file: UploadFile = File(None),
-    service: str = Form("openai")  # 'openai' or 'stackspot'
+    service: str = Form("openai"),  # 'openai' or 'stackspot'
+    streaming: bool = Form(False),
+    stackspot_knowledge: bool = Form(False),
+    return_ks_in_response: bool = Form(False)
 ):
     # Validate input
     if file and requirements:
@@ -146,9 +151,65 @@ async def analyze(
 
     try:
         if service.lower() == "stackspot":
-            result = call_stackspot(prompt)
+            result = call_stackspot(prompt, streaming=streaming, stackspot_knowledge=stackspot_knowledge, return_ks_in_response=return_ks_in_response)
         else:
             result = call_openai(prompt)
         return JSONResponse(content={"result": result})
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generating response: {e}")
+
+# Configurações do usuário
+CONFIG_FILE = "config/user_config.json"
+
+def load_user_config():
+    """Carrega configurações do usuário do arquivo JSON"""
+    try:
+        if os.path.exists(CONFIG_FILE):
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        return get_default_config()
+    except Exception as e:
+        print(f"Erro ao carregar configurações: {e}")
+        return get_default_config()
+
+def save_user_config(config):
+    """Salva configurações do usuário no arquivo JSON"""
+    try:
+        with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(config, f, indent=2, ensure_ascii=False)
+        return True
+    except Exception as e:
+        print(f"Erro ao salvar configurações: {e}")
+        return False
+
+def get_default_config():
+    """Retorna configurações padrão"""
+    return {
+        "userName": "",
+        "userEmail": "",
+        "userCompany": "",
+        "defaultAI": "openai",
+        "maxTokens": 1000,
+        "autoCopy": False,
+        "clearAfterSuccess": True,
+        "theme": "dark",
+        "streaming": False,
+        "stackspotKnowledge": False,
+        "returnKsInResponse": False
+    }
+
+@app.get("/config")
+async def get_config():
+    """Endpoint para obter configurações do usuário"""
+    return load_user_config()
+
+@app.post("/config")
+async def update_config(config: dict):
+    """Endpoint para atualizar configurações do usuário"""
+    current_config = load_user_config()
+    current_config.update(config)
+    
+    if save_user_config(current_config):
+        return {"success": True, "message": "Configurações salvas com sucesso"}
+    else:
+        raise HTTPException(status_code=500, detail="Erro ao salvar configurações")

@@ -71,3 +71,13 @@ __marimo__/
 
 # Abstra
 .abstra/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# User configuration (contains personal data)
+config/user_config.json
