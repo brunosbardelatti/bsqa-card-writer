@@ -234,6 +234,28 @@
       background: rgba(255, 255, 255, 0.2);
       transform: scale(1.1);
     }
+    .config-btn {
+      position: fixed;
+      top: 1rem;
+      right: 4rem;
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: var(--text-color);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all .3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      font-size: 1.2em;
+    }
+    .config-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.1);
+    }
     .modal {
       display: none;
       position: fixed;
@@ -337,6 +359,7 @@
 </head>
 <body>
   <button class="help-btn" onclick="openHelp()" title="Documentação e Regras">❓</button>
+  <button class="config-btn" onclick="openConfig()" title="Configurações do Usuário">⚙️</button>
   <h1>🤖📋 QA Card Writer BSQA</h1>
   <p class="subtitle">Insira seus requisitos de software e receba sugestões de casos de teste com IA!</p>
   <form id="reqForm">
@@ -459,6 +482,14 @@
       }
       formData.append('service', service);
 
+      // Adicionar configurações do StackSpot se o serviço for StackSpot
+      if (service === 'stackspot') {
+        const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
+        formData.append('streaming', config.streaming || false);
+        formData.append('stackspot_knowledge', config.stackspotKnowledge || false);
+        formData.append('return_ks_in_response', config.returnKsInResponse || false);
+      }
+
       try {
         const res = await fetch('http://localhost:8000/analyze', {
           method: 'POST',
@@ -533,6 +564,10 @@
 
     function closeHelp() {
       document.getElementById('helpModal').style.display = 'none';
+    }
+
+    function openConfig() {
+      window.open('config.html', '_blank');
     }
 
     function convertMarkdownToHtml(markdown) {

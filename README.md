@@ -113,19 +113,79 @@ python -m http.server 8501
 
 ## 🧪 Como Usar
 
-### **1. Acesse a Aplicação**
-- URL: [http://localhost:8501/index.html](http://localhost:8501/index.html)
-- Documentação API: [http://localhost:8000/docs](http://localhost:8000/docs)
+1. **Clone o repositório:**
+   ```bash
+   git clone <url-do-repositorio>
+   cd BSQA-card-Writer
+   ```
 
-### **2. Envie Requisitos**
-- **Arraste e solte** arquivo PDF/TXT
-- **Ou digite** requisitos no campo de texto
-- **Selecione** OpenAI ou StackSpot AI
+2. **Configure as variáveis de ambiente:**
+   - Copie `config/env.example` para `config/.env`
+   - Preencha suas chaves de API (OpenAI e/ou StackSpot)
 
-### **3. Receba Casos de Teste**
-- Casos organizados por fluxo
-- Botão copiar para clipboard
-- Limpeza automática para novo input
+3. **Instale as dependências:**
+   ```bash
+   make setup
+   ```
+
+4. **Execute o projeto:**
+   ```bash
+   make chat
+   ```
+   
+   Ou execute separadamente:
+   ```bash
+   make back    # Backend apenas
+   make front   # Frontend apenas
+   ```
+
+5. **Acesse a aplicação:**
+   - Frontend: http://localhost:8501/index.html
+   - Backend: http://localhost:8000
+   - Documentação API: http://localhost:8000/docs
+
+## ⚙️ Configurações do Usuário
+
+O sistema agora utiliza um arquivo JSON local para persistir as configurações do usuário:
+
+### **📁 Arquivo de Configurações**
+- **Localização**: `config/user_config.json`
+- **Formato**: JSON
+- **Backup**: Incluído no `.gitignore` (dados pessoais)
+- **Exemplo**: `config/user_config.example.json`
+
+### **🔄 Sistema Híbrido**
+- **Servidor**: Fonte da verdade (persistente)
+- **localStorage**: Cache temporário (performance)
+- **Sincronização**: Automática entre cliente e servidor
+
+### **📋 Configurações Disponíveis**
+```json
+{
+  "userName": "Nome do usuário",
+  "userEmail": "Email para contato",
+  "userCompany": "Empresa",
+  "defaultAI": "openai|stackspot",
+  "maxTokens": 1000,
+  "autoCopy": false,
+  "clearAfterSuccess": true,
+  "theme": "dark|light|auto",
+  "streaming": false,
+  "stackspotKnowledge": false,
+  "returnKsInResponse": false
+}
+```
+
+### **🔧 Endpoints de Configuração**
+- `GET /config` - Obter configurações
+- `POST /config` - Atualizar configurações
+
+### **💡 Vantagens do Novo Sistema**
+- ✅ **Persistente**: Sobrevive a reinicializações
+- ✅ **Portável**: Funciona em qualquer computador
+- ✅ **Backup**: Pode ser versionado (sem dados pessoais)
+- ✅ **Offline**: Funciona mesmo sem servidor
+- ✅ **Performance**: Cache local para carregamento rápido
 
 ---
 
@@ -216,10 +276,25 @@ A: Edite os arquivos em `config/prompt_template_*.txt`.
 
 ## 🚀 Roadmap
 
+### **📄 Suporte a Formatos**
+- [ ] Adicionar suporte a Word (.doc)
+- [ ] Adicionar suporte a DOCX (.docx)
+
+### **📋 Exportação e Resultados**
+- [ ] Exportar PDF de resultado
+- [ ] Adicionar histórico de análises
+
+### **🧪 Geração de Testes**
+- [ ] Adicionar gerador de Gherkin
+- [ ] Adicionar gerador de testes para Postman baseado na Curl
+
+### **📝 Documentação e Gestão**
+- [ ] Adicionar escritor de Release notes
+- [ ] Adicionar escritor de Card para Jira/Azure baseado em template
+
+### **🔧 Melhorias Técnicas**
 - [ ] Suporte a mais formatos de arquivo
 - [ ] Integração com outras IAs
-- [ ] Exportação de casos de teste
-- [ ] Histórico de análises
 - [ ] Interface administrativa
 
 ---
