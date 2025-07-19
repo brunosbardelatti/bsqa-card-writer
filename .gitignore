@@ -1,0 +1,73 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env
+.venv/
+venv/
+env/
+ENV/
+.envrc
+
+# IDEs e editores
+.vscode/
+.idea/
+.spyderproject
+.spyproject
+.ropeproject
+
+# Ferramentas de lint/format
+.ruff_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# Arquivos de configuração sensíveis
+.pypirc
+config/.env
+.env
+
+# Build/distribuição
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+MANIFEST
+
+# Logs e caches
+*.log
+.cache/
+
+# Testes
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.hypothesis/
+
+# Outros
+.DS_Store
+Thumbs.db
+*.bak
+
+# Cursor (AI code editor)
+.cursorignore
+.cursorindexingignore
+
+# Marimo
+marimo/_static/
+marimo/_lsp/
+__marimo__/
+
+# Streamlit (caso ainda use para prototipagem)
+.streamlit/
+
+# Abstra
+.abstra/
