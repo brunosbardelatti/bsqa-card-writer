@@ -138,87 +138,6 @@
     </div>
 
     <div class="config-section">
-      <h2>🤖 Configurações de IA</h2>
-      <div class="config-item">
-        <label for="defaultAI">IA Padrão <span title="Selecione qual IA será usada por padrão: OpenAI ou StackSpot AI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-        <select id="defaultAI">
-          <option value="openai">OpenAI</option>
-          <option value="stackspot">StackSpot AI</option>
-        </select>
-      </div>
-      <div class="config-item">
-        <label for="maxTokens">Máximo de Tokens <span title="Número máximo de tokens para gerar a resposta. Valores maiores geram respostas mais detalhadas" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-        <input type="text" id="maxTokens" placeholder="1000" value="1000">
-      </div>
-      
-      <!-- Configurações OpenAI -->
-      <div class="config-item">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-          <label>🔑 Configurações OpenAI <span title="Configurações necessárias para usar a OpenAI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-          <div style="display: flex; align-items: center;">
-            <input type="checkbox" id="openaiEnabled" style="margin-right: 0.5rem;">
-            <label for="openaiEnabled" style="margin: 0; font-size: 0.9em;">Habilitar OpenAI</label>
-          </div>
-        </div>
-        <div class="config-item">
-          <label for="openaiApiKey">API Key <span title="Sua chave de API da OpenAI (obrigatório para usar OpenAI)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-          <input type="password" id="openaiApiKey" placeholder="sk-..." disabled>
-        </div>
-      </div>
-      
-      <!-- Configurações StackSpot AI -->
-      <div class="config-item">
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-          <label>🔑 Configurações StackSpot AI <span title="Configurações necessárias para usar o StackSpot AI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-          <div style="display: flex; align-items: center;">
-            <input type="checkbox" id="stackspotEnabled" style="margin-right: 0.5rem;">
-            <label for="stackspotEnabled" style="margin: 0; font-size: 0.9em;">Habilitar StackSpot AI</label>
-          </div>
-        </div>
-        <div class="config-item">
-          <label for="stackspotClientId">Client ID <span title="ID do cliente StackSpot (obrigatório)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-          <input type="text" id="stackspotClientId" placeholder="seu-client-id" disabled>
-        </div>
-        <div class="config-item">
-          <label for="stackspotClientSecret">Client Secret <span title="Chave secreta do cliente StackSpot (obrigatório)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-          <input type="password" id="stackspotClientSecret" placeholder="seu-client-secret" disabled>
-        </div>
-        <div class="config-item">
-          <label for="stackspotRealm">Realm <span title="Realm do StackSpot (obrigatório)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-          <input type="text" id="stackspotRealm" placeholder="seu-realm" disabled>
-        </div>
-        <div class="config-item">
-          <label for="stackspotAgentId">Agent ID <span title="ID do agente StackSpot (obrigatório)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-          <input type="text" id="stackspotAgentId" placeholder="seu-agent-id" disabled>
-        </div>
-      </div>
-      
-      <div class="config-item">
-        <label>Configurações StackSpot AI <span title="Configurações específicas para o StackSpot AI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-        <div class="checkbox-item">
-          <input type="checkbox" id="streaming">
-          <label for="streaming">Streaming (resposta em tempo real) <span title="Ativa o modo streaming para receber respostas em tempo real do StackSpot AI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="stackspotKnowledge">
-          <label for="stackspotKnowledge">Usar conhecimento StackSpot <span title="Utiliza o conhecimento específico do StackSpot para melhorar as respostas" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-        </div>
-        <div class="checkbox-item">
-          <input type="checkbox" id="returnKsInResponse">
-          <label for="returnKsInResponse">Retornar KS na resposta <span title="Inclui informações do Knowledge Source (KS) na resposta gerada" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-        </div>
-      </div>
-       
-      <!-- Botão para testar configurações -->
-      <div class="config-item" style="margin-top: 1rem;">
-        <button onclick="testApiConfig()" style="background: var(--accent-color); color: var(--bg-color); border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
-          🧪 Testar Configurações de API
-        </button>
-        <div id="testResult" style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 4px; display: none;"></div>
-      </div>
-    </div>
-
-    <div class="config-section">
       <h2>📋 Preferências de Saída</h2>
       <div class="checkbox-item">
         <input type="checkbox" id="autoCopy">
@@ -244,6 +163,94 @@
           <option value="light">Claro</option>
           <option value="auto">Automático</option>
         </select>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <h2>🤖 Configurações de IA</h2>
+      <div class="config-item">
+        <label for="defaultAnalyseType">Tipo de Análise Padrão <span title="Selecione o tipo de análise que será usado por padrão" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+        <select id="defaultAnalyseType">
+          <option value="card_QA_writer">Card QA Writer</option>
+          <option value="test_case_flow_classifier">Test Case Flow Classifier</option>
+          <option value="stackspot_ai">StackSpot AI</option>
+          <option value="swagger_postman">Swagger Postman</option>
+          <option value="swagger_python">Swagger Python</option>
+        </select>
+      </div>
+      <div class="config-item">
+        <label for="defaultAI">IA Padrão <span title="Selecione qual IA será usada por padrão: OpenAI ou StackSpot AI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+        <select id="defaultAI">
+          <option value="openai">OpenAI</option>
+          <option value="stackspot">StackSpot AI</option>
+        </select>
+        <div id="defaultAIWarning" style="display:none; color: #f44336; font-size: 0.95em; margin-top: 0.5rem;"></div>
+      </div>
+      <fieldset style="border: 2px solid #4caf50; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+        <legend style="color: #4caf50; font-weight: bold; padding: 0 0.5rem;">OpenAI</legend>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+          <label>🔑 Configurações OpenAI <span title="Configurações necessárias para usar a OpenAI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+          <div style="display: flex; align-items: center;">
+            <input type="checkbox" id="openaiEnabled" style="margin-right: 0.5rem;">
+            <label for="openaiEnabled" style="margin: 0; font-size: 0.9em;">Habilitar OpenAI</label>
+          </div>
+        </div>
+        <div class="config-item">
+          <label for="openaiApiKey">API Key <span title="Sua chave de API da OpenAI (obrigatório para usar OpenAI)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+          <input type="password" id="openaiApiKey" placeholder="sk-..." disabled>
+        </div>
+        <div class="config-item">
+          <label for="maxTokens">Máximo de Tokens <span title="Número máximo de tokens para gerar a resposta. Valores maiores geram respostas mais detalhadas" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+          <input type="text" id="maxTokens" placeholder="1000" value="1000">
+        </div>
+      </fieldset>
+      <fieldset style="border: 2px solid #2196f3; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
+        <legend style="color: #2196f3; font-weight: bold; padding: 0 0.5rem;">StackSpot AI</legend>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+          <label>🔑 Configurações StackSpot AI <span title="Configurações necessárias para usar o StackSpot AI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+          <div style="display: flex; align-items: center;">
+            <input type="checkbox" id="stackspotEnabled" style="margin-right: 0.5rem;">
+            <label for="stackspotEnabled" style="margin: 0; font-size: 0.9em;">Habilitar StackSpot AI</label>
+          </div>
+        </div>
+        <div class="config-item">
+          <label for="stackspotClientId">Client ID <span title="ID do cliente StackSpot (obrigatório)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+          <input type="text" id="stackspotClientId" placeholder="seu-client-id" disabled>
+        </div>
+        <div class="config-item">
+          <label for="stackspotClientSecret">Client Secret <span title="Chave secreta do cliente StackSpot (obrigatório)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+          <input type="password" id="stackspotClientSecret" placeholder="seu-client-secret" disabled>
+        </div>
+        <div class="config-item">
+          <label for="stackspotRealm">Realm <span title="Realm do StackSpot (obrigatório)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+          <input type="text" id="stackspotRealm" placeholder="seu-realm" disabled>
+        </div>
+        <div class="config-item">
+          <label for="stackspotAgentId">Agent ID <span title="ID do agente StackSpot (obrigatório)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+          <input type="text" id="stackspotAgentId" placeholder="seu-agent-id" disabled>
+        </div>
+        <div class="config-item">
+          <label>Configurações StackSpot AI <span title="Configurações específicas para o StackSpot AI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+          <div class="checkbox-item">
+            <input type="checkbox" id="streaming">
+            <label for="streaming">Streaming (resposta em tempo real) <span title="Ativa o modo streaming para receber respostas em tempo real do StackSpot AI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="stackspotKnowledge">
+            <label for="stackspotKnowledge">Usar conhecimento StackSpot <span title="Utiliza o conhecimento específico do StackSpot para melhorar as respostas" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+          </div>
+          <div class="checkbox-item">
+            <input type="checkbox" id="returnKsInResponse">
+            <label for="returnKsInResponse">Retornar KS na resposta <span title="Inclui informações do Knowledge Source (KS) na resposta gerada" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+          </div>
+        </div>
+      </fieldset>
+      <!-- Botão para testar configurações -->
+      <div class="config-item" style="margin-top: 1rem;">
+        <button onclick="testApiConfig()" style="background: var(--accent-color); color: var(--bg-color); border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
+          🧪 Testar Configurações de API
+        </button>
+        <div id="testResult" style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 4px; display: none;"></div>
       </div>
     </div>
 
@@ -344,26 +351,41 @@
 
     // Aplicar configurações aos campos
     function applyConfigToFields(config) {
-      if (config.userName) document.getElementById('userName').value = config.userName;
-      if (config.userEmail) document.getElementById('userEmail').value = config.userEmail;
-      if (config.userCompany) document.getElementById('userCompany').value = config.userCompany;
-      if (config.defaultAI) document.getElementById('defaultAI').value = config.defaultAI;
-      if (config.maxTokens) document.getElementById('maxTokens').value = config.maxTokens;
-      if (config.autoCopy !== undefined) document.getElementById('autoCopy').checked = config.autoCopy;
-      else document.getElementById('autoCopy').checked = false; // Default false
-      if (config.clearAfterSuccess !== undefined) document.getElementById('clearAfterSuccess').checked = config.clearAfterSuccess;
-      // showHistory sempre desabilitado por enquanto
-      if (config.theme) {
-        document.getElementById('theme').value = config.theme;
-        applyTheme(config.theme);
+      // Suporte ao novo formato estruturado
+      const user = config.user || {};
+      const preferences = config.preferences || {};
+      const ia = config.ia || {};
+      const openai = ia.openai || {};
+      const stackspot = ia.stackspot || {};
+
+      if (user.name) document.getElementById('userName').value = user.name;
+      if (user.email) document.getElementById('userEmail').value = user.email;
+      if (user.company) document.getElementById('userCompany').value = user.company;
+
+      if (preferences.defaultAI) document.getElementById('defaultAI').value = preferences.defaultAI;
+      if (preferences.defaultAnalyseType) document.getElementById('defaultAnalyseType').value = preferences.defaultAnalyseType;
+      if (preferences.autoCopy !== undefined) document.getElementById('autoCopy').checked = preferences.autoCopy;
+      else document.getElementById('autoCopy').checked = false;
+      if (preferences.clearAfterSuccess !== undefined) document.getElementById('clearAfterSuccess').checked = preferences.clearAfterSuccess;
+      if (preferences.theme) {
+        document.getElementById('theme').value = preferences.theme;
+        applyTheme(preferences.theme);
       }
-      // Configurações StackSpot
-      if (config.streaming !== undefined) document.getElementById('streaming').checked = config.streaming;
-      else document.getElementById('streaming').checked = false; // Default false
-      if (config.stackspotKnowledge !== undefined) document.getElementById('stackspotKnowledge').checked = config.stackspotKnowledge;
-      else document.getElementById('stackspotKnowledge').checked = false; // Default false
-      if (config.returnKsInResponse !== undefined) document.getElementById('returnKsInResponse').checked = config.returnKsInResponse;
-      else document.getElementById('returnKsInResponse').checked = false; // Default false
+
+      // OpenAI
+      document.getElementById('openaiEnabled').checked = openai.enabled === true;
+      if (openai.maxTokens !== undefined) document.getElementById('maxTokens').value = openai.maxTokens;
+      else document.getElementById('maxTokens').value = 1000;
+
+      document.getElementById('stackspotEnabled').checked = stackspot.enabled === true;
+      document.getElementById('streaming').checked = stackspot.streaming === true;
+      document.getElementById('stackspotKnowledge').checked = stackspot.stackspotKnowledge === true;
+      document.getElementById('returnKsInResponse').checked = stackspot.returnKsInResponse === true;
+
+      // Garante atualização dos campos dependentes e validação correta
+      document.getElementById('openaiEnabled').dispatchEvent(new Event('change'));
+      document.getElementById('stackspotEnabled').dispatchEvent(new Event('change'));
+      checkDefaultAIEnabled();
     }
 
     // Aplicar tema
@@ -419,26 +441,46 @@
       const saveBtn = document.getElementById('saveBtn');
       const saveBtnTop = document.getElementById('saveBtnTop');
       const originalText = saveBtn.textContent;
-      
+      // Validação: impedir salvar se a IA padrão não estiver habilitada
+      const defaultAI = document.getElementById('defaultAI').value;
+      const openaiEnabled = document.getElementById('openaiEnabled').checked;
+      const stackspotEnabled = document.getElementById('stackspotEnabled').checked;
+      if ((defaultAI === 'openai' && !openaiEnabled) || (defaultAI === 'stackspot' && !stackspotEnabled)) {
+        alert('A IA selecionada como padrão não está habilitada. Habilite-a para usá-la como padrão.');
+        return;
+      }
       try {
         saveBtn.disabled = true;
         saveBtnTop.disabled = true;
         saveBtn.textContent = 'Salvando...';
         saveBtnTop.textContent = 'Salvando...';
-        
+
+        // Novo formato estruturado
         const config = {
-          userName: document.getElementById('userName').value,
-          userEmail: document.getElementById('userEmail').value,
-          userCompany: document.getElementById('userCompany').value,
-          defaultAI: document.getElementById('defaultAI').value,
-          maxTokens: parseInt(document.getElementById('maxTokens').value) || 1000,
-          autoCopy: document.getElementById('autoCopy').checked,
-          clearAfterSuccess: document.getElementById('clearAfterSuccess').checked,
-          theme: document.getElementById('theme').value,
-          // Configurações StackSpot
-          streaming: document.getElementById('streaming').checked,
-          stackspotKnowledge: document.getElementById('stackspotKnowledge').checked,
-          returnKsInResponse: document.getElementById('returnKsInResponse').checked
+          user: {
+            name: document.getElementById('userName').value,
+            email: document.getElementById('userEmail').value,
+            company: document.getElementById('userCompany').value
+          },
+          preferences: {
+            defaultAI: document.getElementById('defaultAI').value,
+            defaultAnalyseType: document.getElementById('defaultAnalyseType').value,
+            autoCopy: document.getElementById('autoCopy').checked,
+            clearAfterSuccess: document.getElementById('clearAfterSuccess').checked,
+            theme: document.getElementById('theme').value
+          },
+          ia: {
+            openai: {
+              enabled: document.getElementById('openaiEnabled').checked,
+              maxTokens: parseInt(document.getElementById('maxTokens').value) || 1000
+            },
+            stackspot: {
+              enabled: document.getElementById('stackspotEnabled').checked,
+              streaming: document.getElementById('streaming').checked,
+              stackspotKnowledge: document.getElementById('stackspotKnowledge').checked,
+              returnKsInResponse: document.getElementById('returnKsInResponse').checked
+            }
+          }
         };
 
         // Configurações de API
@@ -511,7 +553,7 @@
     
     // Controlar switches das APIs
     document.getElementById('openaiEnabled').addEventListener('change', function() {
-      const openaiFields = ['openaiApiKey'];
+      const openaiFields = ['openaiApiKey', 'maxTokens'];
       openaiFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
         field.disabled = !this.checked;
@@ -522,14 +564,22 @@
     });
     
     document.getElementById('stackspotEnabled').addEventListener('change', function() {
-      const stackspotFields = ['stackspotClientId', 'stackspotClientSecret', 'stackspotRealm', 'stackspotAgentId'];
+      const stackspotFields = ['stackspotClientId', 'stackspotClientSecret', 'stackspotRealm', 'stackspotAgentId', 'streaming', 'stackspotKnowledge', 'returnKsInResponse'];
       stackspotFields.forEach(fieldId => {
         const field = document.getElementById(fieldId);
         field.disabled = !this.checked;
-        if (!this.checked) {
+        if (!this.checked && (field.type === 'text' || field.type === 'password')) {
           field.value = '';
         }
+        if (!this.checked && field.type === 'checkbox') {
+          field.checked = false;
+        }
       });
+    });
+    // Ao carregar, garantir que os campos estejam no estado correto
+    window.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('openaiEnabled').dispatchEvent(new Event('change'));
+      document.getElementById('stackspotEnabled').dispatchEvent(new Event('change'));
     });
     
     // Testar configurações de API
@@ -623,6 +673,31 @@
         testResult.style.border = '1px solid #f44336';
       }
     }
+
+    // Avisar se a IA padrão selecionada não está habilitada
+    function checkDefaultAIEnabled() {
+      const defaultAI = document.getElementById('defaultAI').value;
+      const openaiEnabled = document.getElementById('openaiEnabled').checked;
+      const stackspotEnabled = document.getElementById('stackspotEnabled').checked;
+      const warning = document.getElementById('defaultAIWarning');
+      const saveBtn = document.getElementById('saveBtn');
+      const saveBtnTop = document.getElementById('saveBtnTop');
+      let hasError = false;
+      if ((defaultAI === 'openai' && !openaiEnabled) || (defaultAI === 'stackspot' && !stackspotEnabled)) {
+        warning.style.display = 'block';
+        warning.textContent = 'A IA selecionada como padrão não está habilitada. Habilite-a para usá-la como padrão.';
+        hasError = true;
+      } else {
+        warning.style.display = 'none';
+        warning.textContent = '';
+      }
+      saveBtn.disabled = hasError;
+      saveBtnTop.disabled = hasError;
+    }
+    document.getElementById('defaultAI').addEventListener('change', checkDefaultAIEnabled);
+    document.getElementById('openaiEnabled').addEventListener('change', checkDefaultAIEnabled);
+    document.getElementById('stackspotEnabled').addEventListener('change', checkDefaultAIEnabled);
+    window.addEventListener('DOMContentLoaded', checkDefaultAIEnabled);
   </script>
 </body>
 </html> 

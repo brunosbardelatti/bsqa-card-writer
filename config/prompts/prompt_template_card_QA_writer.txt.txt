@@ -43,3 +43,6 @@ Critérios de Aceite:
 
 Release Notes:
 <short bullet or sentence describing what was delivered or fixed>
+
+The following software requirements should be used as the source for writing the card:  
+{requirements}
