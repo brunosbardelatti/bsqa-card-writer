@@ -11,6 +11,7 @@ async def analyze(
     requirements: str = Form(None),
     file: UploadFile = File(None),
     service: str = Form("openai"),
+    analyse_type: str = Form(...),
     streaming: bool = Form(False),
     stackspot_knowledge: bool = Form(False),
     return_ks_in_response: bool = Form(False)
@@ -18,9 +19,9 @@ async def analyze(
     if file and requirements:
         raise HTTPException(status_code=400, detail="Use only one input method: file or text.")
     if file:
-        allowed_types = ["application/pdf", "text/plain", "text/utf-8", "text/txt", "application/txt"]
+        allowed_types = ["application/pdf", "text/plain", "text/utf-8", "text/txt", "application/txt", "application/json"]
         if file.content_type not in allowed_types:
-            raise HTTPException(status_code=400, detail="Tipos de arquivo aceitos: PDF (.pdf) e TXT (.txt). Outros formatos não são suportados.")
+            raise HTTPException(status_code=400, detail="Tipos de arquivo aceitos: PDF (.pdf), TXT (.txt) e JSON (.json). Outros formatos não são suportados.")
         file.file.seek(0, 2)
         file_size = file.file.tell()
         file.file.seek(0)
@@ -37,7 +38,7 @@ async def analyze(
     else:
         raise HTTPException(status_code=400, detail="Provide requirements via file or text.")
 
-    prompt_template = load_prompt_template(service)
+    prompt_template = load_prompt_template(analyse_type)
     prompt = prompt_template.format(requirements=content)
 
     try:

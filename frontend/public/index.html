@@ -380,7 +380,7 @@
         <div class="drop-zone" id="dropZone">
           Arraste e solte seu PDF ou TXT aqui<br>
           <span style="color: #ffffff; text-decoration: underline;">Escolha um arquivo</span>
-          <input type="file" id="fileInput" name="file" accept=".pdf,.txt">
+          <input type="file" id="fileInput" name="file" accept=".pdf,.txt,.json">
           <div class="drop-feedback" id="dropFeedback" style="display:none;"></div>
           <button class="drop-remove-btn" id="dropRemoveBtn" style="display:none;" title="Remover arquivo">×</button>
         </div>
@@ -389,6 +389,13 @@
         <select id="service" name="service" style="width: 100%;">
           <option value="openai">OpenAI</option>
           <option value="stackspot">StackSpot AI</option>
+        </select>
+        <select id="analyse_type" name="analyse_type" style="width: 100%; margin-top: 0.5rem;">
+          <option value="card_QA_writer">Card QA Writer</option>
+          <option value="test_case_flow_classifier">Test Case Flow Classifier</option>
+          <option value="stackspot_ai">StackSpot AI</option>
+          <option value="swagger_postman">Swagger Postman</option>
+          <option value="swagger_python">Swagger Python</option>
         </select>
         <button type="submit" style="width: 100%; margin-left: 0;">Enviar</button>
       </div>
@@ -458,6 +465,7 @@
       const file = fileInput.files[0];
       const requirements = document.getElementById('requirements').value;
       const service = document.getElementById('service').value;
+      const analyse_type = document.getElementById('analyse_type').value;
       const formData = new FormData();
 
       if (file && requirements.trim()) {
@@ -472,12 +480,14 @@
           'text/utf-8',
           'text/txt',
           'application/txt',
+          'application/json',
         ];
         const fileType = file.type;
         const fileName = file.name.toLowerCase();
-        const isAllowed = allowedTypes.includes(fileType) || fileName.endsWith('.pdf') || fileName.endsWith('.txt');
+        const isAllowed = allowedTypes.includes(fileType) || fileName.endsWith('.pdf') || fileName.endsWith('.txt')
+          || fileName.endsWith('.json');
         if (!isAllowed) {
-          output.innerHTML = '<div class="error">Tipos de arquivo aceitos: <b>PDF (.pdf)</b> e <b>TXT (.txt)</b>. Outros formatos não são suportados.</div>';
+          output.innerHTML = '<div class="error">Tipos de arquivo aceitos: <b>PDF (.pdf)</b>, <b>TXT (.txt)</b> e <b>JSON (.json)</b>. Outros formatos não são suportados.</div>';
           return;
         }
         // Validação de tamanho de arquivo (100MB)
@@ -490,6 +500,7 @@
         formData.append('requirements', requirements);
       }
       formData.append('service', service);
+      formData.append('analyse_type', analyse_type);
 
       // Adicionar configurações do StackSpot se o serviço for StackSpot
       if (service === 'stackspot') {
@@ -732,10 +743,14 @@
     function loadDefaultAI() {
       try {
         const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
+        const preferences = config.preferences || {};
         console.log('Configurações carregadas:', config);
-        if (config.defaultAI) {
-          console.log('Aplicando IA padrão:', config.defaultAI);
-          document.getElementById('service').value = config.defaultAI;
+        if (preferences.defaultAI) {
+          console.log('Aplicando IA padrão:', preferences.defaultAI);
+          document.getElementById('service').value = preferences.defaultAI;
+        }
+        if (preferences.defaultAnalyseType) {
+          document.getElementById('analyse_type').value = preferences.defaultAnalyseType;
         }
       } catch (error) {
         console.log('Erro ao carregar IA padrão:', error);
@@ -747,9 +762,6 @@
       loadTheme();
       loadDefaultAI();
     }
-
-    // Sincronizar quando a página ganha foco (usuário volta das configurações)
-    window.addEventListener('focus', syncConfigurations);
 
     // Sincronizar quando a página é carregada
     document.addEventListener('DOMContentLoaded', syncConfigurations);
