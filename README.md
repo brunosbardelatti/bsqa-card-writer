@@ -4,50 +4,85 @@
 
 ---
 
-## 🚀 Funcionalidades Principais
+## 🚀 Funcionalidades
 
-### **📄 Entrada de Dados**
-- **Upload de arquivos**: PDF e TXT (drag & drop)
-- **Digitação manual**: Campo de texto expandido
-- **Validação automática**: Tipo, tamanho e conteúdo
-- **Feedback visual**: Quantidade de arquivos selecionados
+### ✨ Principais Recursos
+- **📝 Análise de Requisitos**: Gera casos de teste detalhados a partir de requisitos
+- **📄 Suporte a Arquivos**: Upload de arquivos PDF e TXT
+- **🤖 Múltiplas IAs**: Suporte para OpenAI e StackSpot AI
+- **⚙️ Configuração Totalmente Parametrizável**: Interface web para configurar todas as APIs
+- **🎨 Temas**: Suporte a tema escuro, claro e automático
+- **📋 Copiar Resultado**: Botão para copiar resultados para área de transferência
+- **💾 Configurações Persistentes**: Salva preferências do usuário
 
-### **🤖 Integração com IAs**
-- **OpenAI GPT-4o-mini**: Análise avançada de requisitos
-- **StackSpot AI**: Alternativa com autenticação JWT
-- **Templates dinâmicos**: Prompts específicos por serviço
+### 🔧 Configuração de APIs
+O sistema agora oferece uma interface completa para configurar todas as APIs necessárias:
 
-### **📋 Geração de Casos de Teste**
-- **Main Flow**: Comportamento típico e esperado
-- **Alternative Flow**: Variações válidas do fluxo principal
-- **Exception Flow**: Erros, entradas inválidas, falhas do sistema
+#### 🔑 OpenAI
+- **API Key**: Configure sua chave da OpenAI diretamente na interface
+- **Tokens**: Ajuste o número máximo de tokens para respostas
 
-### **🎨 Interface Moderna**
-- **Design responsivo**: Adaptável para desktop e mobile
-- **Tema escuro**: Interface moderna e profissional
-- **Loading states**: Feedback visual durante processamento
-- **Botão copiar**: Copia resposta com scroll acompanhante
-- **Documentação integrada**: Modal de ajuda com regras completas
+#### 🔑 StackSpot AI
+- **Client ID**: ID do cliente StackSpot
+- **Client Secret**: Chave secreta do cliente StackSpot  
+- **Realm**: Realm do StackSpot
+- **Agent ID**: ID do agente StackSpot
+- **Configurações Avançadas**:
+  - Streaming (resposta em tempo real)
+  - Usar conhecimento StackSpot
+  - Retornar KS na resposta
+
+#### 🧪 Teste de Configurações
+- Botão para testar as configurações de API
+- Validação automática das credenciais
+- Feedback visual do status das configurações
 
 ---
 
 ## 📁 Estrutura do Projeto
+
 ```
-├── backend/
+BSQA-card-Writer/
+├── 📁 backend/
 │   └── main.py                    # Backend FastAPI
-├── .frontend/
-│   └── public/
-│       ├── index.html             # Frontend principal
+├── 📁 frontend/
+│   ├── 📁 public/
+│   │   ├── index.html             # Interface principal
+│   │   ├── config.html            # Página de configurações
+│   │   └── assets/                # Recursos estáticos
+│   └── 📁 docs/
 │       └── software-requirements.md # Documentação técnica
-├── config/
-│   ├── .env                       # Chaves das APIs
+├── 📁 config/
 │   ├── requirements.txt           # Dependências Python
-│   ├── prompt_template_open_ai.txt
-│   └── prompt_template_stackspot_ai.txt
-├── README.md
-├── Makefile
-└── .gitignore
+│   ├── env.example               # Exemplo de variáveis de ambiente
+│   ├── user_config.example.json  # Exemplo de configurações
+│   └── 📁 prompts/
+│       ├── prompt_template_open_ai.txt
+│       └── prompt_template_stackspot_ai.txt
+├── README.md                      # Documentação principal
+├── Makefile                       # Automação de comandos
+└── .gitignore                     # Arquivos ignorados pelo Git
 ```
+
+### **🎯 Organização e Benefícios**
+
+#### **📁 Separação Clara de Responsabilidades**
+- **`backend/`**: Lógica do servidor e API
+- **`frontend/`**: Interface do usuário e documentação
+- **`config/`**: Configurações, templates e dependências
+- **`README.md`**: Documentação principal na raiz
+
+#### **📋 Estrutura Lógica**
+- **`frontend/public/`**: Arquivos servidos pelo servidor web
+- **`frontend/docs/`**: Documentação específica do frontend
+- **`config/prompts/`**: Templates de IA organizados
+- **`config/`**: Configurações centralizadas
+
+#### **🚀 Vantagens da Organização**
+- ✅ **Clareza**: Cada pasta tem propósito específico
+- ✅ **Manutenibilidade**: Fácil navegação e manutenção
+- ✅ **Escalabilidade**: Estrutura preparada para crescimento
+- ✅ **Padrões**: Segue convenções da indústria
 
 ---
 
@@ -68,164 +103,51 @@ Realm_stackspot=xxxxxxxx
 STACKSPOT_AGENT_ID=xxxxxxxx
 ```
 
----
-
-## 📦 Instalação e Setup
-
-### **Usando Makefile (Recomendado)**
-```bash
-# Setup completo
-make setup
-
-# Rodar projeto completo
-make chat
-
-# Rodar apenas backend
-make back
-
-# Rodar apenas frontend
-make front
-```
-
-### **Instalação Manual**
-```bash
-# Criar ambiente virtual
-python3 -m venv .venv
-
-# Ativar ambiente
-# Linux/Mac:
-source .venv/bin/activate
-# Windows:
-.venv\Scripts\activate
-
-# Instalar dependências
-pip install -r config/requirements.txt
-
-# Rodar backend
-uvicorn backend.main:app --reload
-
-# Rodar frontend (novo terminal)
-cd .frontend/public
-python -m http.server 8501
-```
+### **📋 Arquivos de Configuração**
+- **`config/env.example`**: Exemplo de variáveis de ambiente
+- **`config/user_config.example.json`**: Exemplo de configurações do usuário
+- **`config/prompts/`**: Templates de prompts para as IAs
 
 ---
 
-## 🧪 Como Usar
+## 🚀 Instalação e Configuração
 
-### **1. Acesse a Aplicação**
-- URL: [http://localhost:8501/index.html](http://localhost:8501/index.html)
-- Documentação API: [http://localhost:8000/docs](http://localhost:8000/docs)
+### **📋 Pré-requisitos**
+- Python 3.8+
+- Navegador web moderno
+- Conexão com internet
 
-### **2. Envie Requisitos**
-- **Arraste e solte** arquivo PDF/TXT
-- **Ou digite** requisitos no campo de texto
-- **Selecione** OpenAI ou StackSpot AI
+### **⚙️ Setup Rápido**
 
-### **3. Receba Casos de Teste**
-- Casos organizados por fluxo
-- Botão copiar para clipboard
-- Limpeza automática para novo input
+1. **Clone o repositório:**
+   ```bash
+   git clone https://github.com/brunosbardelatti/BSQA-card-Writer.git
+   cd BSQA-card-Writer
+   ```
 
----
+2. **Instale as dependências:**
+   ```bash
+   make setup
+   ```
 
-## 🛡️ Validações Implementadas
+3. **Execute o projeto:**
+   ```bash
+   make chat
+   ```
 
-### **Frontend**
-- ✅ Tipos de arquivo: PDF e TXT apenas
-- ✅ Tamanho máximo: 100MB
-- ✅ Entrada obrigatória: Arquivo OU texto
-- ✅ Feedback visual: Loading, sucesso, erro
+4. **Configure as APIs via interface web:**
+   - Acesse: http://localhost:8501/index.html
+   - Clique no botão ⚙️ (configurações)
+   - Configure suas chaves de API (OpenAI e/ou StackSpot)
+   - Use o botão "🧪 Testar Configurações" para validar
 
-### **Backend**
-- ✅ Validação server-side robusta
-- ✅ Processamento seguro de arquivos
-- ✅ Tratamento de erros HTTP
-- ✅ Integração com múltiplas IAs
+### **🔧 Configuração Manual (Opcional)**
+Se preferir configurar manualmente:
+1. Copie `config/env.example` para `config/.env`
+2. Preencha suas chaves de API
+3. Execute `make chat`
 
----
-
-## 🎯 Recursos Avançados
-
-### **Interface Intuitiva**
-- **Drag & drop** para upload de arquivos
-- **Feedback visual** em tempo real
-- **Botão remover** arquivo selecionado
-- **Scroll acompanhante** no botão copiar
-- **Modal de documentação** integrada
-
-### **Experiência do Usuário**
-- **Loading states** durante processamento
-- **Limpeza automática** após sucesso
-- **Responsividade** para diferentes telas
-- **Acessibilidade** com tooltips e navegação
-
-### **Desenvolvimento**
-- **Makefile** cross-platform
-- **Hot reload** no backend
-- **CORS** habilitado
-- **Logs** detalhados
-
----
-
-## 📚 Documentação Técnica
-
-Para informações detalhadas sobre:
-- **Validações e regras**
-- **Funcionalidades implementadas**
-- **Requisitos técnicos**
-- **Testes realizados**
-
-📋 **[Ver Documentação Completa](.frontend/public/software-requirements.md)**
-
----
-
-## 🧰 Desenvolvimento
-
-### **Comandos Úteis**
-```bash
-make help          # Ver todos os comandos
-make setup         # Setup inicial
-make chat          # Rodar projeto completo
-make stop-all      # Parar todos os processos
-```
-
-### **Arquivos Importantes**
-- **Backend**: `backend/main.py`
-- **Frontend**: `.frontend/public/index.html`
-- **Configuração**: `config/.env`
-- **Dependências**: `config/requirements.txt`
-
----
-
-## ❓ Dúvidas Frequentes
-
-**Q: Posso usar apenas uma das IAs?**
-A: Sim! Configure apenas as chaves da API desejada no `.env`.
-
-**Q: O projeto funciona offline?**
-A: Não, requer conexão com internet para acessar as APIs de IA.
-
-**Q: Posso adicionar novos tipos de arquivo?**
-A: Sim, edite as validações em `backend/main.py` e `index.html`.
-
-**Q: Como personalizar os prompts?**
-A: Edite os arquivos em `config/prompt_template_*.txt`.
-
----
-
-## 🚀 Roadmap
-
-- [ ] Suporte a mais formatos de arquivo
-- [ ] Integração com outras IAs
-- [ ] Exportação de casos de teste
-- [ ] Histórico de análises
-- [ ] Interface administrativa
-
----
-
-### 👩‍💻 Criado por Bruno Sbardelatti
-
-**BSQA QUALIDADE DE SOFTWARE LTDA**
-
-*Projeto em constante evolução - Contribuições são bem-vindas!*
+### **🌐 Acessos**
+- **Frontend**: http://localhost:8501/index.html
+- **Backend**: http://localhost:8000
+- **Documentação API**: http://localhost:8000/docs
