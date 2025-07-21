@@ -4,11 +4,45 @@ import json
 CONFIG_FILE = "config/user_config.json"
 ENV_FILE = "config/.env"
 
+def migrate_old_config(old):
+    # Detecta se já está no novo formato
+    if 'user' in old and 'preferences' in old and 'ia' in old:
+        return old
+    # Migração do formato antigo para o novo
+    return {
+        "user": {
+            "name": old.get("userName", ""),
+            "email": old.get("userEmail", ""),
+            "company": old.get("userCompany", "")
+        },
+        "preferences": {
+            "defaultAI": old.get("defaultAI", "openai"),
+            "defaultAnalyseType": old.get("defaultAnalyseType", "card_QA_writer"),
+            "autoCopy": old.get("autoCopy", False),
+            "clearAfterSuccess": old.get("clearAfterSuccess", True),
+            "theme": old.get("theme", "dark")
+        },
+        "ia": {
+            "openai": {
+                "enabled": old.get("enableOpenAI", True),
+                "maxTokens": old.get("maxTokens", 1000)
+            },
+            "stackspot": {
+                "enabled": old.get("enableStackSpot", True),
+                "streaming": old.get("streaming", False),
+                "stackspotKnowledge": old.get("stackspotKnowledge", False),
+                "returnKsInResponse": old.get("returnKsInResponse", False)
+            }
+        }
+    }
+
 def load_user_config():
     try:
         if os.path.exists(CONFIG_FILE):
             with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                data = json.load(f)
+                data = migrate_old_config(data)
+                return data
         return get_default_config()
     except Exception as e:
         print(f"Erro ao carregar configurações: {e}")
@@ -25,17 +59,30 @@ def save_user_config(config):
 
 def get_default_config():
     return {
-        "userName": "",
-        "userEmail": "",
-        "userCompany": "",
-        "defaultAI": "openai",
-        "maxTokens": 1000,
-        "autoCopy": False,
-        "clearAfterSuccess": True,
-        "theme": "dark",
-        "streaming": False,
-        "stackspotKnowledge": False,
-        "returnKsInResponse": False
+        "user": {
+            "name": "",
+            "email": "",
+            "company": ""
+        },
+        "preferences": {
+            "defaultAI": "openai",
+            "defaultAnalyseType": "card_QA_writer",
+            "autoCopy": False,
+            "clearAfterSuccess": True,
+            "theme": "dark"
+        },
+        "ia": {
+            "openai": {
+                "enabled": True,
+                "maxTokens": 1000
+            },
+            "stackspot": {
+                "enabled": True,
+                "streaming": False,
+                "stackspotKnowledge": False,
+                "returnKsInResponse": False
+            }
+        }
     }
 
 def load_env_config():

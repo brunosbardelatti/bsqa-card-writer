@@ -1,13 +1,26 @@
 {
-  "userName": "João Silva",
-  "userEmail": "joao.silva@empresa.com",
-  "userCompany": "Empresa XYZ",
-  "defaultAI": "openai",
-  "maxTokens": 1000,
-  "autoCopy": false,
-  "clearAfterSuccess": true,
-  "theme": "dark",
-  "streaming": false,
-  "stackspotKnowledge": false,
-  "returnKsInResponse": false
-} 
+  "user": {
+    "name": "João Silva",
+    "email": "joao.silva@empresa.com",
+    "company": "Empresa XYZ"
+  },
+  "preferences": {
+    "defaultAI": "stackspot",
+    "defaultAnalyseType": "swagger_postman",
+    "autoCopy": false,
+    "clearAfterSuccess": true,
+    "theme": "dark"
+  },
+  "ia": {
+    "openai": {
+      "enabled": false,
+      "maxTokens": 1000
+    },
+    "stackspot": {
+      "enabled": true,
+      "streaming": false,
+      "stackspotKnowledge": false,
+      "returnKsInResponse": false
+    }
+  }
+}
