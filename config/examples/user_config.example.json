@@ -1,0 +1,13 @@
+{
+  "userName": "João Silva",
+  "userEmail": "joao.silva@empresa.com",
+  "userCompany": "Empresa XYZ",
+  "defaultAI": "openai",
+  "maxTokens": 1000,
+  "autoCopy": false,
+  "clearAfterSuccess": true,
+  "theme": "dark",
+  "streaming": false,
+  "stackspotKnowledge": false,
+  "returnKsInResponse": false
+} 
