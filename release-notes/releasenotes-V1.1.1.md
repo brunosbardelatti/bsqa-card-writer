@@ -1,0 +1,385 @@
+# Release Notes - BSQA Card Writer v1.1.1
+
+## 📋 **RESUMO EXECUTIVO**
+
+Esta versão traz uma **refatoração completa do frontend e backend**, implementando melhorias significativas na organização do código, modularização de componentes, novos templates de prompt e experiência do usuário. Todas as funcionalidades existentes foram preservadas e aprimoradas.
+
+---
+
+## 🎯 **PRINCIPAIS MELHORIAS**
+
+### 🏗️ **1. ESTRUTURA E ORGANIZAÇÃO**
+
+#### ✅ **Arquivos Criados (Frontend):**
+- `frontend/public/style.css` (8.5KB, 418 linhas) - CSS extraído e organizado
+- `frontend/public/main.js` (2.9KB, 77 linhas) - Funções utilitárias globais
+- `frontend/public/index.js` (9.9KB, 259 linhas) - JavaScript específico da página principal
+- `frontend/public/config.js` (18KB, 442 linhas) - JavaScript específico da página de configurações
+- `frontend/public/components/header.html` (425B, 6 linhas) - Componente header reutilizável
+- `frontend/public/components/footer.html` (568B, 10 linhas) - Componente footer reutilizável
+- `frontend/public/components/modal.html` (338B, 9 linhas) - Componente modal reutilizável
+- `frontend/public/docs/software-requirements.md` (12KB, 327 linhas) - Documentação organizada
+
+#### ✅ **Arquivos Refatorados (Frontend):**
+- `frontend/public/index.html` (2.3KB, 49 linhas) - HTML limpo e modularizado
+- `frontend/public/config.html` (11KB, 164 linhas) - HTML limpo e modularizado
+
+#### ✅ **Arquivos Criados (Backend):**
+- `backend/api/routes_analyze.py` (2.3KB, 49 linhas) - Rotas de análise modularizadas
+- `backend/api/routes_config.py` (1.4KB, 38 linhas) - Rotas de configuração modularizadas
+- `backend/services/ia_factory.py` (3.2KB, 61 linhas) - Factory pattern para serviços de IA
+- `backend/services/openai_service.py` (827B, 22 linhas) - Serviço OpenAI modularizado
+- `backend/services/stackspot_service.py` (1.8KB, 43 linhas) - Serviço StackSpot modularizado
+- `backend/services/ia_base.py` (157B, 6 linhas) - Interface base para serviços de IA
+- `backend/utils/config_utils.py` - Utilitários de configuração
+- `backend/utils/file_utils.py` - Utilitários de manipulação de arquivos
+- `backend/utils/prompt_loader.py` - Carregador de templates de prompt
+
+#### ✅ **Arquivos Refatorados (Backend):**
+- `backend/main.py` (620B, 24 linhas) - Arquivo principal desacoplado e limpo
+
+---
+
+### 🎨 **2. EXTRACTION E MODULARIZAÇÃO**
+
+#### ✅ **CSS Extraído:**
+- **Variáveis CSS**: Sistema completo de variáveis para temas (dark/light/auto)
+- **Componentes Estilizados**: Drop-zone, botões, formulários, modais, resultados
+- **Responsividade**: Layout adaptativo para diferentes tamanhos de tela
+- **Animações**: Transições suaves e feedback visual
+- **Temas**: Sistema completo de temas com suporte a modo automático
+
+#### ✅ **JavaScript Modularizado:**
+- **main.js**: Funções utilitárias globais (carregamento de componentes, temas)
+- **index.js**: Lógica específica da página principal (formulário, upload, análise)
+- **config.js**: Lógica específica da página de configurações (salvamento, validação)
+
+#### ✅ **Componentes HTML:**
+- **Header**: Navegação e título reutilizável
+- **Footer**: Links e copyright reutilizável
+- **Modal**: Sistema de modal reutilizável
+
+#### ✅ **Backend Modularizado:**
+- **API Routes**: Rotas separadas por funcionalidade (análise e configuração)
+- **Services**: Serviços de IA modularizados com factory pattern
+- **Utils**: Utilitários organizados por responsabilidade
+- **Main**: Arquivo principal desacoplado e limpo
+
+---
+
+### 🚀 **3. FUNCIONALIDADES IMPLEMENTADAS**
+
+#### ✅ **Novos Templates de Prompt:**
+- **Card QA Writer**: Gera cards de teste estruturados com BDD/Gherkin
+- **Test Case Flow Classifier**: Classifica casos de teste por fluxo (Principal/Alternativo/Exceção)
+- **Swagger Postman**: Gera coleções Postman para APIs Swagger/OpenAPI
+- **Swagger Python**: Gera testes Python/pytest para APIs Swagger/OpenAPI
+- **StackSpot AI**: Template original mantido para compatibilidade
+
+#### ✅ **Sistema de Temas:**
+- **Tema Escuro** (padrão): Interface escura com contraste otimizado
+- **Tema Claro**: Interface clara para preferências do usuário
+- **Tema Automático**: Detecta preferência do sistema operacional
+- **Persistência**: Configurações salvas no localStorage
+
+#### ✅ **Carregamento Dinâmico:**
+- **Componentes**: Header, footer e modal carregados dinamicamente
+- **Documentação**: Arquivo markdown carregado e convertido para HTML
+- **Configurações**: Sistema de configurações persistente
+
+#### ✅ **Melhorias de UX:**
+- **Feedback Visual**: Indicadores de loading, sucesso e erro
+- **Validação**: Validação de formulários e configurações
+- **Acessibilidade**: Tooltips informativos e navegação por teclado
+- **Responsividade**: Layout adaptativo para mobile e desktop
+
+#### ✅ **Backend Aprimorado:**
+- **Factory Pattern**: Arquitetura modular para serviços de IA
+- **Rotas Modulares**: API organizada por responsabilidade
+- **Suporte a JSON**: Upload e análise de arquivos JSON (Swagger/OpenAPI)
+- **Padronização**: Todos os templates usam {requirements} uniformemente
+- **API Dinâmica**: Endpoint `/analysis-types` para fornecer tipos disponíveis
+- **Carregamento Dinâmico**: Frontend carrega tipos de análise do backend automaticamente
+
+---
+
+### 📁 **4. ORGANIZAÇÃO DE ARQUIVOS**
+
+#### ✅ **Estrutura Criada (Frontend):**
+```
+frontend/public/
+├── style.css              # Estilos globais
+├── main.js               # Utilitários globais
+├── index.js              # Lógica da página principal
+├── config.js             # Lógica da página de configurações
+├── index.html            # Página principal limpa
+├── config.html           # Página de configurações limpa
+├── components/           # Componentes reutilizáveis
+│   ├── header.html
+│   ├── footer.html
+│   └── modal.html
+└── docs/                 # Documentação
+    └── software-requirements.md
+```
+
+#### ✅ **Estrutura Criada (Backend):**
+```
+backend/
+├── main.py               # Arquivo principal desacoplado
+├── api/                  # Rotas da API
+│   ├── routes_analyze.py # Rotas de análise
+│   └── routes_config.py  # Rotas de configuração
+├── services/             # Serviços de IA
+│   ├── ia_factory.py     # Factory pattern
+│   ├── ia_base.py        # Interface base
+│   ├── openai_service.py # Serviço OpenAI
+│   └── stackspot_service.py # Serviço StackSpot
+└── utils/                # Utilitários
+    ├── config_utils.py   # Configurações
+    ├── file_utils.py     # Manipulação de arquivos
+    └── prompt_loader.py  # Carregador de prompts
+```
+
+#### ✅ **Templates de Prompt:**
+```
+config/prompts/
+├── prompt_template_card_QA_writer.txt.txt          # Cards de teste BDD
+├── prompt_template_test_case_flow_classifier.txt   # Classificação de fluxos
+├── prompt_template_swagger_postman.txt             # Coleções Postman
+├── prompt_template_swagger_python.txt              # Testes Python/pytest
+└── prompt_template_stackspot_ai.txt                # StackSpot AI (original)
+```
+
+---
+
+### 🎯 **5. CORREÇÕES E MELHORIAS**
+
+#### ✅ **Correções de Caminhos:**
+- **Documentação**: Caminho corrigido para `docs/software-requirements.md`
+- **Componentes**: Caminhos relativos corretos para carregamento dinâmico
+- **Assets**: Referências CSS e JS atualizadas
+
+#### ✅ **Melhorias de Performance:**
+- **Modularização**: Código separado por responsabilidade
+- **Carregamento**: Scripts carregados como módulos ES6
+- **Cache**: Configurações persistidas no localStorage
+- **Factory Pattern**: Carregamento dinâmico de serviços de IA
+
+#### ✅ **Melhorias de Manutenibilidade:**
+- **Separação de Responsabilidades**: CSS, JS, HTML e Backend organizados
+- **Reutilização**: Componentes compartilhados entre páginas
+- **Configurabilidade**: Sistema de configurações robusto
+- **Templates Padronizados**: Todos os prompts usam {requirements} uniformemente
+
+---
+
+### ✅ **6. FUNCIONALIDADES PRESERVADAS**
+
+#### ✅ **Todas as Funcionalidades Originais Mantidas:**
+- **Upload de Arquivos**: PDF, TXT, JSON com drag & drop
+- **Análise de IA**: OpenAI e StackSpot AI
+- **Tipos de Análise**: Todos os 5 tipos disponíveis (incluindo 4 novos templates)
+- **Configurações**: Sistema completo de configurações
+- **Documentação**: Modal de ajuda com markdown
+- **Navegação**: Entre páginas principal e configurações
+- **Compatibilidade**: Retrocompatibilidade com configurações anteriores
+
+---
+
+### 📊 **7. ESTATÍSTICAS DA REFATORAÇÃO**
+
+- **Arquivos Criados**: 17 novos arquivos (8 frontend + 9 backend)
+- **Arquivos Refatorados**: 3 arquivos principais (2 frontend + 1 backend)
+- **Linhas de Código**: ~50KB de código organizado
+- **Componentes**: 3 componentes reutilizáveis
+- **Temas**: 3 temas disponíveis (dark/light/auto)
+- **Templates de Prompt**: 5 templates disponíveis (4 novos + 1 original)
+- **Funcionalidades**: 100% das funcionalidades preservadas
+
+---
+
+## 🔧 **DETALHES TÉCNICOS**
+
+### **Compatibilidade:**
+- ✅ Navegadores modernos (Chrome, Firefox, Safari, Edge)
+- ✅ Dispositivos móveis e desktop
+- ✅ Sistema de temas responsivo
+
+### **Performance:**
+- ✅ Carregamento otimizado de componentes
+- ✅ Cache de configurações no localStorage
+- ✅ Modularização para melhor manutenção
+
+### **Acessibilidade:**
+- ✅ Tooltips informativos
+- ✅ Navegação por teclado
+- ✅ Contraste adequado nos temas
+
+---
+
+## 🚀 **COMO USAR**
+
+### **Instalação:**
+1. Clone o repositório
+2. Execute o backend conforme documentação
+3. Abra `frontend/public/index.html` no navegador
+
+### **Configuração:**
+1. Acesse a página de configurações (⚙️)
+2. Configure suas credenciais de IA
+3. Personalize preferências de interface
+
+### **Funcionalidades:**
+- **Análise de Requisitos**: Digite ou faça upload de arquivos (PDF, TXT, JSON)
+- **Múltiplas IAs**: OpenAI e StackSpot AI
+- **Tipos de Análise**: 5 tipos diferentes disponíveis (4 novos templates)
+- **Temas**: Escuro, claro ou automático
+- **Templates Especializados**: Cards BDD, Classificação de Fluxos, Testes Postman/Python
+
+---
+
+## 📝 **CHANGELOG**
+
+### **Adicionado:**
+- Sistema completo de temas (dark/light/auto)
+- Componentes HTML reutilizáveis
+- Carregamento dinâmico de componentes
+- Sistema de configurações persistente
+- Melhorias de UX e acessibilidade
+- **4 novos templates de prompt especializados**
+- **Arquitetura modular do backend (Factory Pattern)**
+- **Suporte a arquivos JSON (Swagger/OpenAPI)**
+- **Rotas API modularizadas**
+- **Carregamento dinâmico de tipos de análise** do backend para o frontend
+
+### **Modificado:**
+- Estrutura de arquivos reorganizada (frontend e backend)
+- CSS extraído para arquivo separado
+- JavaScript modularizado por responsabilidade
+- HTML limpo e semântico
+- **Backend desacoplado e modularizado**
+- **Templates padronizados com {requirements}**
+
+### **Corrigido:**
+- Caminhos de arquivos de documentação
+- Referências de assets
+- Validação de formulários
+- Responsividade em dispositivos móveis
+- **Compatibilidade com configurações anteriores**
+- **Padronização de todos os templates de prompt**
+- **Inconsistência entre frontend e backend** nos tipos de análise disponíveis
+
+### **Removido:**
+- CSS inline das páginas HTML
+- JavaScript inline das páginas HTML
+- Duplicação de código entre páginas
+- **Lógica condicional complexa no backend**
+- **Código monolítico no main.py**
+- **Opções hardcoded** de tipos de análise no frontend
+- **Dependência manual** de sincronização entre frontend e backend
+
+---
+
+## 🆕 **NOVAS MELHORIAS IMPLEMENTADAS (ÚLTIMA ATUALIZAÇÃO)**
+
+### 🎨 **1. NAVEGAÇÃO E ESTRUTURA FRONTEND**
+
+#### ✅ **Navegação Refatorada:**
+- **Páginas Padronizadas**: Todas as páginas agora são páginas completas (não modais)
+- **Header com Navegação**: Menu de navegação no header com links para Chat, Docs e Config
+- **Breadcrumbs**: Implementados nas páginas de documentação e configurações
+- **Navegação Consistente**: Experiência uniforme entre todas as páginas
+
+#### ✅ **Estrutura de Arquivos Atualizada:**
+- **`frontend/public/docs.html`**: Nova página dedicada para documentação
+- **`frontend/public/js/docs.js`**: JavaScript específico para a página de documentação
+- **`frontend/public/js/main.js`**: Centralização de funções utilitárias
+- **`frontend/public/assets/style.css`**: CSS reorganizado em pasta assets
+
+### 🎯 **2. MELHORIAS DE UX/UI**
+
+#### ✅ **Filtragem Inteligente de IAs:**
+- **Verificação de Configuração**: Apenas IAs habilitadas e configuradas são exibidas
+- **Feedback Visual**: Mensagem de aviso quando nenhuma IA está configurada
+- **Botão Desabilitado**: Submit button desabilitado quando não há IAs disponíveis
+- **Atualização Dinâmica**: Re-carrega configurações quando a janela ganha foco
+
+#### ✅ **Labels e Espaçamento:**
+- **Labels Descritivos**: Adicionados labels para selects de IA e tipo de análise
+- **Espaçamento Melhorado**: Layout mais organizado com grupos de elementos
+- **Acessibilidade**: Melhor navegação por teclado e leitores de tela
+
+#### ✅ **Placeholders Dinâmicos:**
+- **Centralização**: Placeholders movidos do frontend para `backend/utils/prompt_loader.py`
+- **Carregamento Dinâmico**: Placeholders carregados automaticamente do backend
+- **Específicos por Tipo**: Cada tipo de análise tem seu placeholder específico
+
+### 🔧 **3. NOVOS TEMPLATES E FUNCIONALIDADES**
+
+#### ✅ **Robot API Generator:**
+- **`prompt_template_robot_API_generator.txt`**: Novo template para geração de testes Robot Framework
+- **Integração Completa**: Adicionado ao sistema de análise e placeholders
+- **Escapamento de Variáveis**: Variáveis Robot Framework escapadas corretamente (`${VAR}` → `${{VAR}}`)
+
+#### ✅ **Análise Dinâmica:**
+- **Backend Centralizado**: `prompt_loader.py` gerencia todos os tipos e placeholders
+- **API Unificada**: Endpoint `/analysis-types` retorna tipos e placeholders
+- **Sincronização Automática**: Frontend carrega dados do backend automaticamente
+
+### 🐛 **4. CORREÇÕES DE BUGS**
+
+#### ✅ **Bugs de Configuração:**
+- **Bug 1**: Campos de IA desabilitada agora são limpos corretamente ao entrar na página
+- **Bug 2**: Re-habilitar IA restaura dados originais se não salvos
+- **Bug 3**: Desabilitar e salvar IA remove dados dos arquivos de configuração
+- **Bug 4**: URLs corrigidas para comunicação correta com backend (`localhost:8000`)
+
+#### ✅ **Bugs de Interface:**
+- **Bug 5**: SVG de ícones corrigido para tema escuro
+- **Bug 6**: Tags `<p>` removidas de elementos SVG em blocos de código
+- **Bug 7**: Botão de cópia do resultado agora acompanha scroll corretamente
+- **Bug 8**: Posicionamento do botão de cópia corrigido (canto superior direito)
+
+### 🎨 **5. MELHORIAS DE MARKDOWN**
+
+#### ✅ **Renderização de Código:**
+- **Syntax Highlighting**: Blocos de código com destaque de sintaxe
+- **Botão de Cópia**: Botão unificado para copiar código em markdown
+- **Labels de Linguagem**: Identificação visual da linguagem do código
+- **Estilos Consistentes**: Mesma aparência do botão de cópia do resultado
+
+#### ✅ **Formatação Melhorada:**
+- **Títulos H4**: Suporte correto para `####` em markdown
+- **Regex Robusta**: Processamento melhorado de diferentes quebras de linha
+- **Escape HTML**: Conteúdo de código escapado corretamente
+- **CSS Específico**: Estilos dedicados para documentação
+
+### 📊 **6. ESTATÍSTICAS ADICIONAIS**
+
+- **Arquivos Modificados**: 8 arquivos principais atualizados
+- **Novos Arquivos**: 2 novos arquivos criados (`docs.html`, `docs.js`)
+- **Bugs Corrigidos**: 8 bugs críticos resolvidos
+- **Melhorias UX**: 6 melhorias significativas de experiência do usuário
+- **Funcionalidades**: 1 novo template de análise adicionado
+
+---
+
+## 🎉 **CONCLUSÃO**
+
+A versão **v1.1.1** representa um marco importante na evolução do BSQA Card Writer, trazendo uma **refatoração completa e profissional** do frontend e backend. Todas as funcionalidades foram preservadas e aprimoradas, resultando em um código mais limpo, organizado e fácil de manter.
+
+**Principais conquistas desta versão:**
+- ✅ **Frontend completamente refatorado** com componentes modulares
+- ✅ **Backend desacoplado** com arquitetura Factory Pattern
+- ✅ **4 novos templates de prompt** especializados para diferentes cenários
+- ✅ **Suporte a arquivos JSON** para análise de APIs Swagger/OpenAPI
+- ✅ **Sistema de temas** completo e responsivo
+- ✅ **Compatibilidade total** com versões anteriores
+
+**Status**: ✅ **100% Concluído e Funcional**
+
+---
+
+*Release Date: Julho 2025*  
+*Version: 1.1.1*  
+*Type: Major Refactoring* 
