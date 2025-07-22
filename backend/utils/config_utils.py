@@ -1,5 +1,6 @@
 import os
 import json
+from dotenv import load_dotenv
 
 CONFIG_FILE = "config/user_config.json"
 ENV_FILE = "config/.env"
@@ -106,6 +107,8 @@ def save_env_config(env_config):
         with open(ENV_FILE, 'w', encoding='utf-8') as f:
             for key, value in env_config.items():
                 f.write(f"{key}={value}\n")
+        # Recarregar variáveis de ambiente
+        load_dotenv(dotenv_path=ENV_FILE, override=True)
         return True
     except Exception as e:
         print(f"Erro ao salvar configurações .env: {e}")

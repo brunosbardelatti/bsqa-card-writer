@@ -10,4 +10,13 @@ def load_prompt_template(analyse_type: str) -> str:
     if not path:
         raise ValueError(f"Tipo de análise '{analyse_type}' não suportado.")
     with open(path, "r", encoding="utf-8") as f:
-        return f.read() 
+        return f.read()
+
+def get_available_analysis_types():
+    """Retorna os tipos de análise disponíveis com suas descrições"""
+    return {
+        "card_QA_writer": "Card QA Writer",
+        "test_case_flow_classifier": "Test Case Flow Classifier", 
+        "swagger_postman": "Swagger Postman",
+        "swagger_python": "Swagger Python",
+    } 
