@@ -5,9 +5,7 @@ from backend.api.routes_config import router as config_router
 from dotenv import load_dotenv
 import os
 
-# Carregar variáveis de ambiente
-env_path = os.getenv('DOTENV_PATH', 'config/.env')
-load_dotenv(env_path)
+load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '../config/.env'))
 
 app = FastAPI()
 
