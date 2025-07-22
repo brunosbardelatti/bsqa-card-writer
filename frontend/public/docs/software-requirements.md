@@ -99,6 +99,101 @@ Sistema de geração de casos de teste usando IA, com interface web para upload 
 - ✅ **Extração TXT**: Decodifica arquivos de texto UTF-8
 - ✅ **Tratamento de exceções**: Captura erros de processamento
 
+### **Exemplos de Configuração**
+
+#### **Configuração JSON do Usuário**
+```json
+{
+  "user": {
+    "name": "João Silva",
+    "email": "joao@empresa.com",
+    "company": "Empresa XYZ"
+  },
+  "preferences": {
+    "autoCopy": true,
+    "clearAfterSuccess": true,
+    "theme": "dark"
+  },
+  "ai": {
+    "default": "openai",
+    "openai": {
+      "enabled": true,
+      "maxTokens": 1000
+    },
+    "stackspot": {
+      "enabled": false,
+      "streaming": false,
+      "knowledge": false
+    }
+  }
+}
+```
+
+#### **Exemplo de Requisição API**
+```javascript
+// Requisição para análise de requisitos
+const response = await fetch('/analyze', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    requirements: 'Dados do card de PM/PO...',
+    service: 'openai',
+    analyse_type: 'card_QA_writer'
+  })
+});
+
+const result = await response.json();
+console.log('Análise gerada:', result);
+```
+
+#### **Exemplo de Script Python**
+```python
+# Exemplo de processamento de arquivo PDF
+import PyPDF2
+from pathlib import Path
+
+def extract_pdf_text(file_path):
+    """Extrai texto de arquivo PDF"""
+    try:
+        with open(file_path, 'rb') as file:
+            reader = PyPDF2.PdfReader(file)
+            text = ""
+            for page in reader.pages:
+                text += page.extract_text()
+        return text
+    except Exception as e:
+        print(f"Erro ao processar PDF: {e}")
+        return None
+
+# Uso da função
+pdf_path = Path("requisitos.pdf")
+texto_extraido = extract_pdf_text(pdf_path)
+```
+
+#### **Exemplo de Comando Bash**
+```bash
+# Script para iniciar o servidor
+#!/bin/bash
+
+echo "🚀 Iniciando BSQA Card Writer..."
+
+# Verificar se Python está instalado
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Python 3 não encontrado"
+    exit 1
+fi
+
+# Instalar dependências
+pip install -r requirements.txt
+
+# Iniciar servidor
+python main.py
+
+echo "✅ Servidor iniciado em http://localhost:8000"
+```
+
 ### **Integração com IAs**
 - ✅ **OpenAI**: Suporte completo com GPT-4o-mini
 - ✅ **StackSpot AI**: Suporte completo com autenticação JWT

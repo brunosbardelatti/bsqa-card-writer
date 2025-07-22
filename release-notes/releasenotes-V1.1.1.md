@@ -280,6 +280,90 @@ config/prompts/
 
 ---
 
+## 🆕 **NOVAS MELHORIAS IMPLEMENTADAS (ÚLTIMA ATUALIZAÇÃO)**
+
+### 🎨 **1. NAVEGAÇÃO E ESTRUTURA FRONTEND**
+
+#### ✅ **Navegação Refatorada:**
+- **Páginas Padronizadas**: Todas as páginas agora são páginas completas (não modais)
+- **Header com Navegação**: Menu de navegação no header com links para Chat, Docs e Config
+- **Breadcrumbs**: Implementados nas páginas de documentação e configurações
+- **Navegação Consistente**: Experiência uniforme entre todas as páginas
+
+#### ✅ **Estrutura de Arquivos Atualizada:**
+- **`frontend/public/docs.html`**: Nova página dedicada para documentação
+- **`frontend/public/js/docs.js`**: JavaScript específico para a página de documentação
+- **`frontend/public/js/main.js`**: Centralização de funções utilitárias
+- **`frontend/public/assets/style.css`**: CSS reorganizado em pasta assets
+
+### 🎯 **2. MELHORIAS DE UX/UI**
+
+#### ✅ **Filtragem Inteligente de IAs:**
+- **Verificação de Configuração**: Apenas IAs habilitadas e configuradas são exibidas
+- **Feedback Visual**: Mensagem de aviso quando nenhuma IA está configurada
+- **Botão Desabilitado**: Submit button desabilitado quando não há IAs disponíveis
+- **Atualização Dinâmica**: Re-carrega configurações quando a janela ganha foco
+
+#### ✅ **Labels e Espaçamento:**
+- **Labels Descritivos**: Adicionados labels para selects de IA e tipo de análise
+- **Espaçamento Melhorado**: Layout mais organizado com grupos de elementos
+- **Acessibilidade**: Melhor navegação por teclado e leitores de tela
+
+#### ✅ **Placeholders Dinâmicos:**
+- **Centralização**: Placeholders movidos do frontend para `backend/utils/prompt_loader.py`
+- **Carregamento Dinâmico**: Placeholders carregados automaticamente do backend
+- **Específicos por Tipo**: Cada tipo de análise tem seu placeholder específico
+
+### 🔧 **3. NOVOS TEMPLATES E FUNCIONALIDADES**
+
+#### ✅ **Robot API Generator:**
+- **`prompt_template_robot_API_generator.txt`**: Novo template para geração de testes Robot Framework
+- **Integração Completa**: Adicionado ao sistema de análise e placeholders
+- **Escapamento de Variáveis**: Variáveis Robot Framework escapadas corretamente (`${VAR}` → `${{VAR}}`)
+
+#### ✅ **Análise Dinâmica:**
+- **Backend Centralizado**: `prompt_loader.py` gerencia todos os tipos e placeholders
+- **API Unificada**: Endpoint `/analysis-types` retorna tipos e placeholders
+- **Sincronização Automática**: Frontend carrega dados do backend automaticamente
+
+### 🐛 **4. CORREÇÕES DE BUGS**
+
+#### ✅ **Bugs de Configuração:**
+- **Bug 1**: Campos de IA desabilitada agora são limpos corretamente ao entrar na página
+- **Bug 2**: Re-habilitar IA restaura dados originais se não salvos
+- **Bug 3**: Desabilitar e salvar IA remove dados dos arquivos de configuração
+- **Bug 4**: URLs corrigidas para comunicação correta com backend (`localhost:8000`)
+
+#### ✅ **Bugs de Interface:**
+- **Bug 5**: SVG de ícones corrigido para tema escuro
+- **Bug 6**: Tags `<p>` removidas de elementos SVG em blocos de código
+- **Bug 7**: Botão de cópia do resultado agora acompanha scroll corretamente
+- **Bug 8**: Posicionamento do botão de cópia corrigido (canto superior direito)
+
+### 🎨 **5. MELHORIAS DE MARKDOWN**
+
+#### ✅ **Renderização de Código:**
+- **Syntax Highlighting**: Blocos de código com destaque de sintaxe
+- **Botão de Cópia**: Botão unificado para copiar código em markdown
+- **Labels de Linguagem**: Identificação visual da linguagem do código
+- **Estilos Consistentes**: Mesma aparência do botão de cópia do resultado
+
+#### ✅ **Formatação Melhorada:**
+- **Títulos H4**: Suporte correto para `####` em markdown
+- **Regex Robusta**: Processamento melhorado de diferentes quebras de linha
+- **Escape HTML**: Conteúdo de código escapado corretamente
+- **CSS Específico**: Estilos dedicados para documentação
+
+### 📊 **6. ESTATÍSTICAS ADICIONAIS**
+
+- **Arquivos Modificados**: 8 arquivos principais atualizados
+- **Novos Arquivos**: 2 novos arquivos criados (`docs.html`, `docs.js`)
+- **Bugs Corrigidos**: 8 bugs críticos resolvidos
+- **Melhorias UX**: 6 melhorias significativas de experiência do usuário
+- **Funcionalidades**: 1 novo template de análise adicionado
+
+---
+
 ## 🎉 **CONCLUSÃO**
 
 A versão **v1.1.1** representa um marco importante na evolução do BSQA Card Writer, trazendo uma **refatoração completa e profissional** do frontend e backend. Todas as funcionalidades foram preservadas e aprimoradas, resultando em um código mais limpo, organizado e fácil de manter.
@@ -296,6 +380,6 @@ A versão **v1.1.1** representa um marco importante na evolução do BSQA Card W
 
 ---
 
-*Release Date: Dezembro 2024*  
+*Release Date: Julho 2025*  
 *Version: 1.1.1*  
 *Type: Major Refactoring* 

@@ -1,4 +1,4 @@
-import { loadCommonComponents, loadThemeFromConfig, applyTheme } from './main.js';
+import { loadCommonComponents, loadThemeFromConfig, applyTheme, generateAnalysisOptionsHTML, getAnalysisPlaceholder } from './main.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
@@ -28,13 +28,18 @@ function getCurrentConfigSnapshot() {
     ia: {
       openai: {
         enabled: document.getElementById('openaiEnabled').checked,
-        maxTokens: parseInt(document.getElementById('maxTokens').value) || 1000
+        maxTokens: parseInt(document.getElementById('maxTokens').value) || 1000,
+        apiKey: document.getElementById('openaiApiKey').value
       },
       stackspot: {
         enabled: document.getElementById('stackspotEnabled').checked,
         streaming: document.getElementById('streaming').checked,
         stackspotKnowledge: document.getElementById('stackspotKnowledge').checked,
-        returnKsInResponse: document.getElementById('returnKsInResponse').checked
+        returnKsInResponse: document.getElementById('returnKsInResponse').checked,
+        clientId: document.getElementById('stackspotClientId').value,
+        clientSecret: document.getElementById('stackspotClientSecret').value,
+        realm: document.getElementById('stackspotRealm').value,
+        agentId: document.getElementById('stackspotAgentId').value
       }
     }
   });
@@ -117,6 +122,9 @@ async function loadConfig() {
       applyConfigToFields(localConfig);
     }
     await loadApiConfig();
+    // Aplicar estado final dos campos após carregar todas as configurações
+    applyFieldStates();
+    checkDefaultAIEnabled();
     initialConfigSnapshot = getCurrentConfigSnapshot();
     markClean();
     setupDirtyTracking();
@@ -125,6 +133,9 @@ async function loadConfig() {
     const localConfig = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
     applyConfigToFields(localConfig);
     await loadApiConfig();
+    // Aplicar estado final dos campos após carregar todas as configurações
+    applyFieldStates();
+    checkDefaultAIEnabled();
     initialConfigSnapshot = getCurrentConfigSnapshot();
     markClean();
     setupDirtyTracking();
@@ -148,28 +159,34 @@ function applyApiConfigToFields(apiConfig) {
   if (apiConfig.OPENAI_API_KEY) {
     openaiEnabled.checked = true;
     openaiApiKey.value = apiConfig.OPENAI_API_KEY;
-    openaiApiKey.disabled = false;
+    // Inicializar dados originais OpenAI
+    originalOpenAIConfig.openaiApiKey = apiConfig.OPENAI_API_KEY;
   } else {
     openaiEnabled.checked = false;
-    openaiApiKey.disabled = true;
   }
+  
   const stackspotEnabled = document.getElementById('stackspotEnabled');
-  const stackspotFields = ['stackspotClientId', 'stackspotClientSecret', 'stackspotRealm', 'stackspotAgentId'];
   const hasStackspotConfig = apiConfig.Client_ID_stackspot && apiConfig.Client_Key_stackspot && apiConfig.Realm_stackspot && apiConfig.STACKSPOT_AGENT_ID;
   if (hasStackspotConfig) {
     stackspotEnabled.checked = true;
-    if (apiConfig.Client_ID_stackspot) document.getElementById('stackspotClientId').value = apiConfig.Client_ID_stackspot;
-    if (apiConfig.Client_Key_stackspot) document.getElementById('stackspotClientSecret').value = apiConfig.Client_Key_stackspot;
-    if (apiConfig.Realm_stackspot) document.getElementById('stackspotRealm').value = apiConfig.Realm_stackspot;
-    if (apiConfig.STACKSPOT_AGENT_ID) document.getElementById('stackspotAgentId').value = apiConfig.STACKSPOT_AGENT_ID;
-    stackspotFields.forEach(fieldId => {
-      document.getElementById(fieldId).disabled = false;
-    });
+    if (apiConfig.Client_ID_stackspot) {
+      document.getElementById('stackspotClientId').value = apiConfig.Client_ID_stackspot;
+      originalStackSpotConfig.stackspotClientId = apiConfig.Client_ID_stackspot;
+    }
+    if (apiConfig.Client_Key_stackspot) {
+      document.getElementById('stackspotClientSecret').value = apiConfig.Client_Key_stackspot;
+      originalStackSpotConfig.stackspotClientSecret = apiConfig.Client_Key_stackspot;
+    }
+    if (apiConfig.Realm_stackspot) {
+      document.getElementById('stackspotRealm').value = apiConfig.Realm_stackspot;
+      originalStackSpotConfig.stackspotRealm = apiConfig.Realm_stackspot;
+    }
+    if (apiConfig.STACKSPOT_AGENT_ID) {
+      document.getElementById('stackspotAgentId').value = apiConfig.STACKSPOT_AGENT_ID;
+      originalStackSpotConfig.stackspotAgentId = apiConfig.STACKSPOT_AGENT_ID;
+    }
   } else {
     stackspotEnabled.checked = false;
-    stackspotFields.forEach(fieldId => {
-      document.getElementById(fieldId).disabled = true;
-    });
   }
 }
 
@@ -192,15 +209,91 @@ function applyConfigToFields(config) {
     applyTheme(preferences.theme);
   }
   document.getElementById('openaiEnabled').checked = openai.enabled === true;
-  if (openai.maxTokens !== undefined) document.getElementById('maxTokens').value = openai.maxTokens;
-  else document.getElementById('maxTokens').value = 1000;
+  if (openai.maxTokens !== undefined) {
+    document.getElementById('maxTokens').value = openai.maxTokens;
+    originalOpenAIConfig.maxTokens = openai.maxTokens;
+  } else {
+    document.getElementById('maxTokens').value = 1000;
+    originalOpenAIConfig.maxTokens = 1000;
+  }
   document.getElementById('stackspotEnabled').checked = stackspot.enabled === true;
   document.getElementById('streaming').checked = stackspot.streaming === true;
+  originalStackSpotConfig.streaming = stackspot.streaming === true;
   document.getElementById('stackspotKnowledge').checked = stackspot.stackspotKnowledge === true;
+  originalStackSpotConfig.stackspotKnowledge = stackspot.stackspotKnowledge === true;
   document.getElementById('returnKsInResponse').checked = stackspot.returnKsInResponse === true;
-  document.getElementById('openaiEnabled').dispatchEvent(new Event('change'));
-  document.getElementById('stackspotEnabled').dispatchEvent(new Event('change'));
-  checkDefaultAIEnabled();
+  originalStackSpotConfig.returnKsInResponse = stackspot.returnKsInResponse === true;
+}
+
+// Variáveis para armazenar dados originais
+let originalOpenAIConfig = {};
+let originalStackSpotConfig = {};
+
+// Função para aplicar o estado dos campos baseado nos checkboxes habilitados
+function applyFieldStates() {
+  const openaiEnabled = document.getElementById('openaiEnabled').checked;
+  const stackspotEnabled = document.getElementById('stackspotEnabled').checked;
+  
+  // Aplicar estado dos campos OpenAI
+  const openaiFields = ['openaiApiKey', 'maxTokens'];
+  openaiFields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    field.disabled = !openaiEnabled;
+    if (!openaiEnabled) {
+      // Salvar valor atual antes de limpar
+      if (field.value) {
+        originalOpenAIConfig[fieldId] = field.value;
+      }
+      field.value = '';
+    } else {
+      // Restaurar valor original se existir
+      if (originalOpenAIConfig[fieldId]) {
+        field.value = originalOpenAIConfig[fieldId];
+      }
+    }
+  });
+  
+  // Aplicar estado dos campos StackSpot
+  const stackspotFields = [
+    'stackspotClientId',
+    'stackspotClientSecret',
+    'stackspotRealm',
+    'stackspotAgentId',
+    'streaming',
+    'stackspotKnowledge',
+    'returnKsInResponse'
+  ];
+  stackspotFields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    field.disabled = !stackspotEnabled;
+    if (!stackspotEnabled) {
+      if (field.type === 'text' || field.type === 'password') {
+        // Salvar valor atual antes de limpar
+        if (field.value) {
+          originalStackSpotConfig[fieldId] = field.value;
+        }
+        field.value = '';
+      } else if (field.type === 'checkbox') {
+        // Salvar estado atual antes de desmarcar
+        originalStackSpotConfig[fieldId] = field.checked;
+        field.checked = false;
+      }
+    } else {
+      // Restaurar valor original se existir
+      if (originalStackSpotConfig[fieldId] !== undefined) {
+        if (field.type === 'text' || field.type === 'password') {
+          field.value = originalStackSpotConfig[fieldId];
+        } else if (field.type === 'checkbox') {
+          field.checked = originalStackSpotConfig[fieldId];
+        }
+      }
+    }
+  });
+  
+  // Verificar se houve mudanças após aplicar os estados
+  setTimeout(() => {
+    onConfigFieldChange();
+  }, 0);
 }
 
 function bindConfigEvents() {
@@ -209,35 +302,14 @@ function bindConfigEvents() {
     applyTheme(selectedTheme);
   });
   document.getElementById('openaiEnabled').addEventListener('change', function() {
-    const openaiFields = ['openaiApiKey', 'maxTokens'];
-    openaiFields.forEach(fieldId => {
-      const field = document.getElementById(fieldId);
-      field.disabled = !this.checked;
-      if (!this.checked) {
-        field.value = '';
-      }
-    });
+    applyFieldStates();
+    // Se desabilitou OpenAI, limpar dados originais APENAS se salvou
+    // Os dados originais são preservados para restauração
   });
   document.getElementById('stackspotEnabled').addEventListener('change', function() {
-    const stackspotFields = [
-      'stackspotClientId',
-      'stackspotClientSecret',
-      'stackspotRealm',
-      'stackspotAgentId',
-      'streaming',
-      'stackspotKnowledge',
-      'returnKsInResponse'
-    ];
-    stackspotFields.forEach(fieldId => {
-      const field = document.getElementById(fieldId);
-      field.disabled = !this.checked;
-      if (!this.checked && (field.type === 'text' || field.type === 'password')) {
-        field.value = '';
-      }
-      if (!this.checked && field.type === 'checkbox') {
-        field.checked = false;
-      }
-    });
+    applyFieldStates();
+    // Se desabilitou StackSpot, limpar dados originais APENAS se salvou
+    // Os dados originais são preservados para restauração
   });
   document.getElementById('defaultAI').addEventListener('change', checkDefaultAIEnabled);
   document.getElementById('openaiEnabled').addEventListener('change', checkDefaultAIEnabled);
@@ -284,13 +356,17 @@ async function saveConfig() {
       ia: {
         openai: {
           enabled: document.getElementById('openaiEnabled').checked,
-          maxTokens: parseInt(document.getElementById('maxTokens').value) || 1000
+          ...(document.getElementById('openaiEnabled').checked && {
+            maxTokens: parseInt(document.getElementById('maxTokens').value) || 1000
+          })
         },
         stackspot: {
           enabled: document.getElementById('stackspotEnabled').checked,
-          streaming: document.getElementById('streaming').checked,
-          stackspotKnowledge: document.getElementById('stackspotKnowledge').checked,
-          returnKsInResponse: document.getElementById('returnKsInResponse').checked
+          ...(document.getElementById('stackspotEnabled').checked && {
+            streaming: document.getElementById('streaming').checked,
+            stackspotKnowledge: document.getElementById('stackspotKnowledge').checked,
+            returnKsInResponse: document.getElementById('returnKsInResponse').checked
+          })
         }
       }
     };
@@ -319,6 +395,14 @@ async function saveConfig() {
       localStorage.setItem('bsqaConfig', JSON.stringify(config));
       // Sinalizar para outras abas/páginas que o tema foi alterado
       localStorage.setItem('bsqaThemeChanged', Date.now().toString());
+      
+      // Limpar dados originais se IA foi desabilitada
+      if (!openaiEnabled) {
+        originalOpenAIConfig = {};
+      }
+      if (!stackspotEnabled) {
+        originalStackSpotConfig = {};
+      }
       saveBtn.textContent = 'Salvo! ✅';
       saveBtnTop.textContent = 'Salvo! ✅';
       setTimeout(() => {
@@ -445,7 +529,7 @@ function checkDefaultAIEnabled() {
 // Carregar tipos de análise disponíveis do backend
 async function loadAnalysisTypes() {
   try {
-    const response = await fetch('/analysis-types');
+    const response = await fetch('http://localhost:8000/analysis-types');
     const data = await response.json();
     const defaultAnalyseTypeSelect = document.getElementById('defaultAnalyseType');
     
@@ -469,11 +553,6 @@ async function loadAnalysisTypes() {
     console.error('Erro ao carregar tipos de análise:', error);
     // Fallback para opções padrão em caso de erro
     const defaultAnalyseTypeSelect = document.getElementById('defaultAnalyseType');
-    defaultAnalyseTypeSelect.innerHTML = `
-      <option value="card_QA_writer">Card QA Writer</option>
-      <option value="test_case_flow_classifier">Test Case Flow Classifier</option>
-      <option value="swagger_postman">Swagger Postman</option>
-      <option value="swagger_python">Swagger Python</option>
-    `;
+    defaultAnalyseTypeSelect.innerHTML = generateAnalysisOptionsHTML();
   }
 } 
