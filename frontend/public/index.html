@@ -11,7 +11,7 @@
   <div id="header"></div>
   <form id="reqForm">
     <label style="width: 100%;">
-      <textarea id="requirements" name="requirements" rows="10" placeholder="Ou digite seus requisitos aqui..."></textarea>
+      <textarea id="requirements" name="requirements" rows="10" placeholder="Digite seus requisitos aqui ou selecione um arquivo"></textarea>
     </label>
     <div style="display: flex; flex-direction: row; align-items: flex-start; width: 100%; gap: 1rem; margin-top: 0.5rem;">
       <div style="flex: 1; min-width: 220px;">
@@ -23,20 +23,33 @@
           <button class="drop-remove-btn" id="dropRemoveBtn" style="display:none;" title="Remover arquivo">×</button>
         </div>
       </div>
-      <div style="display: flex; flex-direction: column; align-items: stretch; gap: 0.5rem; flex: 0 0 180px; max-width: 180px; min-width: 140px;">
-        <select id="service" name="service" style="width: 100%;">
+      <div style="display: flex; flex-direction: column; align-items: stretch; gap: 1rem; flex: 0 0 200px; max-width: 200px; min-width: 160px;">
+        <div class="select-group">
+          <label for="service">
+            🤖 IA de Análise
+          </label>
+          <select id="service" name="service">
           <option value="openai">OpenAI</option>
           <option value="stackspot">StackSpot AI</option>
         </select>
-        <select id="analyse_type" name="analyse_type" style="width: 100%; margin-top: 0.5rem;">
-          <option value="">Carregando tipos de análise...</option>
+        </div>
+        
+        <div class="select-group">
+          <label for="analyse_type">
+            📋 Tipo de Análise
+          </label>
+          <select id="analyse_type" name="analyse_type">
+            <option value="">Carregando tipos de análise...</option>
         </select>
-        <button type="submit" style="width: 100%; margin-left: 0;">Enviar</button>
+        </div>
+        
+        <button type="submit" class="submit-btn">
+          🚀 Enviar
+        </button>
       </div>
     </div>
   </form>
   <div id="output"></div>
-  <div id="modal"></div>
   <div id="footer"></div>
   <script type="module" src="js/main.js"></script>
   <script type="module" src="js/index.js"></script>

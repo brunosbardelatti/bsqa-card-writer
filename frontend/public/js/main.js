@@ -9,11 +9,82 @@ async function loadComponent(selector, url) {
   }
 }
 
-// Carregar header, footer e modal se existirem na página
+// Carregar header e footer se existirem na página
 export async function loadCommonComponents() {
   await loadComponent('#header', 'components/header.html');
   await loadComponent('#footer', 'components/footer.html');
-  await loadComponent('#modal', 'components/modal.html');
+  
+  // Destacar página ativa no menu
+  highlightActivePage();
+  
+  // Adicionar breadcrumbs se existir container
+  addBreadcrumbs();
+}
+
+// Destacar a página ativa no menu de navegação
+function highlightActivePage() {
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  const navButtons = document.querySelectorAll('.nav-btn');
+  
+  navButtons.forEach(btn => {
+    const href = btn.getAttribute('onclick');
+    if (href) {
+      const pageName = href.match(/href='([^']+)'/)?.[1];
+      if (pageName === currentPage) {
+        btn.classList.add('active');
+      }
+    }
+  });
+}
+
+// Função para gerar breadcrumbs dinamicamente
+export function generateBreadcrumbs(items) {
+  const breadcrumbs = items.map((item, index) => {
+    if (index === items.length - 1) {
+      return `<span>${item.text}</span>`;
+    } else {
+      return `<a href="${item.url}">${item.text}</a>`;
+    }
+  }).join(' > ');
+  
+  return `<div class="breadcrumbs">${breadcrumbs}</div>`;
+}
+
+// Função para adicionar breadcrumbs baseado na página atual
+export function addBreadcrumbs() {
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  const breadcrumbsContainer = document.querySelector('.breadcrumbs');
+  
+  if (!breadcrumbsContainer) return;
+  
+  const breadcrumbItems = [];
+  
+  // Sempre começar com Home
+  breadcrumbItems.push({ text: 'Home', url: 'index.html' });
+  
+  // Adicionar página atual baseado no nome do arquivo
+  switch (currentPage) {
+    case 'config.html':
+      breadcrumbItems.push({ text: 'Configurações', url: '' });
+      break;
+    case 'docs.html':
+      breadcrumbItems.push({ text: 'Documentação', url: '' });
+      break;
+    case 'index.html':
+      // Se estiver na home, não adicionar breadcrumb
+      return;
+    default:
+      breadcrumbItems.push({ text: 'Página', url: '' });
+  }
+  
+  // Substituir o conteúdo do breadcrumb
+  breadcrumbsContainer.innerHTML = breadcrumbItems.map((item, index) => {
+    if (index === breadcrumbItems.length - 1) {
+      return `<span>${item.text}</span>`;
+    } else {
+      return `<a href="${item.url}">${item.text}</a>`;
+    }
+  }).join(' > ');
 }
 
 // Tema
@@ -74,4 +145,237 @@ export function openHelp() {
   // Implementação pode ser customizada em cada página
 }
 
-window.openConfig = openConfig; 
+window.openConfig = openConfig;
+
+// Tipos de análise centralizados
+export const ANALYSIS_TYPES = {
+  'card_QA_writer': 'Card QA Writer',
+  'test_case_flow_classifier': 'Test Case Flow Classifier',
+  'swagger_postman': 'Swagger Postman',
+  'swagger_python': 'Swagger Python',
+  'robot_api_generator': 'Robot API Generator'
+};
+
+// Placeholders centralizados
+export const ANALYSIS_PLACEHOLDERS = {
+  'card_QA_writer': 'Digite os dados do card de PM/PO para análise. Inclua informações como:\n• Título do card\n• Descrição dos requisitos\n• Critérios de aceitação\n• User stories\n• Dependências\n• Estimativas',
+  'test_case_flow_classifier': 'Digite seus requisitos aqui ou selecione um arquivo',
+  'swagger_postman': 'Faça upload do arquivo JSON do Swagger/OpenAPI para gerar coleção do Postman. O arquivo deve conter a especificação da API.',
+  'swagger_python': 'Faça upload do arquivo JSON do Swagger/OpenAPI para gerar código Python. O arquivo deve conter a especificação da API.',
+  'robot_api_generator': 'Digite o comando cURL (e opcionalmente a resposta) para gerar uma estrutura completa de automação de teste de API com Robot Framework, seguindo um padrão modular e reutilizável.'
+};
+
+// Função para gerar HTML das opções de análise
+export function generateAnalysisOptionsHTML(selectedValue = '') {
+  return Object.entries(ANALYSIS_TYPES)
+    .map(([value, label]) => `<option value="${value}"${selectedValue === value ? ' selected' : ''}>${label}</option>`)
+    .join('');
+}
+
+// Função para obter placeholder de um tipo específico
+export function getAnalysisPlaceholder(type) {
+  return ANALYSIS_PLACEHOLDERS[type] || 'Digite seus requisitos aqui ou selecione um arquivo';
+}
+
+// Função para converter markdown para HTML
+export function convertMarkdownToHtml(markdown) {
+  let html = markdown;
+  
+  // Separadores horizontais
+  html = html.replace(/^---$/gm, '<hr>');
+  
+  // Títulos (processar do maior para o menor para evitar conflitos)
+  html = html.replace(/^#### (.*$)/gim, '<h4>$1</h4>');
+  html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
+  html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
+  html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
+  
+  // Blocos de código com syntax highlighting e botão de cópia
+  // Regex melhorada para capturar blocos de código
+  html = html.replace(/```(\w+)?\r?\n([\s\S]*?)```/gim, function(match, lang, code) {
+    const language = lang || '';
+    const languageLabel = getLanguageLabel(language);
+    const escapedCode = escapeHtml(code.trim());
+    
+    return `<div class="code-block"><div class="code-header"><span class="code-language">${languageLabel}</span><button class="copy-btn" onclick="copyCode(this)" title="Copiar código"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" style="color: inherit;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2"/></svg></button></div><pre><code class="language-${language}" data-language="${language}">${escapedCode}</code></pre></div>`;
+  });
+  
+  // Código inline
+  html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+  
+  // Listas com checkmarks
+  html = html.replace(/^✅ (.*$)/gim, '<li class="checkmark-item">✅ $1</li>');
+  html = html.replace(/^- (.*$)/gim, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>)/gims, '<ul>$1</ul>');
+  
+  // Formatação de texto
+  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  
+  // Processar linhas para parágrafos
+  const lines = html.split('\n');
+  const processedLines = lines.map(line => {
+    if (line.trim() === '' || line.match(/^<[h|p|li|pre|code|ul|ol|hr|div|button|svg]/)) {
+      return line;
+    } else if (line.trim() !== '') {
+      return `<p>${line}</p>`;
+    }
+    return line;
+  });
+  html = processedLines.join('\n');
+  
+  // Limpeza final
+  html = html.replace(/<p><\/p>/g, '');
+  html = html.replace(/<p><h/g, '<h');
+  html = html.replace(/<\/h[1-6]><\/p>/g, '</h$1>');
+  
+  return html;
+}
+
+// Função para obter label da linguagem
+function getLanguageLabel(language) {
+  const labels = {
+    'json': 'JSON',
+    'javascript': 'JavaScript',
+    'js': 'JavaScript',
+    'python': 'Python',
+    'py': 'Python',
+    'bash': 'Bash',
+    'shell': 'Shell',
+    'sh': 'Shell',
+    'html': 'HTML',
+    'css': 'CSS',
+    'xml': 'XML',
+    'yaml': 'YAML',
+    'yml': 'YAML',
+    'markdown': 'Markdown',
+    'md': 'Markdown',
+    'sql': 'SQL',
+    'java': 'Java',
+    'csharp': 'C#',
+    'cs': 'C#',
+    'cpp': 'C++',
+    'c': 'C',
+    'php': 'PHP',
+    'ruby': 'Ruby',
+    'go': 'Go',
+    'rust': 'Rust',
+    'typescript': 'TypeScript',
+    'ts': 'TypeScript'
+  };
+  return labels[language.toLowerCase()] || language || 'Texto';
+}
+
+// Função para escapar HTML
+function escapeHtml(text) {
+  if (!text) return '';
+  
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Função global para copiar código
+window.copyCode = function(button) {
+  const codeBlock = button.closest('.code-block');
+  const codeElement = codeBlock.querySelector('code');
+  const text = codeElement.textContent;
+  
+  navigator.clipboard.writeText(text).then(() => {
+    // Feedback visual
+    button.classList.add('copied');
+    
+    setTimeout(() => {
+      button.classList.remove('copied');
+    }, 2000);
+  }).catch(err => {
+    console.error('Erro ao copiar:', err);
+    // Fallback para navegadores antigos
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+  });
+};
+
+// Função para aplicar syntax highlighting básico
+export function applySyntaxHighlighting() {
+  const codeBlocks = document.querySelectorAll('.code-block code');
+  
+  codeBlocks.forEach(codeElement => {
+    const language = codeElement.dataset.language;
+    const text = codeElement.textContent;
+    
+    if (language === 'json') {
+      codeElement.innerHTML = highlightJSON(text);
+    } else if (language === 'javascript' || language === 'js') {
+      codeElement.innerHTML = highlightJavaScript(text);
+    } else if (language === 'python' || language === 'py') {
+      codeElement.innerHTML = highlightPython(text);
+    } else if (language === 'bash' || language === 'shell' || language === 'sh') {
+      codeElement.innerHTML = highlightBash(text);
+    } else if (language === 'html') {
+      codeElement.innerHTML = highlightHTML(text);
+    } else if (language === 'css') {
+      codeElement.innerHTML = highlightCSS(text);
+    }
+  });
+}
+
+// Funções de syntax highlighting para diferentes linguagens
+function highlightJSON(text) {
+  return text
+    .replace(/"([^"]+)":/g, '<span class="string">"$1"</span>:')
+    .replace(/"([^"]+)"/g, '<span class="string">"$1"</span>')
+    .replace(/\b(true|false|null)\b/g, '<span class="boolean">$1</span>')
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="number">$1</span>')
+    .replace(/([{}[\],:])/g, '<span class="punctuation">$1</span>');
+}
+
+function highlightJavaScript(text) {
+  return text
+    .replace(/\b(function|var|let|const|if|else|for|while|return|class|import|export|default)\b/g, '<span class="keyword">$1</span>')
+    .replace(/"([^"]+)"/g, '<span class="string">"$1"</span>')
+    .replace(/'([^']+)'/g, '<span class="string">\'$1\'</span>')
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="number">$1</span>')
+    .replace(/\b([a-zA-Z_$][a-zA-Z0-9_$]*)\s*\(/g, '<span class="function">$1</span>(')
+    .replace(/\/\/(.*)$/gm, '<span class="comment">//$1</span>');
+}
+
+function highlightPython(text) {
+  return text
+    .replace(/\b(def|class|if|else|elif|for|while|return|import|from|as|try|except|finally|with|in|is|None|True|False)\b/g, '<span class="keyword">$1</span>')
+    .replace(/"([^"]+)"/g, '<span class="string">"$1"</span>')
+    .replace(/'([^']+)'/g, '<span class="string">\'$1\'</span>')
+    .replace(/\b(\d+\.?\d*)\b/g, '<span class="number">$1</span>')
+    .replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/g, '<span class="function">$1</span>(')
+    .replace(/#(.*)$/gm, '<span class="comment">#$1</span>');
+}
+
+function highlightBash(text) {
+  return text
+    .replace(/\b(if|then|else|elif|fi|for|while|do|done|case|esac|function|return|export|source)\b/g, '<span class="keyword">$1</span>')
+    .replace(/"([^"]+)"/g, '<span class="string">"$1"</span>')
+    .replace(/'([^']+)'/g, '<span class="string">\'$1\'</span>')
+    .replace(/#(.*)$/gm, '<span class="comment">#$1</span>');
+}
+
+function highlightHTML(text) {
+  return text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/(&lt;\/?)([a-zA-Z][a-zA-Z0-9]*)/g, '$1<span class="tag">$2</span>')
+    .replace(/([a-zA-Z-]+)=/g, '<span class="attribute">$1</span>=')
+    .replace(/"([^"]+)"/g, '<span class="string">"$1"</span>');
+}
+
+function highlightCSS(text) {
+  return text
+    .replace(/([a-zA-Z-]+):/g, '<span class="property">$1</span>:')
+    .replace(/"([^"]+)"/g, '<span class="string">"$1"</span>')
+    .replace(/'([^']+)'/g, '<span class="string">\'$1\'</span>')
+    .replace(/([a-zA-Z-]+)\s*{/g, '<span class="selector">$1</span>{')
+    .replace(/([a-zA-Z-]+)\s*:/g, '<span class="property">$1</span>:');
+} 

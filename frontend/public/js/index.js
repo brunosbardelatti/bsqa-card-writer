@@ -1,9 +1,9 @@
-import { loadCommonComponents, loadThemeFromConfig, openConfig, applyTheme } from './main.js';
+import { loadCommonComponents, loadThemeFromConfig, applyTheme, generateAnalysisOptionsHTML, getAnalysisPlaceholder } from './main.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
   loadThemeFromConfig();
-  loadDefaultAI();
+  await loadDefaultAI();
   bindFormEvents();
   await loadAnalysisTypes(); // Carregar tipos de análise disponíveis
 });
@@ -115,7 +115,7 @@ function bindFormEvents() {
         let message = data.result && data.result.message ? data.result.message : data.result;
         output.innerHTML = `
           <div class="result-container">
-            <button class="copy-btn" onclick="copyToClipboard(this)" data-text="${encodeURIComponent(message)}" title="Copiar resposta">
+            <button class="copy-btn" onclick="copyToClipboard(this)" data-text="${encodeURIComponent(message)}" title="Copiar resposta" style="position: sticky !important; top: 0.5rem !important; right: 0.5rem !important; left: auto !important; float: right !important; margin: 0.5rem !important; z-index: 10 !important;">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h6a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z"/>
               </svg>
@@ -135,16 +135,114 @@ function bindFormEvents() {
   };
 }
 
-function loadDefaultAI() {
+async function loadDefaultAI() {
   try {
     const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
     const preferences = config.preferences || {};
-    if (preferences.defaultAI) {
-      document.getElementById('service').value = preferences.defaultAI;
+    const ia = config.ia || {};
+    
+    // Carregar configurações de API do servidor
+    let apiConfig = {};
+    try {
+      const response = await fetch('http://localhost:8000/api-config');
+      if (response.ok) {
+        apiConfig = await response.json();
+      }
+    } catch (error) {
+      console.log('Erro ao carregar configurações de API:', error);
     }
+    
+    // Determinar quais IAs estão habilitadas
+    const enabledAIs = [];
+    
+    // Verificar OpenAI
+    if (ia.openai && ia.openai.enabled && apiConfig.OPENAI_API_KEY) {
+      enabledAIs.push({ value: 'openai', label: 'OpenAI' });
+    }
+    
+    // Verificar StackSpot
+    if (ia.stackspot && ia.stackspot.enabled && 
+        apiConfig.Client_ID_stackspot && apiConfig.Client_Key_stackspot && 
+        apiConfig.Realm_stackspot && apiConfig.STACKSPOT_AGENT_ID) {
+      enabledAIs.push({ value: 'stackspot', label: 'StackSpot AI' });
+    }
+    
+    // Atualizar select de IAs
+    const serviceSelect = document.getElementById('service');
+    serviceSelect.innerHTML = '';
+    
+    if (enabledAIs.length === 0) {
+      // Nenhuma IA configurada
+      serviceSelect.innerHTML = '<option value="">❌ Nenhuma IA configurada</option>';
+      serviceSelect.disabled = true;
+      
+      // Desabilitar botão de envio
+      const submitBtn = document.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = '⚠️ Configure uma IA primeiro';
+      }
+      
+      // Mostrar mensagem de aviso
+      const warningDiv = document.createElement('div');
+      warningDiv.style.cssText = 'background: rgba(244, 67, 54, 0.1); color: #f44336; padding: 1rem; border-radius: 6px; margin-top: 1rem; border: 1px solid #f44336;';
+      warningDiv.innerHTML = `
+        <strong>⚠️ Nenhuma IA configurada</strong><br>
+        Para usar o BSQA Card Writer, você precisa configurar pelo menos uma IA nas configurações.
+        <br><br>
+        <a href="config.html" style="color: #f44336; text-decoration: underline;">→ Ir para Configurações</a>
+      `;
+      
+      // Inserir aviso após o formulário
+      const form = document.getElementById('reqForm');
+      if (form && !document.getElementById('noAIConfiguredWarning')) {
+        warningDiv.id = 'noAIConfiguredWarning';
+        form.parentNode.insertBefore(warningDiv, form.nextSibling);
+      }
+      
+      return;
+    }
+    
+    // Adicionar opções das IAs habilitadas
+    enabledAIs.forEach(ai => {
+      const option = document.createElement('option');
+      option.value = ai.value;
+      option.textContent = ai.label;
+      serviceSelect.appendChild(option);
+    });
+    
+    // Definir IA padrão se existir e estiver habilitada
+    if (preferences.defaultAI) {
+      const defaultAIExists = enabledAIs.some(ai => ai.value === preferences.defaultAI);
+      if (defaultAIExists) {
+        serviceSelect.value = preferences.defaultAI;
+      } else if (enabledAIs.length > 0) {
+        // Se a IA padrão não estiver habilitada, usar a primeira disponível
+        serviceSelect.value = enabledAIs[0].value;
+      }
+    } else if (enabledAIs.length > 0) {
+      // Se não houver IA padrão, usar a primeira disponível
+      serviceSelect.value = enabledAIs[0].value;
+    }
+    
+    // Definir tipo de análise padrão se existir
     if (preferences.defaultAnalyseType) {
       document.getElementById('analyse_type').value = preferences.defaultAnalyseType;
     }
+    
+    // Remover aviso se existir
+    const warningDiv = document.getElementById('noAIConfiguredWarning');
+    if (warningDiv) {
+      warningDiv.remove();
+    }
+    
+    // Reabilitar botão de envio
+    const submitBtn = document.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '🚀 Enviar';
+    }
+    
   } catch (error) {
     console.log('Erro ao carregar IA padrão:', error);
   }
@@ -186,83 +284,28 @@ window.copyToClipboard = function(button) {
   });
 };
 
-// Ajuda
-window.openHelp = function() {
-  const modal = document.getElementById('helpModal');
-  const content = document.getElementById('helpContent');
-  const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
-  if (config.theme) {
-    applyTheme(config.theme);
-  }
-  fetch('docs/software-requirements.md')
-    .then(response => response.text())
-    .then(text => {
-      const html = convertMarkdownToHtml(text);
-      content.innerHTML = html;
-    })
-    .catch(err => {
-      content.innerHTML = `
-        <h2>❌ Erro ao carregar documentação</h2>
-        <p>Não foi possível carregar o arquivo de documentação.</p>
-        <p><strong>Erro:</strong> ${err.message}</p>
-      `;
-    });
-  modal.style.display = 'block';
-};
-window.closeHelp = function() {
-  document.getElementById('helpModal').style.display = 'none';
-};
-
-function convertMarkdownToHtml(markdown) {
-  let html = markdown;
-  html = html.replace(/^---$/gm, '<hr>');
-  html = html.replace(/^### (.*$)/gim, '<h3>$1</h3>');
-  html = html.replace(/^## (.*$)/gim, '<h2>$1</h2>');
-  html = html.replace(/^# (.*$)/gim, '<h1>$1</h1>');
-  html = html.replace(/```(\w+)?\n([\s\S]*?)```/gim, function(match, lang, code) {
-    const language = lang || '';
-    return `<pre><code class="language-${language}">${code.trim()}</code></pre>`;
-  });
-  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-  html = html.replace(/^✅ (.*$)/gim, '<li style="color: #4caf50;">✅ $1</li>');
-  html = html.replace(/^- (.*$)/gim, '<li>$1</li>');
-  html = html.replace(/(<li>.*<\/li>)/gims, '<ul>$1</ul>');
-  html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-  html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-  const lines = html.split('\n');
-  const processedLines = lines.map(line => {
-    if (line.trim() === '' || line.match(/^<[h|p|li|pre|code|ul|ol|hr]/)) {
-      return line;
-    } else if (line.trim() !== '') {
-      return `<p>${line}</p>`;
-    }
-    return line;
-  });
-  html = processedLines.join('\n');
-  html = html.replace(/<p><\/p>/g, '');
-  html = html.replace(/<p><h/g, '<h');
-  html = html.replace(/<\/h[1-6]><\/p>/g, '</h$1>');
-  return html;
-}
-
-// Fechar modal ao clicar fora dele
-window.onclick = function(event) {
-  const modal = document.getElementById('helpModal');
-  if (event.target === modal) {
-    window.closeHelp();
-  }
-};
+// Função convertMarkdownToHtml movida para main.js para reutilização
 
 window.addEventListener('storage', (event) => {
   if (event.key === 'bsqaThemeChanged') {
     loadThemeFromConfig();
+  }
+});
+
+// Atualizar IAs quando voltar da página de configuração
+window.addEventListener('focus', async () => {
+  // Verificar se as configurações mudaram
+  const currentConfig = localStorage.getItem('bsqaConfig');
+  if (currentConfig !== window.lastConfigCheck) {
+    window.lastConfigCheck = currentConfig;
+    await loadDefaultAI();
   }
 }); 
 
 // Carregar tipos de análise disponíveis do backend
 async function loadAnalysisTypes() {
   try {
-    const response = await fetch('/analysis-types');
+    const response = await fetch('http://localhost:8000/analysis-types');
     const data = await response.json();
     const analyseTypeSelect = document.getElementById('analyse_type');
     
@@ -277,20 +320,47 @@ async function loadAnalysisTypes() {
       analyseTypeSelect.appendChild(option);
     });
     
+    // Armazenar placeholders globalmente para uso posterior
+    window.analysisPlaceholders = data.placeholders || {};
+    
     // Aplicar configuração padrão se existir
     const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
     if (config.preferences && config.preferences.defaultAnalyseType) {
       analyseTypeSelect.value = config.preferences.defaultAnalyseType;
     }
+    
+    // Atualizar placeholder inicial
+    updatePlaceholder();
+    
+    // Adicionar listener para mudanças no tipo de análise
+    analyseTypeSelect.addEventListener('change', updatePlaceholder);
   } catch (error) {
     console.error('Erro ao carregar tipos de análise:', error);
     // Fallback para opções padrão em caso de erro
     const analyseTypeSelect = document.getElementById('analyse_type');
-    analyseTypeSelect.innerHTML = `
-      <option value="card_QA_writer">Card QA Writer</option>
-      <option value="test_case_flow_classifier">Test Case Flow Classifier</option>
-      <option value="swagger_postman">Swagger Postman</option>
-      <option value="swagger_python">Swagger Python</option>
-    `;
+    analyseTypeSelect.innerHTML = generateAnalysisOptionsHTML();
+    
+    // Placeholders de fallback
+    window.analysisPlaceholders = ANALYSIS_PLACEHOLDERS;
+    
+    // Atualizar placeholder inicial e adicionar listener
+    updatePlaceholder();
+    analyseTypeSelect.addEventListener('change', updatePlaceholder);
   }
+}
+
+// Função para atualizar o placeholder do textarea baseado no tipo de análise selecionado
+function updatePlaceholder() {
+  const analyseTypeSelect = document.getElementById('analyse_type');
+  const requirementsTextarea = document.getElementById('requirements');
+  
+  if (!analyseTypeSelect || !requirementsTextarea) return;
+  
+  const selectedType = analyseTypeSelect.value;
+  
+  // Usar placeholders do backend (ou fallback se não disponível)
+  const placeholders = window.analysisPlaceholders || {};
+  
+  // Aplicar placeholder específico ou usar o padrão
+  requirementsTextarea.placeholder = placeholders[selectedType] || 'Digite seus requisitos aqui ou selecione um arquivo';
 } 
