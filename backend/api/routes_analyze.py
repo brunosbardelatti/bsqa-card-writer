@@ -2,9 +2,14 @@ from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from backend.services.ia_factory import get_ia_service
 from backend.utils.file_utils import extract_text_from_file
-from backend.utils.prompt_loader import load_prompt_template
+from backend.utils.prompt_loader import load_prompt_template, get_available_analysis_types
 
 router = APIRouter()
+
+@router.get("/analysis-types")
+async def get_analysis_types():
+    """Retorna os tipos de análise disponíveis"""
+    return JSONResponse(content={"analysis_types": get_available_analysis_types()})
 
 @router.post("/analyze")
 async def analyze(

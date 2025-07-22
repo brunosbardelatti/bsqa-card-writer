@@ -1,0 +1,418 @@
+/* === Variáveis Globais === */
+:root {
+  --bg-color: #1e1e1e;
+  --card-bg: #2a2a2a;
+  --accent-color: #ffffff;
+  --text-color: #f4f4f4;
+  --muted-text: #bbbbbb;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg-color);
+  color: var(--text-color);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2rem;
+  min-height: 100vh;
+}
+
+/* === Componentes Gerais === */
+h1 {
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+}
+p.subtitle {
+  color: var(--muted-text);
+  margin-bottom: 2rem;
+}
+form {
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 10px;
+  max-width: 600px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.drop-zone {
+  border: 2px dashed var(--muted-text);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  transition: background .3s, border-color .3s;
+  color: var(--muted-text);
+  cursor: pointer;
+  position: relative;
+}
+.drop-zone.dragover {
+  background: rgba(255,255,255,0.1);
+  border-color: var(--accent-color);
+  color: var(--text-color);
+}
+.drop-zone input {
+  display: none;
+}
+textarea, select, input[type="text"], input[type="email"], input[type="password"] {
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--muted-text);
+  border-radius: 6px;
+  padding: 0.75rem;
+  font-size: 1rem;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  resize: none;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+select {
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--muted-text);
+  border-radius: 6px;
+  padding: 0.5rem;
+  font-size: 1rem;
+}
+button {
+  background: var(--accent-color);
+  color: var(--bg-color);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  align-self: flex-end;
+  transition: background .3s;
+}
+button:hover {
+  background: var(--muted-text);
+}
+#output {
+  margin-top: 1rem;
+  width: 100%;
+  max-width: 600px;
+  align-self: center;
+}
+.result-container {
+  position: relative;
+  background: var(--result-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  white-space: pre-wrap;
+  min-height: calc(1.5em * 5);
+  max-height: calc(1.5em * 15 + 2rem);
+  overflow-y: auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+.copy-btn {
+  position: sticky;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.15);
+  border: none;
+  color: var(--text-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all .3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  float: right;
+  margin: 0.5rem;
+  z-index: 10;
+  padding: 0;
+  line-height: 1;
+}
+.copy-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
+}
+.copy-btn.copied {
+  background: rgba(76, 175, 80, 0.3);
+  color: #4caf50 !important;
+  transform: scale(1.1);
+}
+.copy-btn svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+.result {
+  color: var(--result-text);
+  padding-right: 3rem;
+}
+.error {
+  color: #e74c3c;
+  padding: 0.5rem;
+  background: #2a0000;
+  border-radius: 6px;
+}
+.drop-feedback {
+  position: absolute;
+  left: 1rem;
+  bottom: 0.5rem;
+  color: #fff;
+  font-size: 0.95em;
+  opacity: 0.85;
+  pointer-events: none;
+  text-align: left;
+}
+.drop-remove-btn {
+  position: absolute;
+  right: 1rem;
+  bottom: 0.5rem;
+  color: #e74c3c;
+  font-size: 1.2em;
+  cursor: pointer;
+  opacity: 0.85;
+  pointer-events: auto;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background .3s;
+}
+.drop-remove-btn:hover {
+  background: rgba(231, 76, 60, 0.2);
+}
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--muted-text);
+  font-style: italic;
+}
+.loading::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--muted-text);
+  border-top: 2px solid var(--accent-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.help-btn, .config-btn {
+  position: fixed;
+  top: 1rem;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: var(--text-color);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all .3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  font-size: 1.2em;
+}
+.help-btn { right: 1rem; }
+.config-btn { right: 4rem; }
+.help-btn:hover, .config-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: var(--modal-bg);
+}
+.modal-content {
+  background-color: var(--modal-content-bg);
+  margin: 2% auto;
+  padding: 2rem;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  color: var(--modal-text);
+}
+.modal-close-btn {
+  position: sticky;
+  top: 0.5rem;
+  right: 0.5rem;
+  width: 32px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  color: var(--text-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all .3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  float: right;
+  margin: 0.5rem;
+  z-index: 20;
+  font-size: 1.2em;
+}
+.modal-close-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+.modal-content h1, .modal-content h2, .modal-content h3 {
+  color: var(--accent-color);
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+}
+.modal-content h1 {
+  font-size: 1.8em;
+  border-bottom: 2px solid var(--accent-color);
+  padding-bottom: 0.5rem;
+}
+.modal-content h2 {
+  font-size: 1.4em;
+  border-bottom: 1px solid var(--muted-text);
+  padding-bottom: 0.3rem;
+}
+.modal-content h3 {
+  font-size: 1.2em;
+  color: var(--modal-text);
+}
+.modal-content ul, .modal-content ol {
+  margin: 1rem 0;
+  padding-left: 2rem;
+}
+.modal-content li {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+.modal-content pre {
+  background: var(--code-bg);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 1rem 0;
+  color: var(--code-text);
+}
+.modal-content code {
+  background: var(--code-bg);
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Courier New', monospace;
+  color: var(--code-text);
+}
+.modal-content hr {
+  border: none;
+  border-top: 1px solid var(--muted-text);
+  margin: 2rem 0;
+}
+.modal-content p {
+  margin: 1rem 0;
+  line-height: 1.6;
+  color: var(--modal-text);
+}
+.modal-content strong {
+  color: var(--accent-color);
+}
+.modal-content em {
+  color: var(--muted-text);
+}
+
+/* === Específicos de config.html === */
+.container {
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 10px;
+  max-width: 800px;
+  width: 100%;
+}
+.config-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--muted-text);
+}
+.config-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+.config-section h2 {
+  color: var(--accent-color);
+  margin-bottom: 1rem;
+  font-size: 1.4em;
+}
+.config-item {
+  margin-bottom: 1rem;
+}
+.config-item label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+  font-weight: 500;
+}
+input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.checkbox-item.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.checkbox-item.disabled label {
+  cursor: not-allowed;
+}
+.save-btn {
+  background: var(--accent-color);
+  color: var(--bg-color);
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background .3s;
+  margin-top: 1rem;
+}
+.save-btn:hover {
+  background: var(--muted-text);
+}
+.status-message {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 6px;
+  display: none;
+}
+.status-success {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4caf50;
+  border: 1px solid #4caf50;
+}
+.status-error {
+  background: rgba(244, 67, 54, 0.2);
+  color: #f44336;
+  border: 1px solid #f44336;
+} 

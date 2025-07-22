@@ -4,123 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>⚙️ Configurações - BSQA Card Writer</title>
-  <style>
-    :root {
-      --bg-color: #1e1e1e;
-      --card-bg: #2a2a2a;
-      --accent-color: #ffffff;
-      --text-color: #f4f4f4;
-      --muted-text: #bbbbbb;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: var(--bg-color);
-      color: var(--text-color);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 2rem;
-      min-height: 100vh;
-    }
-    .container {
-      background: var(--card-bg);
-      padding: 2rem;
-      border-radius: 10px;
-      max-width: 800px;
-      width: 100%;
-    }
-    .config-section {
-      margin-bottom: 2rem;
-      padding-bottom: 1.5rem;
-      border-bottom: 1px solid var(--muted-text);
-    }
-    .config-section:last-child {
-      border-bottom: none;
-      margin-bottom: 0;
-    }
-    .config-section h2 {
-      color: var(--accent-color);
-      margin-bottom: 1rem;
-      font-size: 1.4em;
-    }
-    .config-item {
-      margin-bottom: 1rem;
-    }
-    .config-item label {
-      display: block;
-      margin-bottom: 0.5rem;
-      color: var(--text-color);
-      font-weight: 500;
-    }
-    input[type="text"], input[type="email"], select, textarea {
-      background: var(--bg-color);
-      color: var(--text-color);
-      border: 1px solid var(--muted-text);
-      border-radius: 6px;
-      padding: 0.75rem;
-      font-size: 1rem;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    input[type="checkbox"] {
-      margin-right: 0.5rem;
-    }
-    .checkbox-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 0.5rem;
-    }
-    .checkbox-item.disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    .checkbox-item.disabled label {
-      cursor: not-allowed;
-    }
-    .save-btn {
-      background: var(--accent-color);
-      color: var(--bg-color);
-      border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 6px;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: background .3s;
-      margin-top: 1rem;
-    }
-    .save-btn:hover {
-      background: var(--muted-text);
-    }
-    .status-message {
-      margin-top: 1rem;
-      padding: 0.75rem;
-      border-radius: 6px;
-      display: none;
-    }
-    .status-success {
-      background: rgba(76, 175, 80, 0.2);
-      color: #4caf50;
-      border: 1px solid #4caf50;
-    }
-    .status-error {
-      background: rgba(244, 67, 54, 0.2);
-      color: #f44336;
-      border: 1px solid #f44336;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
+  <div id="header"></div>
   <div class="container">
     <!-- Botões de navegação no topo -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
       <button onclick="window.location.href='index.html'" style="background: var(--accent-color); color: var(--text-color); border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; font-size: 1rem; width: 200px;">
         ← Voltar ao QA Card Writer
       </button>
-      <button class="save-btn" id="saveBtnTop" onclick="saveConfig()" style="margin: 0; width: 200px;">💾 Salvar Configurações</button>
+      <button class="save-btn" id="saveBtnTop" style="margin: 0; width: 200px;">💾 Salvar Configurações</button>
     </div>
     <h1>⚙️ Configurações do Usuário</h1>
-
     <div class="config-section">
       <h2>👤 Informações Pessoais</h2>
       <div class="config-item">
@@ -136,7 +33,6 @@
         <input type="text" id="userCompany" placeholder="Nome da empresa">
       </div>
     </div>
-
     <div class="config-section">
       <h2>📋 Preferências de Saída</h2>
       <div class="checkbox-item">
@@ -153,7 +49,6 @@
         <span style="color: var(--muted-text); font-size: 0.8em; margin-left: 0.5rem;">(Em desenvolvimento)</span>
       </div>
     </div>
-
     <div class="config-section">
       <h2>🎨 Configurações de Interface</h2>
       <div class="config-item">
@@ -165,17 +60,12 @@
         </select>
       </div>
     </div>
-
     <div class="config-section">
       <h2>🤖 Configurações de IA</h2>
       <div class="config-item">
         <label for="defaultAnalyseType">Tipo de Análise Padrão <span title="Selecione o tipo de análise que será usado por padrão" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
         <select id="defaultAnalyseType">
-          <option value="card_QA_writer">Card QA Writer</option>
-          <option value="test_case_flow_classifier">Test Case Flow Classifier</option>
-          <option value="stackspot_ai">StackSpot AI</option>
-          <option value="swagger_postman">Swagger Postman</option>
-          <option value="swagger_python">Swagger Python</option>
+          <option value="">Carregando tipos de análise...</option>
         </select>
       </div>
       <div class="config-item">
@@ -253,451 +143,18 @@
         <div id="testResult" style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 4px; display: none;"></div>
       </div>
     </div>
-
     <!-- Botões de navegação no rodapé -->
     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--muted-text);">
       <button onclick="window.location.href='index.html'" style="background: var(--accent-color); color: var(--text-color); border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; font-size: 1rem; width: 200px;">
         ← Voltar ao QA Card Writer
       </button>
-      <button class="save-btn" id="saveBtn" onclick="saveConfig()" style="margin: 0; width: 200px;">💾 Salvar Configurações</button>
+      <button class="save-btn" id="saveBtn" style="margin: 0; width: 200px;">💾 Salvar Configurações</button>
     </div>
     <div id="statusMessage" class="status-message"></div>
   </div>
-
-  <script>
-    // Carregar configurações salvas
-    async function loadConfig() {
-      try {
-        // Primeiro tenta carregar do localStorage (cache)
-        const localConfig = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
-        
-        // Depois busca do servidor (fonte da verdade)
-        const response = await fetch('http://localhost:8000/config');
-        if (response.ok) {
-          const serverConfig = await response.json();
-          
-          // Mescla configurações (servidor tem prioridade)
-          const mergedConfig = { ...localConfig, ...serverConfig };
-          
-          // Aplica valores aos campos
-          applyConfigToFields(mergedConfig);
-          
-          // Atualiza cache local
-          localStorage.setItem('bsqaConfig', JSON.stringify(mergedConfig));
-        } else {
-          // Se servidor não disponível, usa cache local
-          applyConfigToFields(localConfig);
-        }
-        
-        // Carregar configurações de API
-        await loadApiConfig();
-      } catch (error) {
-        console.log('Erro ao carregar configurações do servidor, usando cache local:', error);
-        const localConfig = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
-        applyConfigToFields(localConfig);
-        await loadApiConfig();
-      }
-    }
-
-    // Carregar configurações de API
-    async function loadApiConfig() {
-      try {
-        const response = await fetch('http://localhost:8000/api-config');
-        if (response.ok) {
-          const apiConfig = await response.json();
-          applyApiConfigToFields(apiConfig);
-        }
-      } catch (error) {
-        console.log('Erro ao carregar configurações de API:', error);
-      }
-    }
-
-    // Aplicar configurações de API aos campos
-    function applyApiConfigToFields(apiConfig) {
-      // Configurar OpenAI
-      const openaiEnabled = document.getElementById('openaiEnabled');
-      const openaiApiKey = document.getElementById('openaiApiKey');
-      if (apiConfig.OPENAI_API_KEY) {
-        openaiEnabled.checked = true;
-        openaiApiKey.value = apiConfig.OPENAI_API_KEY;
-        openaiApiKey.disabled = false;
-      } else {
-        openaiEnabled.checked = false;
-        openaiApiKey.disabled = true;
-      }
-      
-      // Configurar StackSpot
-      const stackspotEnabled = document.getElementById('stackspotEnabled');
-      const stackspotFields = ['stackspotClientId', 'stackspotClientSecret', 'stackspotRealm', 'stackspotAgentId'];
-      const hasStackspotConfig = apiConfig.Client_ID_stackspot && apiConfig.Client_Key_stackspot && 
-                                apiConfig.Realm_stackspot && apiConfig.STACKSPOT_AGENT_ID;
-      
-      if (hasStackspotConfig) {
-        stackspotEnabled.checked = true;
-        if (apiConfig.Client_ID_stackspot) document.getElementById('stackspotClientId').value = apiConfig.Client_ID_stackspot;
-        if (apiConfig.Client_Key_stackspot) document.getElementById('stackspotClientSecret').value = apiConfig.Client_Key_stackspot;
-        if (apiConfig.Realm_stackspot) document.getElementById('stackspotRealm').value = apiConfig.Realm_stackspot;
-        if (apiConfig.STACKSPOT_AGENT_ID) document.getElementById('stackspotAgentId').value = apiConfig.STACKSPOT_AGENT_ID;
-        stackspotFields.forEach(fieldId => {
-          document.getElementById(fieldId).disabled = false;
-        });
-      } else {
-        stackspotEnabled.checked = false;
-        stackspotFields.forEach(fieldId => {
-          document.getElementById(fieldId).disabled = true;
-        });
-      }
-    }
-
-    // Aplicar configurações aos campos
-    function applyConfigToFields(config) {
-      // Suporte ao novo formato estruturado
-      const user = config.user || {};
-      const preferences = config.preferences || {};
-      const ia = config.ia || {};
-      const openai = ia.openai || {};
-      const stackspot = ia.stackspot || {};
-
-      if (user.name) document.getElementById('userName').value = user.name;
-      if (user.email) document.getElementById('userEmail').value = user.email;
-      if (user.company) document.getElementById('userCompany').value = user.company;
-
-      if (preferences.defaultAI) document.getElementById('defaultAI').value = preferences.defaultAI;
-      if (preferences.defaultAnalyseType) document.getElementById('defaultAnalyseType').value = preferences.defaultAnalyseType;
-      if (preferences.autoCopy !== undefined) document.getElementById('autoCopy').checked = preferences.autoCopy;
-      else document.getElementById('autoCopy').checked = false;
-      if (preferences.clearAfterSuccess !== undefined) document.getElementById('clearAfterSuccess').checked = preferences.clearAfterSuccess;
-      if (preferences.theme) {
-        document.getElementById('theme').value = preferences.theme;
-        applyTheme(preferences.theme);
-      }
-
-      // OpenAI
-      document.getElementById('openaiEnabled').checked = openai.enabled === true;
-      if (openai.maxTokens !== undefined) document.getElementById('maxTokens').value = openai.maxTokens;
-      else document.getElementById('maxTokens').value = 1000;
-
-      document.getElementById('stackspotEnabled').checked = stackspot.enabled === true;
-      document.getElementById('streaming').checked = stackspot.streaming === true;
-      document.getElementById('stackspotKnowledge').checked = stackspot.stackspotKnowledge === true;
-      document.getElementById('returnKsInResponse').checked = stackspot.returnKsInResponse === true;
-
-      // Garante atualização dos campos dependentes e validação correta
-      document.getElementById('openaiEnabled').dispatchEvent(new Event('change'));
-      document.getElementById('stackspotEnabled').dispatchEvent(new Event('change'));
-      checkDefaultAIEnabled();
-    }
-
-    // Aplicar tema
-    function applyTheme(theme) {
-      const root = document.documentElement;
-      
-      if (theme === 'light') {
-        root.style.setProperty('--bg-color', '#ffffff');
-        root.style.setProperty('--text-color', '#333333');
-        root.style.setProperty('--card-bg', '#f5f5f5');
-        root.style.setProperty('--muted-text', '#666666');
-        root.style.setProperty('--accent-color', '#2196f3');
-        root.style.setProperty('--border-color', '#e0e0e0');
-        // Cores específicas para tema claro
-        root.style.setProperty('--result-bg', '#f8f9fa');
-        root.style.setProperty('--result-text', '#333333');
-        root.style.setProperty('--modal-bg', 'rgba(0, 0, 0, 0.5)');
-        root.style.setProperty('--modal-content-bg', '#ffffff');
-        root.style.setProperty('--modal-text', '#333333');
-        root.style.setProperty('--code-bg', '#f1f3f4');
-        root.style.setProperty('--code-text', '#333333');
-      } else if (theme === 'dark') {
-        root.style.setProperty('--bg-color', '#1a1a1a');
-        root.style.setProperty('--text-color', '#ffffff');
-        root.style.setProperty('--card-bg', '#2d2d2d');
-        root.style.setProperty('--muted-text', '#cccccc');
-        root.style.setProperty('--accent-color', '#4caf50');
-        root.style.setProperty('--border-color', '#444444');
-        // Cores específicas para tema escuro
-        root.style.setProperty('--result-bg', '#333333');
-        root.style.setProperty('--result-text', '#ffffff');
-        root.style.setProperty('--modal-bg', 'rgba(0, 0, 0, 0.8)');
-        root.style.setProperty('--modal-content-bg', '#2d2d2d');
-        root.style.setProperty('--modal-text', '#ffffff');
-        root.style.setProperty('--code-bg', '#1a1a1a');
-        root.style.setProperty('--code-text', '#ffffff');
-      } else if (theme === 'auto') {
-        // Detectar preferência do sistema
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        applyTheme(prefersDark ? 'dark' : 'light');
-        return;
-      }
-    }
-
-    // Listener para mudança de tema
-    document.getElementById('theme').addEventListener('change', function() {
-      const selectedTheme = this.value;
-      applyTheme(selectedTheme);
-    });
-
-    // Salvar configurações
-    async function saveConfig() {
-      const saveBtn = document.getElementById('saveBtn');
-      const saveBtnTop = document.getElementById('saveBtnTop');
-      const originalText = saveBtn.textContent;
-      // Validação: impedir salvar se a IA padrão não estiver habilitada
-      const defaultAI = document.getElementById('defaultAI').value;
-      const openaiEnabled = document.getElementById('openaiEnabled').checked;
-      const stackspotEnabled = document.getElementById('stackspotEnabled').checked;
-      if ((defaultAI === 'openai' && !openaiEnabled) || (defaultAI === 'stackspot' && !stackspotEnabled)) {
-        alert('A IA selecionada como padrão não está habilitada. Habilite-a para usá-la como padrão.');
-        return;
-      }
-      try {
-        saveBtn.disabled = true;
-        saveBtnTop.disabled = true;
-        saveBtn.textContent = 'Salvando...';
-        saveBtnTop.textContent = 'Salvando...';
-
-        // Novo formato estruturado
-        const config = {
-          user: {
-            name: document.getElementById('userName').value,
-            email: document.getElementById('userEmail').value,
-            company: document.getElementById('userCompany').value
-          },
-          preferences: {
-            defaultAI: document.getElementById('defaultAI').value,
-            defaultAnalyseType: document.getElementById('defaultAnalyseType').value,
-            autoCopy: document.getElementById('autoCopy').checked,
-            clearAfterSuccess: document.getElementById('clearAfterSuccess').checked,
-            theme: document.getElementById('theme').value
-          },
-          ia: {
-            openai: {
-              enabled: document.getElementById('openaiEnabled').checked,
-              maxTokens: parseInt(document.getElementById('maxTokens').value) || 1000
-            },
-            stackspot: {
-              enabled: document.getElementById('stackspotEnabled').checked,
-              streaming: document.getElementById('streaming').checked,
-              stackspotKnowledge: document.getElementById('stackspotKnowledge').checked,
-              returnKsInResponse: document.getElementById('returnKsInResponse').checked
-            }
-          }
-        };
-
-        // Configurações de API
-        const apiConfig = {
-          // Salvar apenas APIs habilitadas
-          ...(document.getElementById('openaiEnabled').checked && {
-            OPENAI_API_KEY: document.getElementById('openaiApiKey').value
-          }),
-          ...(document.getElementById('stackspotEnabled').checked && {
-            Client_ID_stackspot: document.getElementById('stackspotClientId').value,
-            Client_Key_stackspot: document.getElementById('stackspotClientSecret').value,
-            Realm_stackspot: document.getElementById('stackspotRealm').value,
-            STACKSPOT_AGENT_ID: document.getElementById('stackspotAgentId').value
-          })
-        };
-
-        // Salva no servidor
-        const response = await fetch('http://localhost:8000/config', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(config)
-        });
-
-        // Salva configurações de API
-        const apiResponse = await fetch('http://localhost:8000/api-config', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(apiConfig)
-        });
-
-        if (response.ok && apiResponse.ok) {
-          // Salva também no localStorage como cache
-          localStorage.setItem('bsqaConfig', JSON.stringify(config));
-          
-          saveBtn.textContent = 'Salvo! ✅';
-          saveBtnTop.textContent = 'Salvo! ✅';
-          // Manter o estado "Salvo!" por 3 segundos, depois voltar ao normal
-          setTimeout(() => {
-            saveBtn.textContent = originalText;
-            saveBtnTop.textContent = originalText;
-            saveBtn.disabled = false;
-            saveBtnTop.disabled = false;
-          }, 3000);
-        } else {
-          throw new Error('Erro ao salvar no servidor');
-        }
-      } catch (error) {
-        console.error('Erro ao salvar configurações:', error);
-        
-        // Fallback: salva apenas no localStorage
-        localStorage.setItem('bsqaConfig', JSON.stringify(config));
-        
-        saveBtn.textContent = 'Salvo (local) ⚠️';
-        saveBtnTop.textContent = 'Salvo (local) ⚠️';
-        setTimeout(() => {
-          saveBtn.textContent = originalText;
-          saveBtnTop.textContent = originalText;
-          saveBtn.disabled = false;
-          saveBtnTop.disabled = false;
-        }, 3000);
-      }
-    }
-
-    // Carregar configurações ao abrir a página
-    document.addEventListener('DOMContentLoaded', loadConfig);
-    
-    // Controlar switches das APIs
-    document.getElementById('openaiEnabled').addEventListener('change', function() {
-      const openaiFields = ['openaiApiKey', 'maxTokens'];
-      openaiFields.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        field.disabled = !this.checked;
-        if (!this.checked) {
-          field.value = '';
-        }
-      });
-    });
-    
-    document.getElementById('stackspotEnabled').addEventListener('change', function() {
-      const stackspotFields = ['stackspotClientId', 'stackspotClientSecret', 'stackspotRealm', 'stackspotAgentId', 'streaming', 'stackspotKnowledge', 'returnKsInResponse'];
-      stackspotFields.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        field.disabled = !this.checked;
-        if (!this.checked && (field.type === 'text' || field.type === 'password')) {
-          field.value = '';
-        }
-        if (!this.checked && field.type === 'checkbox') {
-          field.checked = false;
-        }
-      });
-    });
-    // Ao carregar, garantir que os campos estejam no estado correto
-    window.addEventListener('DOMContentLoaded', function() {
-      document.getElementById('openaiEnabled').dispatchEvent(new Event('change'));
-      document.getElementById('stackspotEnabled').dispatchEvent(new Event('change'));
-    });
-    
-    // Testar configurações de API
-    async function testApiConfig() {
-      const testResult = document.getElementById('testResult');
-      testResult.style.display = 'block';
-      testResult.innerHTML = '🔄 Testando configurações...';
-      testResult.style.background = 'rgba(255, 193, 7, 0.2)';
-      testResult.style.color = '#ffc107';
-      testResult.style.border = '1px solid #ffc107';
-      
-      try {
-        // Primeiro salva as configurações atuais
-        const apiConfig = {
-          // Salvar apenas APIs habilitadas
-          ...(document.getElementById('openaiEnabled').checked && {
-            OPENAI_API_KEY: document.getElementById('openaiApiKey').value
-          }),
-          ...(document.getElementById('stackspotEnabled').checked && {
-            Client_ID_stackspot: document.getElementById('stackspotClientId').value,
-            Client_Key_stackspot: document.getElementById('stackspotClientSecret').value,
-            Realm_stackspot: document.getElementById('stackspotRealm').value,
-            STACKSPOT_AGENT_ID: document.getElementById('stackspotAgentId').value
-          })
-        };
-        
-        // Salva no servidor
-        const response = await fetch('http://localhost:8000/api-config', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(apiConfig)
-        });
-        
-        if (response.ok) {
-          // Testa as configurações usando o endpoint específico
-          const testResponse = await fetch('http://localhost:8000/test-api-config', {
-            method: 'POST',
-          });
-          
-          if (testResponse.ok) {
-            const testData = await testResponse.json();
-            if (testData.success) {
-              let resultHtml = `✅ ${testData.message}<br><br>`;
-              if (testData.results && testData.results.length > 0) {
-                resultHtml += '<strong>Detalhes dos testes:</strong><br>';
-                testData.results.forEach(result => {
-                  const icon = result.status === 'success' ? '✅' : '❌';
-                  const color = result.status === 'success' ? '#4caf50' : '#f44336';
-                  resultHtml += `<span style="color: ${color};">${icon} ${result.service}: ${result.message}</span><br>`;
-                });
-              }
-              testResult.innerHTML = resultHtml;
-              testResult.style.background = 'rgba(76, 175, 80, 0.2)';
-              testResult.style.color = '#4caf50';
-              testResult.style.border = '1px solid #4caf50';
-            } else {
-              let resultHtml = `❌ ${testData.message}<br><br>`;
-              if (testData.results && testData.results.length > 0) {
-                resultHtml += '<strong>Detalhes dos testes:</strong><br>';
-                testData.results.forEach(result => {
-                  const icon = result.status === 'success' ? '✅' : '❌';
-                  const color = result.status === 'success' ? '#4caf50' : '#f44336';
-                  resultHtml += `<span style="color: ${color};">${icon} ${result.service}: ${result.message}</span><br>`;
-                });
-              }
-              testResult.innerHTML = resultHtml;
-              testResult.style.background = 'rgba(244, 67, 54, 0.2)';
-              testResult.style.color = '#f44336';
-              testResult.style.border = '1px solid #f44336';
-            }
-          } else {
-            const errorData = await testResponse.json();
-            testResult.innerHTML = `❌ Erro ao testar configurações: ${errorData.detail}`;
-            testResult.style.background = 'rgba(244, 67, 54, 0.2)';
-            testResult.style.color = '#f44336';
-            testResult.style.border = '1px solid #f44336';
-          }
-        } else {
-          testResult.innerHTML = '❌ Erro ao salvar configurações de API';
-          testResult.style.background = 'rgba(244, 67, 54, 0.2)';
-          testResult.style.color = '#f44336';
-          testResult.style.border = '1px solid #f44336';
-        }
-      } catch (error) {
-        console.error('Erro ao testar configurações:', error);
-        testResult.innerHTML = `❌ Erro ao testar configurações: ${error.message}`;
-        testResult.style.background = 'rgba(244, 67, 54, 0.2)';
-        testResult.style.color = '#f44336';
-        testResult.style.border = '1px solid #f44336';
-      }
-    }
-
-    // Avisar se a IA padrão selecionada não está habilitada
-    function checkDefaultAIEnabled() {
-      const defaultAI = document.getElementById('defaultAI').value;
-      const openaiEnabled = document.getElementById('openaiEnabled').checked;
-      const stackspotEnabled = document.getElementById('stackspotEnabled').checked;
-      const warning = document.getElementById('defaultAIWarning');
-      const saveBtn = document.getElementById('saveBtn');
-      const saveBtnTop = document.getElementById('saveBtnTop');
-      let hasError = false;
-      if ((defaultAI === 'openai' && !openaiEnabled) || (defaultAI === 'stackspot' && !stackspotEnabled)) {
-        warning.style.display = 'block';
-        warning.textContent = 'A IA selecionada como padrão não está habilitada. Habilite-a para usá-la como padrão.';
-        hasError = true;
-      } else {
-        warning.style.display = 'none';
-        warning.textContent = '';
-      }
-      saveBtn.disabled = hasError;
-      saveBtnTop.disabled = hasError;
-    }
-    document.getElementById('defaultAI').addEventListener('change', checkDefaultAIEnabled);
-    document.getElementById('openaiEnabled').addEventListener('change', checkDefaultAIEnabled);
-    document.getElementById('stackspotEnabled').addEventListener('change', checkDefaultAIEnabled);
-    window.addEventListener('DOMContentLoaded', checkDefaultAIEnabled);
-  </script>
+  <div id="modal"></div>
+  <div id="footer"></div>
+  <script type="module" src="main.js"></script>
+  <script type="module" src="config.js"></script>
 </body>
 </html> 
