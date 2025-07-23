@@ -1,5 +1,8 @@
 import { loadCommonComponents, loadThemeFromConfig, applyTheme, generateAnalysisOptionsHTML, getAnalysisPlaceholder } from './main.js';
 
+// Flag para controlar se a página foi recarregada
+window.pageReloaded = true;
+
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
   loadThemeFromConfig();
@@ -315,13 +318,16 @@ async function loadDefaultAI() {
         // Se não houver IA padrão, usar a primeira disponível
         serviceSelect.value = enabledAIs[0].value;
       }
-      // Resetar a flag após aplicar as configurações padrão
-      window.pageReloaded = false;
     }
     
     // Definir tipo de análise padrão apenas se for um recarregamento real da página
     if (window.pageReloaded && preferences.defaultAnalyseType) {
       document.getElementById('analyse_type').value = preferences.defaultAnalyseType;
+    }
+    
+    // Resetar a flag após aplicar todas as configurações padrão
+    if (window.pageReloaded) {
+      window.pageReloaded = false;
     }
     
     // Remover aviso se existir
@@ -396,9 +402,6 @@ window.addEventListener('focus', async () => {
   }
 });
 
-// Flag para controlar se a página foi recarregada
-window.pageReloaded = true;
-
 // Atualizar IAs apenas quando a página for recarregada
 window.addEventListener('load', () => {
   window.pageReloaded = true;
@@ -429,6 +432,7 @@ async function loadAnalysisTypes() {
     const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
     if (window.pageReloaded && config.preferences && config.preferences.defaultAnalyseType) {
       analyseTypeSelect.value = config.preferences.defaultAnalyseType;
+      // Não resetar a flag aqui, pois ela será resetada em loadDefaultAI()
     }
     
     // Atualizar placeholder inicial
