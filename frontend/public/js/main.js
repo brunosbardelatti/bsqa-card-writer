@@ -57,24 +57,37 @@ export function addBreadcrumbs() {
   
   if (!breadcrumbsContainer) return;
   
-  const breadcrumbItems = [];
-  
-  // Sempre começar com Home
-  breadcrumbItems.push({ text: 'Home', url: 'index.html' });
+  let breadcrumbItems = [];
   
   // Adicionar página atual baseado no nome do arquivo
   switch (currentPage) {
     case 'config.html':
-      breadcrumbItems.push({ text: 'Configurações', url: '' });
+      breadcrumbItems = [
+        { text: 'Home', url: 'index.html' },
+        { text: 'Configurações', url: '' }
+      ];
       break;
     case 'docs.html':
-      breadcrumbItems.push({ text: 'Documentação', url: '' });
+      breadcrumbItems = [
+        { text: 'Home', url: 'index.html' },
+        { text: 'Documentação', url: '' }
+      ];
+      break;
+    case 'chat.html':
+      breadcrumbItems = [
+        { text: 'Home', url: 'index.html' },
+        { text: 'Chat', url: '' }
+      ];
       break;
     case 'index.html':
-      // Se estiver na home, não adicionar breadcrumb
-      return;
+      // Se estiver na home, mostrar apenas "Home"
+      breadcrumbItems = [{ text: 'Home', url: '' }];
+      break;
     default:
-      breadcrumbItems.push({ text: 'Página', url: '' });
+      breadcrumbItems = [
+        { text: 'Home', url: 'index.html' },
+        { text: 'Página', url: '' }
+      ];
   }
   
   // Substituir o conteúdo do breadcrumb
@@ -92,32 +105,58 @@ export function applyTheme(theme) {
   const root = document.documentElement;
   if (theme === 'light') {
     root.style.setProperty('--bg-color', '#ffffff');
-    root.style.setProperty('--text-color', '#333333');
-    root.style.setProperty('--card-bg', '#f5f5f5');
-    root.style.setProperty('--muted-text', '#666666');
-    root.style.setProperty('--accent-color', '#2196f3');
-    root.style.setProperty('--border-color', '#e0e0e0');
-    root.style.setProperty('--result-bg', '#f8f9fa');
-    root.style.setProperty('--result-text', '#333333');
-    root.style.setProperty('--modal-bg', 'rgba(0, 0, 0, 0.5)');
+    root.style.setProperty('--text-color', '#1a1a1a');
+    root.style.setProperty('--card-bg', '#f8f9fa');
+    root.style.setProperty('--muted-text', '#4a4a4a');
+    root.style.setProperty('--accent-color', '#1976d2');
+    root.style.setProperty('--accent-color-rgb', '25, 118, 210');
+    root.style.setProperty('--border-color', '#d1d5db');
+    root.style.setProperty('--result-bg', '#ffffff');
+    root.style.setProperty('--result-text', '#1a1a1a');
+    root.style.setProperty('--modal-bg', 'rgba(0, 0, 0, 0.6)');
     root.style.setProperty('--modal-content-bg', '#ffffff');
-    root.style.setProperty('--modal-text', '#333333');
-    root.style.setProperty('--code-bg', '#f1f3f4');
-    root.style.setProperty('--code-text', '#333333');
+    root.style.setProperty('--modal-text', '#1a1a1a');
+    root.style.setProperty('--code-bg', '#f3f4f6');
+    root.style.setProperty('--code-text', '#1a1a1a');
+    // Syntax highlighting para tema claro
+    root.style.setProperty('--syntax-string', '#d73a49');
+    root.style.setProperty('--syntax-number', '#005cc5');
+    root.style.setProperty('--syntax-keyword', '#d73a49');
+    root.style.setProperty('--syntax-function', '#6f42c1');
+    root.style.setProperty('--syntax-comment', '#6a737d');
+    root.style.setProperty('--syntax-punctuation', '#24292e');
+    root.style.setProperty('--syntax-tag', '#22863a');
+    root.style.setProperty('--syntax-attribute', '#6f42c1');
+    root.style.setProperty('--syntax-property', '#005cc5');
+    root.style.setProperty('--syntax-value', '#032f62');
+    root.style.setProperty('--syntax-selector', '#d73a49');
   } else if (theme === 'dark') {
-    root.style.setProperty('--bg-color', '#1a1a1a');
+    root.style.setProperty('--bg-color', '#0f0f0f');
     root.style.setProperty('--text-color', '#ffffff');
-    root.style.setProperty('--card-bg', '#2d2d2d');
-    root.style.setProperty('--muted-text', '#cccccc');
+    root.style.setProperty('--card-bg', '#1e1e1e');
+    root.style.setProperty('--muted-text', '#b0b0b0');
     root.style.setProperty('--accent-color', '#4caf50');
-    root.style.setProperty('--border-color', '#444444');
-    root.style.setProperty('--result-bg', '#333333');
+    root.style.setProperty('--accent-color-rgb', '76, 175, 80');
+    root.style.setProperty('--border-color', '#404040');
+    root.style.setProperty('--result-bg', '#2a2a2a');
     root.style.setProperty('--result-text', '#ffffff');
     root.style.setProperty('--modal-bg', 'rgba(0, 0, 0, 0.8)');
-    root.style.setProperty('--modal-content-bg', '#2d2d2d');
+    root.style.setProperty('--modal-content-bg', '#1e1e1e');
     root.style.setProperty('--modal-text', '#ffffff');
     root.style.setProperty('--code-bg', '#1a1a1a');
     root.style.setProperty('--code-text', '#ffffff');
+    // Syntax highlighting para tema escuro
+    root.style.setProperty('--syntax-string', '#a8ff60');
+    root.style.setProperty('--syntax-number', '#ff9d00');
+    root.style.setProperty('--syntax-keyword', '#ff9d00');
+    root.style.setProperty('--syntax-function', '#ff628c');
+    root.style.setProperty('--syntax-comment', '#7c7c7c');
+    root.style.setProperty('--syntax-punctuation', '#ffffff');
+    root.style.setProperty('--syntax-tag', '#ff9d00');
+    root.style.setProperty('--syntax-attribute', '#ff628c');
+    root.style.setProperty('--syntax-property', '#ff628c');
+    root.style.setProperty('--syntax-value', '#a8ff60');
+    root.style.setProperty('--syntax-selector', '#ff9d00');
   } else if (theme === 'auto') {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     applyTheme(prefersDark ? 'dark' : 'light');
@@ -150,10 +189,12 @@ window.openConfig = openConfig;
 // Tipos de análise centralizados
 export const ANALYSIS_TYPES = {
   'card_QA_writer': 'Card QA Writer',
-  'test_case_flow_classifier': 'Test Case Flow Classifier',
-  'swagger_postman': 'Swagger Postman',
-  'swagger_python': 'Swagger Python',
-  'robot_api_generator': 'Robot API Generator'
+  'test_case_flow_classifier': 'Test Case Flow Generator',
+  'swagger_postman': 'Swagger Postman Generator',
+  'swagger_python': 'Swagger Python Generator',
+  'robot_api_generator': 'Curl Robot API Generator',
+  'swagger_robot_generator': 'Swagger Robot Generator',
+  'code_review_diff': 'Code Review Analyzer'
 };
 
 // Placeholders centralizados
@@ -162,7 +203,9 @@ export const ANALYSIS_PLACEHOLDERS = {
   'test_case_flow_classifier': 'Digite seus requisitos aqui ou selecione um arquivo',
   'swagger_postman': 'Faça upload do arquivo JSON do Swagger/OpenAPI para gerar coleção do Postman. O arquivo deve conter a especificação da API.',
   'swagger_python': 'Faça upload do arquivo JSON do Swagger/OpenAPI para gerar código Python. O arquivo deve conter a especificação da API.',
-  'robot_api_generator': 'Digite o comando cURL (e opcionalmente a resposta) para gerar uma estrutura completa de automação de teste de API com Robot Framework, seguindo um padrão modular e reutilizável.'
+  'robot_api_generator': 'Digite o comando cURL (e opcionalmente a resposta) para gerar uma estrutura completa de automação de teste de API com Robot Framework, seguindo um padrão modular e reutilizável.',
+  'swagger_robot_generator': 'Faça upload do arquivo JSON do Swagger/OpenAPI para gerar uma estrutura completa de automação de testes em Robot Framework. O retorno incluirá keywords reutilizáveis, requests e casos de teste prontos.',
+  'code_review_diff': 'Insira abaixo o diff do Git gerado entre a sua branch e a main. O conteúdo será analisado com foco técnico, e você receberá feedback em português sobre possíveis erros, violações de boas práticas, oportunidades de melhoria e riscos de segurança.'
 };
 
 // Função para gerar HTML das opções de análise

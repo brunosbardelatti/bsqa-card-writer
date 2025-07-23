@@ -1,366 +1,88 @@
-import { loadCommonComponents, loadThemeFromConfig, applyTheme, generateAnalysisOptionsHTML, getAnalysisPlaceholder } from './main.js';
+import { loadCommonComponents, loadThemeFromConfig } from './main.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
   loadThemeFromConfig();
-  await loadDefaultAI();
-  bindFormEvents();
-  await loadAnalysisTypes(); // Carregar tipos de análise disponíveis
+  
+  // Adicionar animações e interações específicas da home
+  addHomeInteractions();
 });
 
-function bindFormEvents() {
-  const form = document.getElementById('reqForm');
-  const output = document.getElementById('output');
-  const dropZone = document.getElementById('dropZone');
-  const fileInput = document.getElementById('fileInput');
-  const dropFeedback = document.getElementById('dropFeedback');
-  const dropRemoveBtn = document.getElementById('dropRemoveBtn');
-
-  if (!form) return;
-
-  dropZone.addEventListener('click', () => fileInput.click());
-  dropZone.addEventListener('dragover', e => {
-    e.preventDefault();
-    dropZone.classList.add('dragover');
-  });
-  dropZone.addEventListener('dragleave', () => {
-    dropZone.classList.remove('dragover');
-  });
-  dropZone.addEventListener('drop', e => {
-    e.preventDefault();
-    dropZone.classList.remove('dragover');
-    if (e.dataTransfer.files.length) {
-      fileInput.files = e.dataTransfer.files;
-      updateDropFeedback();
-    }
+function addHomeInteractions() {
+  // Adicionar efeitos hover nos cards
+  const cards = document.querySelectorAll('.feature-card, .type-card');
+  cards.forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      card.style.transform = 'translateY(-5px)';
+      card.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
+    });
+    
+    card.addEventListener('mouseleave', () => {
+      card.style.transform = 'translateY(0)';
+      card.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+    });
   });
 
-  fileInput.addEventListener('change', updateDropFeedback);
-  dropRemoveBtn.addEventListener('click', removeFile);
 
-  function removeFile() {
-    fileInput.value = '';
-    updateDropFeedback();
-  }
 
-  function updateDropFeedback() {
-    if (fileInput.files && fileInput.files.length > 0) {
-      dropFeedback.style.display = 'block';
-      dropRemoveBtn.style.display = 'flex';
-      dropFeedback.textContent = `${fileInput.files.length} arquivo${fileInput.files.length > 1 ? 's' : ''} selecionado${fileInput.files.length > 1 ? 's' : ''}`;
-    } else {
-      dropFeedback.style.display = 'none';
-      dropRemoveBtn.style.display = 'none';
-      dropFeedback.textContent = '';
-    }
-  }
-
-  form.onsubmit = async (e) => {
-    e.preventDefault();
-    output.innerHTML = '';
-    const submitBtn = document.querySelector('button[type="submit"]');
-    submitBtn.disabled = true;
-    output.innerHTML = '<div class="loading">Processando requisição...</div>';
-    const file = fileInput.files[0];
-    const requirements = document.getElementById('requirements').value;
-    const service = document.getElementById('service').value;
-    const analyse_type = document.getElementById('analyse_type').value;
-    const formData = new FormData();
-
-    if (file && requirements.trim()) {
-      output.innerHTML = '<div class="error">Use apenas um método de entrada: arquivo ou texto.</div>';
-      return;
-    }
-    if (file) {
-      const allowedTypes = [
-        'application/pdf',
-        'text/plain',
-        'text/utf-8',
-        'text/txt',
-        'application/txt',
-        'application/json',
-      ];
-      const fileType = file.type;
-      const fileName = file.name.toLowerCase();
-      const isAllowed = allowedTypes.includes(fileType) || fileName.endsWith('.pdf') || fileName.endsWith('.txt') || fileName.endsWith('.json');
-      if (!isAllowed) {
-        output.innerHTML = '<div class="error">Tipos de arquivo aceitos: <b>PDF (.pdf)</b>, <b>TXT (.txt)</b> e <b>JSON (.json)</b>. Outros formatos não são suportados.</div>';
-        return;
-      }
-      if (file.size > 100 * 1024 * 1024) {
-        output.innerHTML = '<div class="error">Arquivo maior que o tamanho de 100MB suportado. Tente com outro arquivo.</div>';
-        return;
-      }
-      formData.append('file', file);
-    } else if (requirements.trim()) {
-      formData.append('requirements', requirements);
-    }
-    formData.append('service', service);
-    formData.append('analyse_type', analyse_type);
-    if (service === 'stackspot') {
-      const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
-      formData.append('streaming', config.streaming || false);
-      formData.append('stackspot_knowledge', config.stackspotKnowledge || false);
-      formData.append('return_ks_in_response', config.returnKsInResponse || false);
-    }
-    try {
-      const res = await fetch('http://localhost:8000/analyze', {
-        method: 'POST',
-        body: formData
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        output.innerHTML = `<div class="error">${data.detail}</div>`;
-      } else {
-        let message = data.result && data.result.message ? data.result.message : data.result;
-        output.innerHTML = `
-          <div class="result-container">
-            <button class="copy-btn" onclick="copyToClipboard(this)" data-text="${encodeURIComponent(message)}" title="Copiar resposta" style="position: sticky !important; top: 0.5rem !important; right: 0.5rem !important; left: auto !important; float: right !important; margin: 0.5rem !important; z-index: 10 !important;">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h6a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z"/>
-              </svg>
-            </button>
-            <div class="result">${message.replace(/\n/g, '<br>')}</div>
-          </div>
-        `;
-        fileInput.value = '';
-        document.getElementById('requirements').value = '';
-        updateDropFeedback();
-      }
-    } catch (err) {
-      output.innerHTML = `<div class="error">${err}</div>`;
-    } finally {
-      submitBtn.disabled = false;
-    }
+  // Adicionar scroll suave para seções
+  const sections = document.querySelectorAll('.hero-section, .quick-actions, .analysis-types, .features');
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
   };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, observerOptions);
+
+  sections.forEach(section => {
+    section.style.opacity = '0';
+    section.style.transform = 'translateY(20px)';
+    section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(section);
+  });
+
+  // Adicionar contador de funcionalidades
+  animateCounters();
 }
 
-async function loadDefaultAI() {
-  try {
-    const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
-    const preferences = config.preferences || {};
-    const ia = config.ia || {};
-    
-    // Carregar configurações de API do servidor
-    let apiConfig = {};
-    try {
-      const response = await fetch('http://localhost:8000/api-config');
-      if (response.ok) {
-        apiConfig = await response.json();
-      }
-    } catch (error) {
-      console.log('Erro ao carregar configurações de API:', error);
-    }
-    
-    // Determinar quais IAs estão habilitadas
-    const enabledAIs = [];
-    
-    // Verificar OpenAI
-    if (ia.openai && ia.openai.enabled && apiConfig.OPENAI_API_KEY) {
-      enabledAIs.push({ value: 'openai', label: 'OpenAI' });
-    }
-    
-    // Verificar StackSpot
-    if (ia.stackspot && ia.stackspot.enabled && 
-        apiConfig.Client_ID_stackspot && apiConfig.Client_Key_stackspot && 
-        apiConfig.Realm_stackspot && apiConfig.STACKSPOT_AGENT_ID) {
-      enabledAIs.push({ value: 'stackspot', label: 'StackSpot AI' });
-    }
-    
-    // Atualizar select de IAs
-    const serviceSelect = document.getElementById('service');
-    serviceSelect.innerHTML = '';
-    
-    if (enabledAIs.length === 0) {
-      // Nenhuma IA configurada
-      serviceSelect.innerHTML = '<option value="">❌ Nenhuma IA configurada</option>';
-      serviceSelect.disabled = true;
-      
-      // Desabilitar botão de envio
-      const submitBtn = document.querySelector('button[type="submit"]');
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = '⚠️ Configure uma IA primeiro';
-      }
-      
-      // Mostrar mensagem de aviso
-      const warningDiv = document.createElement('div');
-      warningDiv.style.cssText = 'background: rgba(244, 67, 54, 0.1); color: #f44336; padding: 1rem; border-radius: 6px; margin-top: 1rem; border: 1px solid #f44336;';
-      warningDiv.innerHTML = `
-        <strong>⚠️ Nenhuma IA configurada</strong><br>
-        Para usar o BSQA Card Writer, você precisa configurar pelo menos uma IA nas configurações.
-        <br><br>
-        <a href="config.html" style="color: #f44336; text-decoration: underline;">→ Ir para Configurações</a>
-      `;
-      
-      // Inserir aviso após o formulário
-      const form = document.getElementById('reqForm');
-      if (form && !document.getElementById('noAIConfiguredWarning')) {
-        warningDiv.id = 'noAIConfiguredWarning';
-        form.parentNode.insertBefore(warningDiv, form.nextSibling);
-      }
-      
-      return;
-    }
-    
-    // Adicionar opções das IAs habilitadas
-    enabledAIs.forEach(ai => {
-      const option = document.createElement('option');
-      option.value = ai.value;
-      option.textContent = ai.label;
-      serviceSelect.appendChild(option);
-    });
-    
-    // Definir IA padrão se existir e estiver habilitada
-    if (preferences.defaultAI) {
-      const defaultAIExists = enabledAIs.some(ai => ai.value === preferences.defaultAI);
-      if (defaultAIExists) {
-        serviceSelect.value = preferences.defaultAI;
-      } else if (enabledAIs.length > 0) {
-        // Se a IA padrão não estiver habilitada, usar a primeira disponível
-        serviceSelect.value = enabledAIs[0].value;
-      }
-    } else if (enabledAIs.length > 0) {
-      // Se não houver IA padrão, usar a primeira disponível
-      serviceSelect.value = enabledAIs[0].value;
-    }
-    
-    // Definir tipo de análise padrão se existir
-    if (preferences.defaultAnalyseType) {
-      document.getElementById('analyse_type').value = preferences.defaultAnalyseType;
-    }
-    
-    // Remover aviso se existir
-    const warningDiv = document.getElementById('noAIConfiguredWarning');
-    if (warningDiv) {
-      warningDiv.remove();
-    }
-    
-    // Reabilitar botão de envio
-    const submitBtn = document.querySelector('button[type="submit"]');
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.textContent = '🚀 Enviar';
-    }
-    
-  } catch (error) {
-    console.log('Erro ao carregar IA padrão:', error);
+function animateCounters() {
+  // Simular contador de tipos de análise
+  const analysisTypes = document.querySelectorAll('.type-card');
+  const typesCount = analysisTypes.length;
+  
+  // Encontrar elemento que mostra o número de tipos (se existir)
+  const typesText = document.querySelector('.hero-features .feature-card:nth-child(4) p');
+  if (typesText) {
+    typesText.textContent = `${typesCount} tipos diferentes de análise`;
   }
 }
 
-// Copiar para área de transferência
-window.copyToClipboard = function(button) {
-  const text = decodeURIComponent(button.getAttribute('data-text'));
-  navigator.clipboard.writeText(text).then(() => {
-    const originalHTML = button.innerHTML;
-    button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
-    button.classList.add('copied');
-    button.title = 'Copiado!';
-    setTimeout(() => {
-      button.innerHTML = originalHTML;
-      button.classList.remove('copied');
-      button.title = 'Copiar resposta';
-    }, 2000);
-  }).catch(err => {
-    try {
-      const textArea = document.createElement('textarea');
-      textArea.value = text;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      const originalHTML = button.innerHTML;
-      button.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>';
-      button.classList.add('copied');
-      button.title = 'Copiado!';
+// Função para adicionar efeito de destaque nos cards de tipo de análise
+export function highlightAnalysisType(typeName) {
+  const typeCards = document.querySelectorAll('.type-card');
+  typeCards.forEach(card => {
+    const cardTitle = card.querySelector('h4');
+    if (cardTitle && cardTitle.textContent.includes(typeName)) {
+      card.style.border = '2px solid var(--accent-color)';
+      card.style.transform = 'scale(1.05)';
+      
       setTimeout(() => {
-        button.innerHTML = originalHTML;
-        button.classList.remove('copied');
-        button.title = 'Copiar resposta';
+        card.style.border = '';
+        card.style.transform = '';
       }, 2000);
-    } catch (fallbackErr) {
-      alert('Erro ao copiar texto. Tente novamente.');
     }
   });
-};
-
-// Função convertMarkdownToHtml movida para main.js para reutilização
-
-window.addEventListener('storage', (event) => {
-  if (event.key === 'bsqaThemeChanged') {
-    loadThemeFromConfig();
-  }
-});
-
-// Atualizar IAs quando voltar da página de configuração
-window.addEventListener('focus', async () => {
-  // Verificar se as configurações mudaram
-  const currentConfig = localStorage.getItem('bsqaConfig');
-  if (currentConfig !== window.lastConfigCheck) {
-    window.lastConfigCheck = currentConfig;
-    await loadDefaultAI();
-  }
-}); 
-
-// Carregar tipos de análise disponíveis do backend
-async function loadAnalysisTypes() {
-  try {
-    const response = await fetch('http://localhost:8000/analysis-types');
-    const data = await response.json();
-    const analyseTypeSelect = document.getElementById('analyse_type');
-    
-    // Limpar opções existentes
-    analyseTypeSelect.innerHTML = '';
-    
-    // Adicionar opções dinamicamente
-    Object.entries(data.analysis_types).forEach(([value, label]) => {
-      const option = document.createElement('option');
-      option.value = value;
-      option.textContent = label;
-      analyseTypeSelect.appendChild(option);
-    });
-    
-    // Armazenar placeholders globalmente para uso posterior
-    window.analysisPlaceholders = data.placeholders || {};
-    
-    // Aplicar configuração padrão se existir
-    const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
-    if (config.preferences && config.preferences.defaultAnalyseType) {
-      analyseTypeSelect.value = config.preferences.defaultAnalyseType;
-    }
-    
-    // Atualizar placeholder inicial
-    updatePlaceholder();
-    
-    // Adicionar listener para mudanças no tipo de análise
-    analyseTypeSelect.addEventListener('change', updatePlaceholder);
-  } catch (error) {
-    console.error('Erro ao carregar tipos de análise:', error);
-    // Fallback para opções padrão em caso de erro
-    const analyseTypeSelect = document.getElementById('analyse_type');
-    analyseTypeSelect.innerHTML = generateAnalysisOptionsHTML();
-    
-    // Placeholders de fallback
-    window.analysisPlaceholders = ANALYSIS_PLACEHOLDERS;
-    
-    // Atualizar placeholder inicial e adicionar listener
-    updatePlaceholder();
-    analyseTypeSelect.addEventListener('change', updatePlaceholder);
-  }
 }
 
-// Função para atualizar o placeholder do textarea baseado no tipo de análise selecionado
-function updatePlaceholder() {
-  const analyseTypeSelect = document.getElementById('analyse_type');
-  const requirementsTextarea = document.getElementById('requirements');
-  
-  if (!analyseTypeSelect || !requirementsTextarea) return;
-  
-  const selectedType = analyseTypeSelect.value;
-  
-  // Usar placeholders do backend (ou fallback se não disponível)
-  const placeholders = window.analysisPlaceholders || {};
-  
-  // Aplicar placeholder específico ou usar o padrão
-  requirementsTextarea.placeholder = placeholders[selectedType] || 'Digite seus requisitos aqui ou selecione um arquivo';
+// Função para mostrar estatísticas de uso (futuro)
+export function showUsageStats() {
+  // Esta função pode ser implementada no futuro para mostrar estatísticas
+  console.log('Estatísticas de uso serão implementadas em versões futuras');
 } 

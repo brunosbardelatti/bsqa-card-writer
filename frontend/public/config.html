@@ -15,13 +15,6 @@
       <!-- Breadcrumbs serão preenchidos dinamicamente -->
     </div>
     
-    <!-- Botões de navegação no topo -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-      <button onclick="window.location.href='index.html'" style="background: var(--accent-color); color: var(--text-color); border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; font-size: 1rem; width: 200px;">
-        ← Voltar ao QA Card Writer
-      </button>
-      <button class="save-btn" id="saveBtnTop" style="margin: 0; width: 200px;">💾 Salvar Configurações</button>
-    </div>
     <h1>⚙️ Configurações do Usuário</h1>
     <div class="config-section">
       <h2>👤 Informações Pessoais</h2>
@@ -65,14 +58,14 @@
         </select>
       </div>
     </div>
-    <div class="config-section">
+    <div class="config-section" id="ai-config">
       <h2>🤖 Configurações de IA</h2>
-      <div class="config-item">
-        <label for="defaultAnalyseType">Tipo de Análise Padrão <span title="Selecione o tipo de análise que será usado por padrão" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-        <select id="defaultAnalyseType">
-          <option value="">Carregando tipos de análise...</option>
-        </select>
-      </div>
+              <div class="config-item" id="template-config">
+          <label for="defaultAnalyseType">Tipo de Análise Padrão <span title="Selecione o tipo de análise que será usado por padrão" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+          <select id="defaultAnalyseType">
+            <option value="">Carregando tipos de análise...</option>
+          </select>
+        </div>
       <div class="config-item">
         <label for="defaultAI">IA Padrão <span title="Selecione qual IA será usada por padrão: OpenAI ou StackSpot AI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
         <select id="defaultAI">
@@ -140,20 +133,16 @@
           </div>
         </div>
       </fieldset>
-      <!-- Botão para testar configurações -->
+      <!-- Botões de ação -->
       <div class="config-item" style="margin-top: 1rem;">
-        <button onclick="testApiConfig()" style="background: var(--accent-color); color: var(--bg-color); border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.9em;">
-          🧪 Testar Configurações de API
-        </button>
+        <div style="display: flex; gap: 1rem; justify-content: center;">
+          <button onclick="testApiConfig()" class="primary-btn" style="width: 200px; font-size: 0.9em;">
+            🧪 Testar conexão com IA
+          </button>
+          <button class="save-btn" id="saveBtn" style="width: 200px;">💾 Salvar Configurações</button>
+        </div>
         <div id="testResult" style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 4px; display: none;"></div>
       </div>
-    </div>
-    <!-- Botões de navegação no rodapé -->
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--muted-text);">
-      <button onclick="window.location.href='index.html'" style="background: var(--accent-color); color: var(--text-color); border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; font-size: 1rem; width: 200px;">
-        ← Voltar ao QA Card Writer
-      </button>
-      <button class="save-btn" id="saveBtn" style="margin: 0; width: 200px;">💾 Salvar Configurações</button>
     </div>
     <div id="statusMessage" class="status-message"></div>
   </div>

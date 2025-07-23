@@ -38,9 +38,11 @@ async def analyze(
         try:
             content = extract_text_from_file(file)
             if not content.strip():
-                raise ValueError("Uploaded file is empty.")
+                raise ValueError("Arquivo enviado está vazio.")
+        except UnicodeDecodeError as e:
+            raise HTTPException(status_code=400, detail=f"Erro de encoding no arquivo. O arquivo pode estar corrompido ou usar um encoding não suportado. Detalhes: {str(e)}")
         except Exception as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=f"Erro ao processar arquivo: {str(e)}")
     elif requirements and requirements.strip():
         content = requirements
     else:

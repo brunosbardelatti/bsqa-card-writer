@@ -4,6 +4,8 @@
 
 Esta versão traz uma **refatoração completa do frontend e backend**, implementando melhorias significativas na organização do código, modularização de componentes, novos templates de prompt e experiência do usuário. Todas as funcionalidades existentes foram preservadas e aprimoradas.
 
+**Data de Lançamento:** Julho 2025
+
 ---
 
 ## 🎯 **PRINCIPAIS MELHORIAS**
@@ -71,9 +73,10 @@ Esta versão traz uma **refatoração completa do frontend e backend**, implemen
 
 #### ✅ **Novos Templates de Prompt:**
 - **Card QA Writer**: Gera cards de teste estruturados com BDD/Gherkin
-- **Test Case Flow Classifier**: Classifica casos de teste por fluxo (Principal/Alternativo/Exceção)
-- **Swagger Postman**: Gera coleções Postman para APIs Swagger/OpenAPI
-- **Swagger Python**: Gera testes Python/pytest para APIs Swagger/OpenAPI
+- **Test Case Flow Generator**: Classifica casos de teste por fluxo (Principal/Alternativo/Exceção)
+- **Swagger Postman Generator**: Gera coleções Postman para APIs Swagger/OpenAPI
+- **Swagger Python Generator**: Gera testes Python/pytest para APIs Swagger/OpenAPI
+- **Code Review Analyzer**: Análise técnica de diffs do Git com feedback em português
 - **StackSpot AI**: Template original mantido para compatibilidade
 
 #### ✅ **Sistema de Temas:**
@@ -98,6 +101,68 @@ Esta versão traz uma **refatoração completa do frontend e backend**, implemen
 - **Rotas Modulares**: API organizada por responsabilidade
 - **Suporte a JSON**: Upload e análise de arquivos JSON (Swagger/OpenAPI)
 - **Padronização**: Todos os templates usam {requirements} uniformemente
+
+---
+
+### 🎨 **4. MELHORIAS DE CONTRASTE E ACESSIBILIDADE**
+
+#### ✅ **Sistema de Temas Aprimorado:**
+- **Tema Claro Otimizado**: Cores com melhor contraste para legibilidade
+- **Tema Escuro Refinado**: Cores mais suaves e profissionais
+- **Syntax Highlighting Adaptativo**: Cores de código que se ajustam ao tema
+- **Variáveis CSS Dinâmicas**: Sistema completo de variáveis para ambos os temas
+
+#### ✅ **Melhorias de Contraste:**
+- **Texto Principal**: `#1a1a1a` (tema claro) e `#ffffff` (tema escuro)
+- **Texto Secundário**: `#4a4a4a` (tema claro) e `#b0b0b0` (tema escuro)
+- **Backgrounds**: Cores otimizadas para reduzir fadiga visual
+- **Bordas e Separadores**: Contraste adequado em ambos os temas
+
+#### ✅ **Syntax Highlighting Inteligente:**
+- **Tema Claro**: Cores baseadas no GitHub Light Theme
+- **Tema Escuro**: Cores baseadas no GitHub Dark Theme
+- **Linguagens Suportadas**: JSON, JavaScript, Python, Bash, HTML, CSS
+- **Elementos**: Strings, números, keywords, funções, comentários, pontuação
+
+#### ✅ **Elementos de Interface:**
+- **Botões**: Contraste otimizado com hover states
+- **Inputs e Selects**: Bordas e focus states melhorados
+- **Drop-zones**: Feedback visual com contraste adequado
+- **Modais**: Backgrounds e textos com contraste garantido
+- **Títulos**: Todos os h1, h2, h3, h4 com contraste adequado
+- **Breadcrumbs**: Links com contraste otimizado
+- **Checkmarks**: Elementos de lista com contraste garantido
+- **Padronização de Botões**: Sistema unificado de cores e estilos para todos os botões principais
+
+#### ✅ **Acessibilidade:**
+- **Contraste WCAG**: Todas as cores atendem aos padrões de acessibilidade
+- **Focus States**: Indicadores visuais claros para navegação por teclado
+- **Tooltips**: Informações contextuais com contraste adequado
+- **Responsividade**: Mantida em ambos os temas
+
+---
+
+### 🎨 **5. PADRONIZAÇÃO DE BOTÕES E IDENTIDADE VISUAL**
+
+#### ✅ **Sistema Unificado de Botões:**
+- **Botões Principais**: `.submit-btn`, `.save-btn`, `.primary-btn` com estilo padronizado
+- **Cores Consistentes**: Fundo `var(--accent-color)` e texto `var(--bg-color)` para contraste adequado
+- **Hover States**: Efeito de elevação e mudança de cor para feedback visual
+- **Transições Suaves**: Animações de 0.3s para melhor experiência
+- **Especificidade CSS**: Uso de `!important` para garantir consistência em todos os temas
+
+#### ✅ **Tipos de Botões Padronizados:**
+- **Botões de Ação Principal**: Submit, Salvar, Testar API
+- **Botões de Navegação**: Header e breadcrumbs com estilo próprio
+- **Botões Secundários**: Retry, Close com estilos específicos
+- **Botões de Interface**: Copy, Remove com estilos minimalistas
+
+#### ✅ **Identidade Visual Consistente:**
+- **Cores**: Sistema de cores unificado em todos os temas
+- **Espaçamento**: Padding e margins padronizados
+- **Tipografia**: Font-weight e font-size consistentes
+- **Bordas**: Border-radius uniforme (6px para botões principais)
+- **Correção de Inconsistências**: Botões "Voltar" e "Salvar" padronizados em toda a página
 - **API Dinâmica**: Endpoint `/analysis-types` para fornecer tipos disponíveis
 - **Carregamento Dinâmico**: Frontend carrega tipos de análise do backend automaticamente
 
@@ -144,9 +209,12 @@ backend/
 ```
 config/prompts/
 ├── prompt_template_card_QA_writer.txt.txt          # Cards de teste BDD
-├── prompt_template_test_case_flow_classifier.txt   # Classificação de fluxos
+├── prompt_template_test_case_flow_classifier.txt   # Geração de fluxos
 ├── prompt_template_swagger_postman.txt             # Coleções Postman
 ├── prompt_template_swagger_python.txt              # Testes Python/pytest
+├── prompt_template_robot_API_generator.txt         # Testes Robot Framework
+├── prompt_template_swagger_robot_generator.txt     # Testes Robot Framework (Swagger)
+├── prompt_template_code_review_diff.txt            # Code Review Analyzer de diffs Git
 └── prompt_template_stackspot_ai.txt                # StackSpot AI (original)
 ```
 
@@ -178,7 +246,7 @@ config/prompts/
 #### ✅ **Todas as Funcionalidades Originais Mantidas:**
 - **Upload de Arquivos**: PDF, TXT, JSON com drag & drop
 - **Análise de IA**: OpenAI e StackSpot AI
-- **Tipos de Análise**: Todos os 5 tipos disponíveis (incluindo 4 novos templates)
+- **Tipos de Análise**: Todos os 7 tipos disponíveis (incluindo 6 novos templates)
 - **Configurações**: Sistema completo de configurações
 - **Documentação**: Modal de ajuda com markdown
 - **Navegação**: Entre páginas principal e configurações
@@ -193,7 +261,7 @@ config/prompts/
 - **Linhas de Código**: ~50KB de código organizado
 - **Componentes**: 3 componentes reutilizáveis
 - **Temas**: 3 temas disponíveis (dark/light/auto)
-- **Templates de Prompt**: 5 templates disponíveis (4 novos + 1 original)
+- **Templates de Prompt**: 7 templates disponíveis (6 novos + 1 original)
 - **Funcionalidades**: 100% das funcionalidades preservadas
 
 ---
@@ -232,9 +300,9 @@ config/prompts/
 ### **Funcionalidades:**
 - **Análise de Requisitos**: Digite ou faça upload de arquivos (PDF, TXT, JSON)
 - **Múltiplas IAs**: OpenAI e StackSpot AI
-- **Tipos de Análise**: 5 tipos diferentes disponíveis (4 novos templates)
+- **Tipos de Análise**: 7 tipos diferentes disponíveis (6 novos templates)
 - **Temas**: Escuro, claro ou automático
-- **Templates Especializados**: Cards BDD, Classificação de Fluxos, Testes Postman/Python
+- **Templates Especializados**: Cards BDD, Classificação de Fluxos, Testes Postman/Python, Code Review Analyzer
 
 ---
 
@@ -316,7 +384,7 @@ config/prompts/
 
 ### 🔧 **3. NOVOS TEMPLATES E FUNCIONALIDADES**
 
-#### ✅ **Robot API Generator:**
+#### ✅ **Curl Robot API Generator:**
 - **`prompt_template_robot_API_generator.txt`**: Novo template para geração de testes Robot Framework
 - **Integração Completa**: Adicionado ao sistema de análise e placeholders
 - **Escapamento de Variáveis**: Variáveis Robot Framework escapadas corretamente (`${VAR}` → `${{VAR}}`)
@@ -340,7 +408,25 @@ config/prompts/
 - **Bug 7**: Botão de cópia do resultado agora acompanha scroll corretamente
 - **Bug 8**: Posicionamento do botão de cópia corrigido (canto superior direito)
 
-### 🎨 **5. MELHORIAS DE MARKDOWN**
+#### ✅ **Bugs de Navegação:**
+- **Bug 9**: **Correção crítica de navegação** - Botão "📋 Docs" na página de configurações agora redireciona corretamente para `docs.html` em vez de `index.html`
+- **Bug 10**: Seletor de botões corrigido para não interferir com botões de navegação do header
+
+### 🎨 **5. MELHORIAS DE UX E INTERFACE**
+
+#### ✅ **Melhorias de Feedback Visual:**
+- **Estados de Loading**: Elementos desabilitados durante processamento (textarea, selects, drop-zone, botões)
+- **Reabilitação Inteligente**: Elementos reabilitados automaticamente em caso de erro ou conclusão
+- **Feedback Visual**: Opacidade reduzida e pointer-events desabilitados durante processamento
+- **Prevenção de Múltiplos Envios**: Interface bloqueada durante análise para evitar conflitos
+
+#### ✅ **Melhorias de Processamento:**
+- **Limpeza de Resposta**: Espaços em branco removidos automaticamente do início das respostas da IA
+- **Estados de Interface**: Controle granular do estado de cada elemento da interface
+- **Recuperação de Erro**: Interface restaurada automaticamente em caso de falha na requisição
+- **Consistência Visual**: Todos os elementos seguem o mesmo padrão de loading/disabled
+
+### 🎨 **6. MELHORIAS DE MARKDOWN**
 
 #### ✅ **Renderização de Código:**
 - **Syntax Highlighting**: Blocos de código com destaque de sintaxe
@@ -356,11 +442,12 @@ config/prompts/
 
 ### 📊 **6. ESTATÍSTICAS ADICIONAIS**
 
-- **Arquivos Modificados**: 8 arquivos principais atualizados
+- **Arquivos Modificados**: 10 arquivos principais atualizados
 - **Novos Arquivos**: 2 novos arquivos criados (`docs.html`, `docs.js`)
-- **Bugs Corrigidos**: 8 bugs críticos resolvidos
-- **Melhorias UX**: 6 melhorias significativas de experiência do usuário
+- **Bugs Corrigidos**: 10 bugs críticos resolvidos
+- **Melhorias UX**: 10 melhorias significativas de experiência do usuário
 - **Funcionalidades**: 1 novo template de análise adicionado
+- **Melhorias de Contraste**: Sistema completo de temas com syntax highlighting adaptativo
 
 ---
 
@@ -373,7 +460,8 @@ A versão **v1.1.1** representa um marco importante na evolução do BSQA Card W
 - ✅ **Backend desacoplado** com arquitetura Factory Pattern
 - ✅ **4 novos templates de prompt** especializados para diferentes cenários
 - ✅ **Suporte a arquivos JSON** para análise de APIs Swagger/OpenAPI
-- ✅ **Sistema de temas** completo e responsivo
+- ✅ **Sistema de temas** completo e responsivo com contraste otimizado
+- ✅ **Syntax highlighting adaptativo** para melhor legibilidade
 - ✅ **Compatibilidade total** com versões anteriores
 
 **Status**: ✅ **100% Concluído e Funcional**
