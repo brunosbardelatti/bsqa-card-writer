@@ -20,7 +20,7 @@ body {
 
 /* === Componentes Gerais === */
 h1 {
-  color: #ffffff;
+  color: var(--text-color);
   margin-bottom: 0.5rem;
   font-size: 2rem;
 }
@@ -103,29 +103,34 @@ select {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 }
 
-/* Botão de submit específico */
+/* Botões principais padronizados */
+.submit-btn, .save-btn, .primary-btn {
+  background: var(--accent-color) !important;
+  color: var(--bg-color) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  cursor: pointer !important;
+  font-size: 1rem !important;
+  font-weight: 600 !important;
+  transition: background 0.3s, transform 0.2s !important;
+  padding: 0.75rem 1.5rem !important;
+}
+
 .submit-btn {
   width: 100%;
-  padding: 0.75rem;
-  background: var(--accent-color);
-  color: var(--bg-color);
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
   margin-top: 0.5rem;
-  transition: background 0.3s, transform 0.2s;
 }
 
-.submit-btn:hover {
-  background: var(--muted-text);
-  transform: translateY(-1px);
+.submit-btn:hover, .save-btn:hover, .primary-btn:hover {
+  background: var(--muted-text) !important;
+  transform: translateY(-1px) !important;
 }
 
-.submit-btn:active {
-  transform: translateY(0);
+.submit-btn:active, .save-btn:active, .primary-btn:active {
+  transform: translateY(0) !important;
 }
+
+/* Botões secundários */
 button {
   background: var(--accent-color);
   color: var(--bg-color);
@@ -137,6 +142,7 @@ button {
   align-self: flex-end;
   transition: background .3s;
 }
+
 button:hover {
   background: var(--muted-text);
 }
@@ -158,7 +164,6 @@ button:hover {
   width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
-  padding-top: 3rem;
 }
 /* Botão de cópia do resultado do chat - posicionamento específico */
 .copy-btn {
@@ -343,7 +348,7 @@ button:disabled {
 }
 
 .breadcrumbs a {
-  color: var(--accent-color);
+  color: var(--text-color);
   text-decoration: none;
   transition: color 0.3s;
   font-weight: 500;
@@ -376,10 +381,11 @@ button:disabled {
 }
 
 #docsContent h1 {
-  color: var(--accent-color);
+  color: var(--text-color);
   border-bottom: 2px solid var(--accent-color);
   padding-bottom: 0.5rem;
   margin-bottom: 1.5rem;
+  font-weight: 700;
 }
 
 #docsContent h2 {
@@ -447,7 +453,7 @@ button:disabled {
 .code-language {
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--accent-color);
+  color: var(--text-color);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -506,7 +512,7 @@ button:disabled {
   z-index: 10 !important;
 }
 
-/* Garantir que o SVG seja visível no tema escuro */
+/* Garantir que o SVG seja visível em ambos os temas */
 .code-block .copy-btn svg {
   color: var(--text-color) !important;
   stroke: var(--text-color) !important;
@@ -516,6 +522,44 @@ button:disabled {
   display: block !important;
   visibility: visible !important;
   opacity: 1 !important;
+}
+
+/* Melhorar contraste de elementos específicos */
+.drop-zone {
+  border: 2px dashed var(--border-color);
+  color: var(--muted-text);
+}
+
+.drop-zone.dragover {
+  background: rgba(var(--accent-color-rgb, 33, 150, 243), 0.1);
+  border-color: var(--accent-color);
+  color: var(--text-color);
+}
+
+/* Melhorar contraste dos selects */
+
+/* Melhorar contraste dos selects */
+select {
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+select:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb, 33, 150, 243), 0.2);
+}
+
+/* Melhorar contraste dos inputs */
+textarea, input[type="text"], input[type="email"], input[type="password"] {
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus {
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb, 33, 150, 243), 0.2);
 }
 
 /* Código dentro dos blocos */
@@ -548,40 +592,40 @@ button:disabled {
   border: 1px solid var(--muted-text);
 }
 
-/* Syntax highlighting básico */
-.language-json .string { color: #a8ff60; }
-.language-json .number { color: #ff9d00; }
-.language-json .boolean { color: #ff628c; }
-.language-json .null { color: #ff628c; }
-.language-json .punctuation { color: #ffffff; }
+/* Syntax highlighting adaptativo */
+.language-json .string { color: var(--syntax-string); }
+.language-json .number { color: var(--syntax-number); }
+.language-json .boolean { color: var(--syntax-function); }
+.language-json .null { color: var(--syntax-function); }
+.language-json .punctuation { color: var(--syntax-punctuation); }
 
-.language-javascript .keyword { color: #ff9d00; }
-.language-javascript .string { color: #a8ff60; }
-.language-javascript .number { color: #ff9d00; }
-.language-javascript .function { color: #ff628c; }
-.language-javascript .comment { color: #7c7c7c; }
+.language-javascript .keyword { color: var(--syntax-keyword); }
+.language-javascript .string { color: var(--syntax-string); }
+.language-javascript .number { color: var(--syntax-number); }
+.language-javascript .function { color: var(--syntax-function); }
+.language-javascript .comment { color: var(--syntax-comment); }
 
-.language-python .keyword { color: #ff9d00; }
-.language-python .string { color: #a8ff60; }
-.language-python .number { color: #ff9d00; }
-.language-python .function { color: #ff628c; }
-.language-python .comment { color: #7c7c7c; }
+.language-python .keyword { color: var(--syntax-keyword); }
+.language-python .string { color: var(--syntax-string); }
+.language-python .number { color: var(--syntax-number); }
+.language-python .function { color: var(--syntax-function); }
+.language-python .comment { color: var(--syntax-comment); }
 
-.language-bash .keyword { color: #ff9d00; }
-.language-bash .string { color: #a8ff60; }
-.language-bash .comment { color: #7c7c7c; }
+.language-bash .keyword { color: var(--syntax-keyword); }
+.language-bash .string { color: var(--syntax-string); }
+.language-bash .comment { color: var(--syntax-comment); }
 
-.language-html .tag { color: #ff9d00; }
-.language-html .attribute { color: #ff628c; }
-.language-html .string { color: #a8ff60; }
+.language-html .tag { color: var(--syntax-tag); }
+.language-html .attribute { color: var(--syntax-attribute); }
+.language-html .string { color: var(--syntax-string); }
 
-.language-css .property { color: #ff628c; }
-.language-css .value { color: #a8ff60; }
-.language-css .selector { color: #ff9d00; }
+.language-css .property { color: var(--syntax-property); }
+.language-css .value { color: var(--syntax-value); }
+.language-css .selector { color: var(--syntax-selector); }
 
 /* Listas com checkmarks */
 .checkmark-item {
-  color: #4caf50 !important;
+  color: var(--text-color) !important;
   font-weight: 500;
 }
 
@@ -676,7 +720,7 @@ button:disabled {
   background: rgba(255, 255, 255, 0.2);
 }
 .modal-content h1, .modal-content h2, .modal-content h3 {
-  color: var(--accent-color);
+  color: var(--text-color);
   margin-top: 1.5rem;
   margin-bottom: 1rem;
 }
@@ -728,7 +772,8 @@ button:disabled {
   color: var(--modal-text);
 }
 .modal-content strong {
-  color: var(--accent-color);
+  color: var(--text-color);
+  font-weight: 700;
 }
 .modal-content em {
   color: var(--muted-text);
@@ -752,7 +797,7 @@ button:disabled {
   margin-bottom: 0;
 }
 .config-section h2 {
-  color: var(--accent-color);
+  color: var(--text-color);
   margin-bottom: 1rem;
   font-size: 1.4em;
 }
@@ -781,18 +826,7 @@ input[type="checkbox"] {
   cursor: not-allowed;
 }
 .save-btn {
-  background: var(--accent-color);
-  color: var(--bg-color);
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: background .3s;
   margin-top: 1rem;
-}
-.save-btn:hover {
-  background: var(--muted-text);
 }
 .status-message {
   margin-top: 1rem;
