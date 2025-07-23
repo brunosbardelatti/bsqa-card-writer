@@ -23,7 +23,7 @@ export async function loadCommonComponents() {
 
 // Destacar a página ativa no menu de navegação
 function highlightActivePage() {
-  const currentPage = window.location.pathname.split('/').pop() || 'chat.html';
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
   const navButtons = document.querySelectorAll('.nav-btn');
   
   navButtons.forEach(btn => {
@@ -52,7 +52,7 @@ export function generateBreadcrumbs(items) {
 
 // Função para adicionar breadcrumbs baseado na página atual
 export function addBreadcrumbs() {
-  const currentPage = window.location.pathname.split('/').pop() || 'chat.html';
+  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
   const breadcrumbsContainer = document.querySelector('.breadcrumbs');
   
   if (!breadcrumbsContainer) return;
