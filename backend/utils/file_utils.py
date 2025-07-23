@@ -51,8 +51,6 @@ def extract_text_from_file(uploaded_file) -> str:
     uploaded_file.file.seek(0)
     content = uploaded_file.file.read()
     
-    print(f"Processando arquivo: {uploaded_file.filename}, tipo: {uploaded_file.content_type}, tamanho: {len(content)} bytes")
-    
     # Tentar detectar o encoding automaticamente (se chardet estiver disponível)
     if CHARDET_AVAILABLE:
         try:

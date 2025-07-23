@@ -44,4 +44,4 @@ Filename: resources/helper.resource
 <code>
 ```
 
-Now generate the complete Robot Framework automation structure based on the Swagger specification provided in {swagger}. Do not include explanations or extra comments in your response.
+Now generate the complete Robot Framework automation structure based on the Swagger specification provided in {requirements}. Do not include explanations or extra comments in your response.
