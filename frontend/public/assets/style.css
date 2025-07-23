@@ -455,13 +455,7 @@ button:disabled {
   }
 }
 
-/* Botões de navegação nas páginas */
-.nav-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  justify-content: space-between;
-}
+
 
 /* Breadcrumbs */
 .breadcrumbs {
@@ -954,8 +948,21 @@ input[type="checkbox"] {
 .checkbox-item.disabled label {
   cursor: not-allowed;
 }
+/* Botões de ação na página de configurações */
 .save-btn {
-  margin-top: 1rem;
+  /* Estilos específicos removidos - agora usa as classes padrão */
+}
+
+/* Layout responsivo para botões de ação */
+@media (max-width: 600px) {
+  .config-item div[style*="display: flex"] {
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+  }
+  
+  .config-item div[style*="display: flex"] button {
+    width: 100% !important;
+  }
 }
 .status-message {
   margin-top: 1rem;

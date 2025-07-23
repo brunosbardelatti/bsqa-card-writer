@@ -82,6 +82,6 @@ function applyDocumentationStyles() {
 // Navegação por teclado para acessibilidade
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
-    window.location.href = 'chat.html';
+    window.location.href = 'index.html';
   }
 }); 
