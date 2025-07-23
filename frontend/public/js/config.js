@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadConfig();
   await loadAnalysisTypes(); // Carregar tipos de análise disponíveis
   bindConfigEvents();
+  
+  // Verificar se há âncora na URL para focar em seções específicas
+  checkUrlAnchor();
 });
 
 let initialConfigSnapshot = null;
@@ -318,9 +321,9 @@ function bindConfigEvents() {
   document.getElementById('saveBtn').addEventListener('click', saveConfig);
   document.getElementById('saveBtnTop').addEventListener('click', saveConfig);
   // Corrigir apenas os botões específicos de "Voltar ao QA Card Writer"
-  document.querySelectorAll('button[onclick*="window.location.href=\'index.html\'"]').forEach(btn => {
-    btn.onclick = () => { window.location.href = 'index.html'; };
-  });
+      document.querySelectorAll('button[onclick*="window.location.href=\'chat.html\'"]').forEach(btn => {
+      btn.onclick = () => { window.location.href = 'chat.html'; };
+    });
   document.querySelector('button[onclick*="testApiConfig"]').onclick = testApiConfig;
   window.saveConfig = saveConfig;
 }
@@ -555,5 +558,35 @@ async function loadAnalysisTypes() {
     // Fallback para opções padrão em caso de erro
     const defaultAnalyseTypeSelect = document.getElementById('defaultAnalyseType');
     defaultAnalyseTypeSelect.innerHTML = generateAnalysisOptionsHTML();
+  }
+}
+
+// Função para verificar âncora na URL e focar em seções específicas
+function checkUrlAnchor() {
+  const hash = window.location.hash;
+  
+  if (hash) {
+    // Aguardar um pouco para garantir que a página foi carregada
+    setTimeout(() => {
+      const targetElement = document.querySelector(hash);
+      if (targetElement) {
+        // Scroll suave para o elemento
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        // Adicionar efeito visual para destacar a seção
+        targetElement.style.border = '2px solid var(--accent-color)';
+        targetElement.style.borderRadius = '8px';
+        targetElement.style.padding = '1rem';
+        targetElement.style.backgroundColor = 'rgba(76, 175, 80, 0.1)';
+        
+        // Remover o efeito após alguns segundos
+        setTimeout(() => {
+          targetElement.style.border = '';
+          targetElement.style.borderRadius = '';
+          targetElement.style.padding = '';
+          targetElement.style.backgroundColor = '';
+        }, 3000);
+      }
+    }, 500);
   }
 } 
