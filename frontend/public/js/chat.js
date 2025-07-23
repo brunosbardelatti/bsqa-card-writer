@@ -6,7 +6,7 @@ window.pageReloaded = true;
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
   loadThemeFromConfig();
-  await loadDefaultAI();
+  await loadDefaultAI(true); // Aplicar configurações padrão no carregamento inicial
   bindFormEvents();
   await loadAnalysisTypes(); // Carregar tipos de análise disponíveis
   
@@ -228,7 +228,7 @@ function bindFormEvents() {
   };
 }
 
-async function loadDefaultAI() {
+async function loadDefaultAI(applyDefaults = true) {
   try {
     const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
     const preferences = config.preferences || {};
@@ -304,8 +304,8 @@ async function loadDefaultAI() {
       serviceSelect.appendChild(option);
     });
     
-    // Definir IA padrão apenas se for um recarregamento real da página
-    if (window.pageReloaded) {
+    // Definir IA padrão apenas se for um recarregamento real da página E applyDefaults for true
+    if (window.pageReloaded && applyDefaults) {
       if (preferences.defaultAI) {
         const defaultAIExists = enabledAIs.some(ai => ai.value === preferences.defaultAI);
         if (defaultAIExists) {
@@ -320,13 +320,13 @@ async function loadDefaultAI() {
       }
     }
     
-    // Definir tipo de análise padrão apenas se for um recarregamento real da página
-    if (window.pageReloaded && preferences.defaultAnalyseType) {
+    // Definir tipo de análise padrão apenas se for um recarregamento real da página E applyDefaults for true
+    if (window.pageReloaded && applyDefaults && preferences.defaultAnalyseType) {
       document.getElementById('analyse_type').value = preferences.defaultAnalyseType;
     }
     
-    // Resetar a flag após aplicar todas as configurações padrão
-    if (window.pageReloaded) {
+    // Resetar a flag apenas se applyDefaults for true
+    if (window.pageReloaded && applyDefaults) {
       window.pageReloaded = false;
     }
     
@@ -398,14 +398,12 @@ window.addEventListener('focus', async () => {
   const currentConfig = localStorage.getItem('bsqaConfig');
   if (currentConfig !== window.lastConfigCheck) {
     window.lastConfigCheck = currentConfig;
-    await loadDefaultAI();
+    await loadDefaultAI(false); // Não reaplicar configurações padrão
   }
 });
 
-// Atualizar IAs apenas quando a página for recarregada
-window.addEventListener('load', () => {
-  window.pageReloaded = true;
-}); 
+// Flag já é inicializada como true no início do arquivo
+// Não precisamos do evento load pois a flag já está correta
 
 // Carregar tipos de análise disponíveis do backend
 async function loadAnalysisTypes() {
