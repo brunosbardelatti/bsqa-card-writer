@@ -2,6 +2,14 @@ import PyPDF2
 import io
 import json
 
+# Import opcional da biblioteca chardet
+try:
+    import chardet
+    CHARDET_AVAILABLE = True
+except ImportError:
+    CHARDET_AVAILABLE = False
+    print("Aviso: Biblioteca 'chardet' não encontrada. A detecção automática de encoding será desabilitada.")
+
 
 def extract_text_from_pdf(pdf_file: io.BytesIO) -> str:
     reader = PyPDF2.PdfReader(pdf_file)
@@ -38,4 +46,36 @@ def extract_text_from_file(uploaded_file) -> str:
     if uploaded_file.content_type == "application/json":
         uploaded_file.file.seek(0)
         return extract_text_from_json(uploaded_file.file)
-    return uploaded_file.file.read().decode("utf-8") 
+    
+    # Para arquivos de texto (TXT), tentar diferentes encodings
+    uploaded_file.file.seek(0)
+    content = uploaded_file.file.read()
+    
+    print(f"Processando arquivo: {uploaded_file.filename}, tipo: {uploaded_file.content_type}, tamanho: {len(content)} bytes")
+    
+    # Tentar detectar o encoding automaticamente (se chardet estiver disponível)
+    if CHARDET_AVAILABLE:
+        try:
+            detected = chardet.detect(content)
+            if detected['confidence'] > 0.7:
+                try:
+                    return content.decode(detected['encoding'])
+                except UnicodeDecodeError:
+                    pass
+        except Exception:
+            pass
+    
+    # Lista de encodings para tentar
+    encodings = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+    
+    for encoding in encodings:
+        try:
+            return content.decode(encoding)
+        except UnicodeDecodeError:
+            continue
+    
+    # Se nenhum encoding funcionar, tentar com tratamento de erros
+    try:
+        return content.decode('utf-8', errors='replace')
+    except Exception:
+        return content.decode('latin-1', errors='replace') 

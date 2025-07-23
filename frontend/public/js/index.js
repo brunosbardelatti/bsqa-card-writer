@@ -59,7 +59,33 @@ function bindFormEvents() {
     e.preventDefault();
     output.innerHTML = '';
     const submitBtn = document.querySelector('button[type="submit"]');
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    
+    // Desabilitar elementos de upload
     submitBtn.disabled = true;
+    dropZone.style.pointerEvents = 'none';
+    dropZone.style.opacity = '0.6';
+    fileInput.disabled = true;
+    
+    // Desabilitar textarea
+    const requirementsTextarea = document.getElementById('requirements');
+    requirementsTextarea.disabled = true;
+    
+    // Desabilitar botão de remover arquivo
+    const dropRemoveBtn = document.getElementById('dropRemoveBtn');
+    if (dropRemoveBtn) {
+      dropRemoveBtn.disabled = true;
+      dropRemoveBtn.style.pointerEvents = 'none';
+      dropRemoveBtn.style.opacity = '0.6';
+    }
+    
+    // Desabilitar selects
+    const serviceSelect = document.getElementById('service');
+    const analyseTypeSelect = document.getElementById('analyse_type');
+    serviceSelect.disabled = true;
+    analyseTypeSelect.disabled = true;
+    
     output.innerHTML = '<div class="loading">Processando requisição...</div>';
     const file = fileInput.files[0];
     const requirements = document.getElementById('requirements').value;
@@ -69,6 +95,19 @@ function bindFormEvents() {
 
     if (file && requirements.trim()) {
       output.innerHTML = '<div class="error">Use apenas um método de entrada: arquivo ou texto.</div>';
+      // Reabilitar elementos em caso de erro
+      submitBtn.disabled = false;
+      dropZone.style.pointerEvents = 'auto';
+      dropZone.style.opacity = '1';
+      fileInput.disabled = false;
+      requirementsTextarea.disabled = false;
+      serviceSelect.disabled = false;
+      analyseTypeSelect.disabled = false;
+      if (dropRemoveBtn) {
+        dropRemoveBtn.disabled = false;
+        dropRemoveBtn.style.pointerEvents = 'auto';
+        dropRemoveBtn.style.opacity = '1';
+      }
       return;
     }
     if (file) {
@@ -85,10 +124,36 @@ function bindFormEvents() {
       const isAllowed = allowedTypes.includes(fileType) || fileName.endsWith('.pdf') || fileName.endsWith('.txt') || fileName.endsWith('.json');
       if (!isAllowed) {
         output.innerHTML = '<div class="error">Tipos de arquivo aceitos: <b>PDF (.pdf)</b>, <b>TXT (.txt)</b> e <b>JSON (.json)</b>. Outros formatos não são suportados.</div>';
+        // Reabilitar elementos em caso de erro
+        submitBtn.disabled = false;
+        dropZone.style.pointerEvents = 'auto';
+        dropZone.style.opacity = '1';
+        fileInput.disabled = false;
+        requirementsTextarea.disabled = false;
+        serviceSelect.disabled = false;
+        analyseTypeSelect.disabled = false;
+        if (dropRemoveBtn) {
+          dropRemoveBtn.disabled = false;
+          dropRemoveBtn.style.pointerEvents = 'auto';
+          dropRemoveBtn.style.opacity = '1';
+        }
         return;
       }
       if (file.size > 100 * 1024 * 1024) {
         output.innerHTML = '<div class="error">Arquivo maior que o tamanho de 100MB suportado. Tente com outro arquivo.</div>';
+        // Reabilitar elementos em caso de erro
+        submitBtn.disabled = false;
+        dropZone.style.pointerEvents = 'auto';
+        dropZone.style.opacity = '1';
+        fileInput.disabled = false;
+        requirementsTextarea.disabled = false;
+        serviceSelect.disabled = false;
+        analyseTypeSelect.disabled = false;
+        if (dropRemoveBtn) {
+          dropRemoveBtn.disabled = false;
+          dropRemoveBtn.style.pointerEvents = 'auto';
+          dropRemoveBtn.style.opacity = '1';
+        }
         return;
       }
       formData.append('file', file);
@@ -113,6 +178,10 @@ function bindFormEvents() {
         output.innerHTML = `<div class="error">${data.detail}</div>`;
       } else {
         let message = data.result && data.result.message ? data.result.message : data.result;
+        
+        // Limpar espaços em branco no início da resposta
+        message = message.replace(/^\s+/, ''); // Remove espaços no início
+        
         output.innerHTML = `
           <div class="result-container">
             <button class="copy-btn" onclick="copyToClipboard(this)" data-text="${encodeURIComponent(message)}" title="Copiar resposta" style="position: sticky !important; top: 0.5rem !important; right: 0.5rem !important; left: auto !important; float: right !important; margin: 0.5rem !important; z-index: 10 !important;">
@@ -131,6 +200,24 @@ function bindFormEvents() {
       output.innerHTML = `<div class="error">${err}</div>`;
     } finally {
       submitBtn.disabled = false;
+      // Reabilitar elementos de upload
+      dropZone.style.pointerEvents = 'auto';
+      dropZone.style.opacity = '1';
+      fileInput.disabled = false;
+      
+      // Reabilitar textarea
+      requirementsTextarea.disabled = false;
+      
+      // Reabilitar selects
+      serviceSelect.disabled = false;
+      analyseTypeSelect.disabled = false;
+      
+      // Reabilitar botão de remover arquivo
+      if (dropRemoveBtn) {
+        dropRemoveBtn.disabled = false;
+        dropRemoveBtn.style.pointerEvents = 'auto';
+        dropRemoveBtn.style.opacity = '1';
+      }
     }
   };
 }
@@ -211,22 +298,26 @@ async function loadDefaultAI() {
       serviceSelect.appendChild(option);
     });
     
-    // Definir IA padrão se existir e estiver habilitada
-    if (preferences.defaultAI) {
-      const defaultAIExists = enabledAIs.some(ai => ai.value === preferences.defaultAI);
-      if (defaultAIExists) {
-        serviceSelect.value = preferences.defaultAI;
+    // Definir IA padrão apenas se for um recarregamento real da página
+    if (window.pageReloaded) {
+      if (preferences.defaultAI) {
+        const defaultAIExists = enabledAIs.some(ai => ai.value === preferences.defaultAI);
+        if (defaultAIExists) {
+          serviceSelect.value = preferences.defaultAI;
+        } else if (enabledAIs.length > 0) {
+          // Se a IA padrão não estiver habilitada, usar a primeira disponível
+          serviceSelect.value = enabledAIs[0].value;
+        }
       } else if (enabledAIs.length > 0) {
-        // Se a IA padrão não estiver habilitada, usar a primeira disponível
+        // Se não houver IA padrão, usar a primeira disponível
         serviceSelect.value = enabledAIs[0].value;
       }
-    } else if (enabledAIs.length > 0) {
-      // Se não houver IA padrão, usar a primeira disponível
-      serviceSelect.value = enabledAIs[0].value;
+      // Resetar a flag após aplicar as configurações padrão
+      window.pageReloaded = false;
     }
     
-    // Definir tipo de análise padrão se existir
-    if (preferences.defaultAnalyseType) {
+    // Definir tipo de análise padrão apenas se for um recarregamento real da página
+    if (window.pageReloaded && preferences.defaultAnalyseType) {
       document.getElementById('analyse_type').value = preferences.defaultAnalyseType;
     }
     
@@ -300,6 +391,14 @@ window.addEventListener('focus', async () => {
     window.lastConfigCheck = currentConfig;
     await loadDefaultAI();
   }
+});
+
+// Flag para controlar se a página foi recarregada
+window.pageReloaded = true;
+
+// Atualizar IAs apenas quando a página for recarregada
+window.addEventListener('load', () => {
+  window.pageReloaded = true;
 }); 
 
 // Carregar tipos de análise disponíveis do backend
@@ -323,9 +422,9 @@ async function loadAnalysisTypes() {
     // Armazenar placeholders globalmente para uso posterior
     window.analysisPlaceholders = data.placeholders || {};
     
-    // Aplicar configuração padrão se existir
+    // Aplicar configuração padrão apenas se for um recarregamento real da página
     const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
-    if (config.preferences && config.preferences.defaultAnalyseType) {
+    if (window.pageReloaded && config.preferences && config.preferences.defaultAnalyseType) {
       analyseTypeSelect.value = config.preferences.defaultAnalyseType;
     }
     

@@ -317,7 +317,8 @@ function bindConfigEvents() {
   window.addEventListener('DOMContentLoaded', checkDefaultAIEnabled);
   document.getElementById('saveBtn').addEventListener('click', saveConfig);
   document.getElementById('saveBtnTop').addEventListener('click', saveConfig);
-  document.querySelectorAll('button[onclick*="window.location.href"]').forEach(btn => {
+  // Corrigir apenas os botões específicos de "Voltar ao QA Card Writer"
+  document.querySelectorAll('button[onclick*="window.location.href=\'index.html\'"]').forEach(btn => {
     btn.onclick = () => { window.location.href = 'index.html'; };
   });
   document.querySelector('button[onclick*="testApiConfig"]').onclick = testApiConfig;
