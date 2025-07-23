@@ -24,6 +24,134 @@ h1 {
   margin-bottom: 0.5rem;
   font-size: 2rem;
 }
+
+/* === Estilos da Página Home === */
+.hero-section {
+  text-align: center;
+  margin-bottom: 3rem;
+  padding: 1.5rem;
+  background: var(--card-bg);
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.hero-subtitle {
+  font-size: 1.2rem;
+  color: var(--muted-text);
+  margin-bottom: 2rem;
+}
+
+.hero-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.feature-card {
+  background: var(--bg-color);
+  padding: 1.5rem;
+  border-radius: 10px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--border-color);
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Links dos cards */
+.feature-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.feature-card-link:hover {
+  transform: translateY(-5px);
+}
+
+.feature-card-link:hover .feature-card {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.feature-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 1rem;
+}
+
+
+
+.analysis-types {
+  margin-bottom: 3rem;
+}
+
+.types-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.type-card {
+  background: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.type-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Links dos tipos de análise */
+.type-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.type-card-link:hover {
+  transform: translateY(-5px);
+}
+
+.type-card-link:hover .type-card {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.type-card h4 {
+  color: var(--accent-color);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.type-card p {
+  color: var(--muted-text);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+
+
+/* Responsividade para a home */
+@media (max-width: 768px) {
+  .hero-features {
+    grid-template-columns: 1fr;
+  }
+  
+  .types-grid {
+    grid-template-columns: 1fr;
+  }
+}
 p.subtitle {
   color: var(--muted-text);
   margin-bottom: 2rem;
@@ -779,13 +907,14 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
   color: var(--muted-text);
 }
 
-/* === Específicos de config.html === */
+/* === Container Geral === */
 .container {
   background: var(--card-bg);
   padding: 2rem;
   border-radius: 10px;
   max-width: 800px;
   width: 100%;
+  margin: 0 auto;
 }
 .config-section {
   margin-bottom: 2rem;

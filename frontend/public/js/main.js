@@ -23,7 +23,7 @@ export async function loadCommonComponents() {
 
 // Destacar a página ativa no menu de navegação
 function highlightActivePage() {
-  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  const currentPage = window.location.pathname.split('/').pop() || 'chat.html';
   const navButtons = document.querySelectorAll('.nav-btn');
   
   navButtons.forEach(btn => {
@@ -52,29 +52,42 @@ export function generateBreadcrumbs(items) {
 
 // Função para adicionar breadcrumbs baseado na página atual
 export function addBreadcrumbs() {
-  const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+  const currentPage = window.location.pathname.split('/').pop() || 'chat.html';
   const breadcrumbsContainer = document.querySelector('.breadcrumbs');
   
   if (!breadcrumbsContainer) return;
   
-  const breadcrumbItems = [];
-  
-  // Sempre começar com Home
-  breadcrumbItems.push({ text: 'Home', url: 'index.html' });
+  let breadcrumbItems = [];
   
   // Adicionar página atual baseado no nome do arquivo
   switch (currentPage) {
     case 'config.html':
-      breadcrumbItems.push({ text: 'Configurações', url: '' });
+      breadcrumbItems = [
+        { text: 'Home', url: 'index.html' },
+        { text: 'Configurações', url: '' }
+      ];
       break;
     case 'docs.html':
-      breadcrumbItems.push({ text: 'Documentação', url: '' });
+      breadcrumbItems = [
+        { text: 'Home', url: 'index.html' },
+        { text: 'Documentação', url: '' }
+      ];
+      break;
+    case 'chat.html':
+      breadcrumbItems = [
+        { text: 'Home', url: 'index.html' },
+        { text: 'Chat', url: '' }
+      ];
       break;
     case 'index.html':
-      // Se estiver na home, não adicionar breadcrumb
-      return;
+      // Se estiver na home, mostrar apenas "Home"
+      breadcrumbItems = [{ text: 'Home', url: '' }];
+      break;
     default:
-      breadcrumbItems.push({ text: 'Página', url: '' });
+      breadcrumbItems = [
+        { text: 'Home', url: 'index.html' },
+        { text: 'Página', url: '' }
+      ];
   }
   
   // Substituir o conteúdo do breadcrumb
