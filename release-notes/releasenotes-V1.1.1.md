@@ -4,7 +4,7 @@
 
 Esta versão traz uma **refatoração completa do frontend e backend**, implementando melhorias significativas na organização do código, modularização de componentes, novos templates de prompt e experiência do usuário. Todas as funcionalidades existentes foram preservadas e aprimoradas.
 
-**Data de Lançamento:** Julho 2025
+**Data de Lançamento:** Janeiro 2025
 
 ---
 
@@ -16,15 +16,18 @@ Esta versão traz uma **refatoração completa do frontend e backend**, implemen
 - `frontend/public/style.css` (8.5KB, 418 linhas) - CSS extraído e organizado
 - `frontend/public/main.js` (2.9KB, 77 linhas) - Funções utilitárias globais
 - `frontend/public/index.js` (9.9KB, 259 linhas) - JavaScript específico da página principal
+- `frontend/public/chat.js` (9.9KB, 259 linhas) - JavaScript específico da página de chat
 - `frontend/public/config.js` (18KB, 442 linhas) - JavaScript específico da página de configurações
+- `frontend/public/docs.js` (2.1KB, 67 linhas) - JavaScript específico da página de documentação
 - `frontend/public/components/header.html` (425B, 6 linhas) - Componente header reutilizável
 - `frontend/public/components/footer.html` (568B, 10 linhas) - Componente footer reutilizável
-- `frontend/public/components/modal.html` (338B, 9 linhas) - Componente modal reutilizável
-- `frontend/public/docs/software-requirements.md` (12KB, 327 linhas) - Documentação organizada
+- `frontend/public/docs.html` (867B, 30 linhas) - Página de documentação
+- `frontend/public/chat.html` (2.5KB, 68 linhas) - Página de chat (renomeada de index.html)
+- `frontend/public/index.html` (4.1KB, 108 linhas) - Nova home page interativa
 
 #### ✅ **Arquivos Refatorados (Frontend):**
-- `frontend/public/index.html` (2.3KB, 49 linhas) - HTML limpo e modularizado
-- `frontend/public/config.html` (11KB, 164 linhas) - HTML limpo e modularizado
+- `frontend/public/config.html` (10.0KB, 154 linhas) - HTML limpo e modularizado
+- `frontend/public/assets/style.css` - CSS reorganizado em pasta assets
 
 #### ✅ **Arquivos Criados (Backend):**
 - `backend/api/routes_analyze.py` (2.3KB, 49 linhas) - Rotas de análise modularizadas
@@ -52,14 +55,16 @@ Esta versão traz uma **refatoração completa do frontend e backend**, implemen
 - **Temas**: Sistema completo de temas com suporte a modo automático
 
 #### ✅ **JavaScript Modularizado:**
-- **main.js**: Funções utilitárias globais (carregamento de componentes, temas)
-- **index.js**: Lógica específica da página principal (formulário, upload, análise)
-- **config.js**: Lógica específica da página de configurações (salvamento, validação)
+- **main.js**: Funções utilitárias globais (carregamento de componentes, temas, breadcrumbs)
+- **index.js**: Lógica específica da home page (animações, contadores, interações)
+- **chat.js**: Lógica específica da página de chat (formulário, upload, análise, tipos de IA)
+- **config.js**: Lógica específica da página de configurações (salvamento, validação, testes de API)
+- **docs.js**: Lógica específica da página de documentação (carregamento de markdown)
 
 #### ✅ **Componentes HTML:**
-- **Header**: Navegação e título reutilizável
+- **Header**: Navegação e título reutilizável com menu completo
 - **Footer**: Links e copyright reutilizável
-- **Modal**: Sistema de modal reutilizável
+- **Breadcrumbs**: Sistema de navegação dinâmico
 
 #### ✅ **Backend Modularizado:**
 - **API Routes**: Rotas separadas por funcionalidade (análise e configuração)
@@ -71,13 +76,21 @@ Esta versão traz uma **refatoração completa do frontend e backend**, implemen
 
 ### 🚀 **3. FUNCIONALIDADES IMPLEMENTADAS**
 
-#### ✅ **Novos Templates de Prompt:**
+#### ✅ **7 Tipos de Análise Especializados:**
 - **Card QA Writer**: Gera cards de teste estruturados com BDD/Gherkin
 - **Test Case Flow Generator**: Classifica casos de teste por fluxo (Principal/Alternativo/Exceção)
 - **Swagger Postman Generator**: Gera coleções Postman para APIs Swagger/OpenAPI
 - **Swagger Python Generator**: Gera testes Python/pytest para APIs Swagger/OpenAPI
+- **Curl Robot API Generator**: Automação Robot Framework a partir de cURL
+- **Swagger Robot Generator**: Automação completa Robot Framework
 - **Code Review Analyzer**: Análise técnica de diffs do Git com feedback em português
-- **StackSpot AI**: Template original mantido para compatibilidade
+
+#### ✅ **Interface Moderna:**
+- **Home Page Interativa**: Cards clicáveis com navegação direta
+- **Hero Features**: 4 cards principais (Chat Inteligente, Configurações, Múltiplas IAs, Templates)
+- **Tipos de Análise**: 7 cards clicáveis com pré-seleção automática
+- **Design Responsivo**: 2x2 grid em desktop, 1 coluna em mobile
+- **Altura Uniforme**: Cards com altura padronizada independente do conteúdo
 
 #### ✅ **Sistema de Temas:**
 - **Tema Escuro** (padrão): Interface escura com contraste otimizado
@@ -86,21 +99,24 @@ Esta versão traz uma **refatoração completa do frontend e backend**, implemen
 - **Persistência**: Configurações salvas no localStorage
 
 #### ✅ **Carregamento Dinâmico:**
-- **Componentes**: Header, footer e modal carregados dinamicamente
+- **Componentes**: Header, footer e breadcrumbs carregados dinamicamente
 - **Documentação**: Arquivo markdown carregado e convertido para HTML
 - **Configurações**: Sistema de configurações persistente
+- **Tipos de Análise**: Carregamento dinâmico do backend
 
 #### ✅ **Melhorias de UX:**
 - **Feedback Visual**: Indicadores de loading, sucesso e erro
 - **Validação**: Validação de formulários e configurações
 - **Acessibilidade**: Tooltips informativos e navegação por teclado
 - **Responsividade**: Layout adaptativo para mobile e desktop
+- **Breadcrumbs**: Navegação clara em todas as páginas
 
 #### ✅ **Backend Aprimorado:**
 - **Factory Pattern**: Arquitetura modular para serviços de IA
 - **Rotas Modulares**: API organizada por responsabilidade
 - **Suporte a JSON**: Upload e análise de arquivos JSON (Swagger/OpenAPI)
 - **Padronização**: Todos os templates usam {requirements} uniformemente
+- **Encoding Automático**: Detecção inteligente de encoding
 
 ---
 
@@ -168,41 +184,47 @@ Esta versão traz uma **refatoração completa do frontend e backend**, implemen
 
 ---
 
-### 📁 **4. ORGANIZAÇÃO DE ARQUIVOS**
+### 📁 **6. ORGANIZAÇÃO DE ARQUIVOS**
 
 #### ✅ **Estrutura Criada (Frontend):**
 ```
 frontend/public/
-├── style.css              # Estilos globais
-├── main.js               # Utilitários globais
-├── index.js              # Lógica da página principal
-├── config.js             # Lógica da página de configurações
-├── index.html            # Página principal limpa
-├── config.html           # Página de configurações limpa
-├── components/           # Componentes reutilizáveis
-│   ├── header.html
-│   ├── footer.html
-│   └── modal.html
-└── docs/                 # Documentação
+├── index.html              # Home page interativa
+├── chat.html               # Página de chat (renomeada)
+├── config.html             # Página de configurações
+├── docs.html               # Página de documentação
+├── assets/                 # Recursos estáticos
+│   ├── style.css           # Estilos globais
+│   └── favicon.ico         # Ícone
+├── js/                     # Scripts JavaScript
+│   ├── main.js             # Utilitários globais
+│   ├── index.js            # Lógica da home page
+│   ├── chat.js             # Lógica do chat
+│   ├── config.js           # Lógica de configurações
+│   └── docs.js             # Lógica da documentação
+├── components/             # Componentes reutilizáveis
+│   ├── header.html         # Header com navegação
+│   └── footer.html         # Footer
+└── docs/                   # Documentação
     └── software-requirements.md
 ```
 
 #### ✅ **Estrutura Criada (Backend):**
 ```
 backend/
-├── main.py               # Arquivo principal desacoplado
-├── api/                  # Rotas da API
-│   ├── routes_analyze.py # Rotas de análise
-│   └── routes_config.py  # Rotas de configuração
-├── services/             # Serviços de IA
-│   ├── ia_factory.py     # Factory pattern
-│   ├── ia_base.py        # Interface base
-│   ├── openai_service.py # Serviço OpenAI
+├── main.py                 # Arquivo principal desacoplado
+├── api/                    # Rotas da API
+│   ├── routes_analyze.py   # Rotas de análise
+│   └── routes_config.py    # Rotas de configuração
+├── services/               # Serviços de IA
+│   ├── ia_factory.py       # Factory pattern
+│   ├── ia_base.py          # Interface base
+│   ├── openai_service.py   # Serviço OpenAI
 │   └── stackspot_service.py # Serviço StackSpot
-└── utils/                # Utilitários
-    ├── config_utils.py   # Configurações
-    ├── file_utils.py     # Manipulação de arquivos
-    └── prompt_loader.py  # Carregador de prompts
+└── utils/                  # Utilitários
+    ├── config_utils.py     # Configurações
+    ├── file_utils.py       # Manipulação de arquivos
+    └── prompt_loader.py    # Carregador de prompts
 ```
 
 #### ✅ **Templates de Prompt:**
@@ -214,24 +236,25 @@ config/prompts/
 ├── prompt_template_swagger_python.txt              # Testes Python/pytest
 ├── prompt_template_robot_API_generator.txt         # Testes Robot Framework
 ├── prompt_template_swagger_robot_generator.txt     # Testes Robot Framework (Swagger)
-├── prompt_template_code_review_diff.txt            # Code Review Analyzer de diffs Git
-└── prompt_template_stackspot_ai.txt                # StackSpot AI (original)
+└── prompt_template_code_review_diff.txt            # Code Review Analyzer de diffs Git
 ```
 
 ---
 
-### 🎯 **5. CORREÇÕES E MELHORIAS**
+### 🎯 **7. CORREÇÕES E MELHORIAS**
 
 #### ✅ **Correções de Caminhos:**
 - **Documentação**: Caminho corrigido para `docs/software-requirements.md`
 - **Componentes**: Caminhos relativos corretos para carregamento dinâmico
 - **Assets**: Referências CSS e JS atualizadas
+- **Navegação**: URLs corrigidas para comunicação correta com backend
 
 #### ✅ **Melhorias de Performance:**
 - **Modularização**: Código separado por responsabilidade
 - **Carregamento**: Scripts carregados como módulos ES6
 - **Cache**: Configurações persistidas no localStorage
 - **Factory Pattern**: Carregamento dinâmico de serviços de IA
+- **Encoding Automático**: Detecção inteligente de encoding
 
 #### ✅ **Melhorias de Manutenibilidade:**
 - **Separação de Responsabilidades**: CSS, JS, HTML e Backend organizados
@@ -241,28 +264,29 @@ config/prompts/
 
 ---
 
-### ✅ **6. FUNCIONALIDADES PRESERVADAS**
+### ✅ **8. FUNCIONALIDADES PRESERVADAS**
 
 #### ✅ **Todas as Funcionalidades Originais Mantidas:**
 - **Upload de Arquivos**: PDF, TXT, JSON com drag & drop
 - **Análise de IA**: OpenAI e StackSpot AI
 - **Tipos de Análise**: Todos os 7 tipos disponíveis (incluindo 6 novos templates)
 - **Configurações**: Sistema completo de configurações
-- **Documentação**: Modal de ajuda com markdown
-- **Navegação**: Entre páginas principal e configurações
+- **Documentação**: Página dedicada com markdown
+- **Navegação**: Entre todas as páginas (Home, Chat, Docs, Config)
 - **Compatibilidade**: Retrocompatibilidade com configurações anteriores
 
 ---
 
-### 📊 **7. ESTATÍSTICAS DA REFATORAÇÃO**
+### 📊 **9. ESTATÍSTICAS DA REFATORAÇÃO**
 
-- **Arquivos Criados**: 17 novos arquivos (8 frontend + 9 backend)
-- **Arquivos Refatorados**: 3 arquivos principais (2 frontend + 1 backend)
-- **Linhas de Código**: ~50KB de código organizado
+- **Arquivos Criados**: 20 novos arquivos (10 frontend + 10 backend)
+- **Arquivos Refatorados**: 4 arquivos principais (3 frontend + 1 backend)
+- **Linhas de Código**: ~60KB de código organizado
 - **Componentes**: 3 componentes reutilizáveis
 - **Temas**: 3 temas disponíveis (dark/light/auto)
 - **Templates de Prompt**: 7 templates disponíveis (6 novos + 1 original)
 - **Funcionalidades**: 100% das funcionalidades preservadas
+- **Páginas**: 4 páginas completas (Home, Chat, Config, Docs)
 
 ---
 
@@ -277,11 +301,13 @@ config/prompts/
 - ✅ Carregamento otimizado de componentes
 - ✅ Cache de configurações no localStorage
 - ✅ Modularização para melhor manutenção
+- ✅ Encoding automático para arquivos
 
 ### **Acessibilidade:**
 - ✅ Tooltips informativos
 - ✅ Navegação por teclado
 - ✅ Contraste adequado nos temas
+- ✅ Breadcrumbs em todas as páginas
 
 ---
 
@@ -314,11 +340,16 @@ config/prompts/
 - Carregamento dinâmico de componentes
 - Sistema de configurações persistente
 - Melhorias de UX e acessibilidade
-- **4 novos templates de prompt especializados**
+- **6 novos templates de prompt especializados**
 - **Arquitetura modular do backend (Factory Pattern)**
 - **Suporte a arquivos JSON (Swagger/OpenAPI)**
 - **Rotas API modularizadas**
 - **Carregamento dinâmico de tipos de análise** do backend para o frontend
+- **Home page interativa** com cards clicáveis
+- **Sistema de breadcrumbs** em todas as páginas
+- **Página de documentação dedicada**
+- **Encoding automático** para arquivos
+- **Teste de APIs** integrado
 
 ### **Modificado:**
 - Estrutura de arquivos reorganizada (frontend e backend)
@@ -327,6 +358,9 @@ config/prompts/
 - HTML limpo e semântico
 - **Backend desacoplado e modularizado**
 - **Templates padronizados com {requirements}**
+- **Navegação refatorada** com header consistente
+- **Páginas renomeadas** (index.html → chat.html, nova index.html)
+- **Configurações avançadas** com validação de APIs
 
 ### **Corrigido:**
 - Caminhos de arquivos de documentação
@@ -336,6 +370,9 @@ config/prompts/
 - **Compatibilidade com configurações anteriores**
 - **Padronização de todos os templates de prompt**
 - **Inconsistência entre frontend e backend** nos tipos de análise disponíveis
+- **Bugs de navegação** e redirecionamento
+- **Bugs de configuração** e validação
+- **Bugs de interface** e responsividade
 
 ### **Removido:**
 - CSS inline das páginas HTML
@@ -345,6 +382,8 @@ config/prompts/
 - **Código monolítico no main.py**
 - **Opções hardcoded** de tipos de análise no frontend
 - **Dependência manual** de sincronização entre frontend e backend
+- **Botões redundantes** nas páginas
+- **Debug prints** em produção
 
 ---
 
@@ -354,12 +393,16 @@ config/prompts/
 
 #### ✅ **Navegação Refatorada:**
 - **Páginas Padronizadas**: Todas as páginas agora são páginas completas (não modais)
-- **Header com Navegação**: Menu de navegação no header com links para Chat, Docs e Config
+- **Header com Navegação**: Menu de navegação no header com links para Home, Chat, Docs e Config
 - **Breadcrumbs**: Implementados nas páginas de documentação e configurações
 - **Navegação Consistente**: Experiência uniforme entre todas as páginas
 
 #### ✅ **Estrutura de Arquivos Atualizada:**
-- **`frontend/public/docs.html`**: Nova página dedicada para documentação
+- **`frontend/public/index.html`**: Nova home page interativa
+- **`frontend/public/chat.html`**: Página de chat (renomeada de index.html)
+- **`frontend/public/docs.html`**: Página dedicada para documentação
+- **`frontend/public/js/chat.js`**: JavaScript específico para a página de chat
+- **`frontend/public/js/index.js`**: JavaScript específico para a home page
 - **`frontend/public/js/docs.js`**: JavaScript específico para a página de documentação
 - **`frontend/public/js/main.js`**: Centralização de funções utilitárias
 - **`frontend/public/assets/style.css`**: CSS reorganizado em pasta assets
@@ -440,13 +483,13 @@ config/prompts/
 - **Escape HTML**: Conteúdo de código escapado corretamente
 - **CSS Específico**: Estilos dedicados para documentação
 
-### 📊 **6. ESTATÍSTICAS ADICIONAIS**
+### 📊 **7. ESTATÍSTICAS ADICIONAIS**
 
-- **Arquivos Modificados**: 10 arquivos principais atualizados
-- **Novos Arquivos**: 2 novos arquivos criados (`docs.html`, `docs.js`)
+- **Arquivos Modificados**: 15 arquivos principais atualizados
+- **Novos Arquivos**: 5 novos arquivos criados (`index.html`, `chat.html`, `docs.html`, `chat.js`, `docs.js`)
 - **Bugs Corrigidos**: 10 bugs críticos resolvidos
-- **Melhorias UX**: 10 melhorias significativas de experiência do usuário
-- **Funcionalidades**: 1 novo template de análise adicionado
+- **Melhorias UX**: 15 melhorias significativas de experiência do usuário
+- **Funcionalidades**: 2 novos templates de análise adicionados
 - **Melhorias de Contraste**: Sistema completo de temas com syntax highlighting adaptativo
 
 ---
@@ -458,16 +501,19 @@ A versão **v1.1.1** representa um marco importante na evolução do BSQA Card W
 **Principais conquistas desta versão:**
 - ✅ **Frontend completamente refatorado** com componentes modulares
 - ✅ **Backend desacoplado** com arquitetura Factory Pattern
-- ✅ **4 novos templates de prompt** especializados para diferentes cenários
+- ✅ **6 novos templates de prompt** especializados para diferentes cenários
 - ✅ **Suporte a arquivos JSON** para análise de APIs Swagger/OpenAPI
 - ✅ **Sistema de temas** completo e responsivo com contraste otimizado
 - ✅ **Syntax highlighting adaptativo** para melhor legibilidade
+- ✅ **Interface moderna** com home page interativa
+- ✅ **Sistema de breadcrumbs** em todas as páginas
+- ✅ **Encoding automático** para arquivos
 - ✅ **Compatibilidade total** com versões anteriores
 
 **Status**: ✅ **100% Concluído e Funcional**
 
 ---
 
-*Release Date: Julho 2025*  
+*Release Date: Janeiro 2025*  
 *Version: 1.1.1*  
-*Type: Major Refactoring* 
+*Type: Major Refactoring + New Features* 
