@@ -181,7 +181,7 @@ function bindFormEvents() {
       });
       const data = await res.json();
       if (!res.ok) {
-        output.innerHTML = `<div class="error">${data.detail}</div>`;
+        output.innerHTML = `<div class="error" data-testid="chat-error-message">${data.detail}</div>`;
       } else {
         let message = data.result && data.result.message ? data.result.message : data.result;
         
@@ -189,13 +189,13 @@ function bindFormEvents() {
         message = message.replace(/^\s+/, ''); // Remove espaços no início
         
         output.innerHTML = `
-          <div class="result-container">
-            <button class="copy-btn" onclick="copyToClipboard(this)" data-text="${encodeURIComponent(message)}" title="Copiar resposta" style="position: sticky !important; top: 0.5rem !important; right: 0.5rem !important; left: auto !important; float: right !important; margin: 0.5rem !important; z-index: 10 !important;">
+          <div class="result-container" data-testid="chat-result-container">
+            <button class="copy-btn" onclick="copyToClipboard(this)" data-text="${encodeURIComponent(message)}" title="Copiar resposta" style="position: sticky !important; top: 0.5rem !important; right: 0.5rem !important; left: auto !important; float: right !important; margin: 0.5rem !important; z-index: 10 !important;" data-testid="chat-copy-result-button">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h6a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z"/>
               </svg>
             </button>
-            <div class="result">${message.replace(/\n/g, '<br>')}</div>
+            <div class="result" data-testid="chat-result-text">${message.replace(/\n/g, '<br>')}</div>
           </div>
         `;
         fileInput.value = '';
@@ -203,7 +203,7 @@ function bindFormEvents() {
         updateDropFeedback();
       }
     } catch (err) {
-      output.innerHTML = `<div class="error">${err}</div>`;
+      output.innerHTML = `<div class="error" data-testid="chat-error-message">${err}</div>`;
     } finally {
       submitBtn.disabled = false;
       // Reabilitar elementos de upload

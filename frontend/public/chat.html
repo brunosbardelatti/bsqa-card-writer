@@ -20,16 +20,16 @@
     
     <form id="reqForm">
     <label style="width: 100%;">
-      <textarea id="requirements" name="requirements" rows="10" placeholder="Digite seus requisitos aqui ou selecione um arquivo"></textarea>
+      <textarea id="requirements" name="requirements" rows="10" placeholder="Digite seus requisitos aqui ou selecione um arquivo" data-testid="chat-textarea-requirements"></textarea>
     </label>
     <div style="display: flex; flex-direction: row; align-items: flex-start; width: 100%; gap: 1rem; margin-top: 0.5rem;">
       <div style="flex: 1; min-width: 220px;">
-        <div class="drop-zone" id="dropZone">
+        <div class="drop-zone" id="dropZone" data-testid="chat-drop-zone">
           Arraste e solte seu PDF, TXT ou JSON aqui<br>
           <span style="color: #ffffff; text-decoration: underline;">Escolha um arquivo</span>
-          <input type="file" id="fileInput" name="file" accept=".pdf,.txt,.json">
-          <div class="drop-feedback" id="dropFeedback" style="display:none;"></div>
-          <button class="drop-remove-btn" id="dropRemoveBtn" style="display:none;" title="Remover arquivo">×</button>
+          <input type="file" id="fileInput" name="file" accept=".pdf,.txt,.json" data-testid="chat-file-input">
+          <div class="drop-feedback" id="dropFeedback" style="display:none;" data-testid="chat-drop-feedback"></div>
+          <button class="drop-remove-btn" id="dropRemoveBtn" style="display:none;" title="Remover arquivo" data-testid="chat-button-remove-file">×</button>
         </div>
       </div>
       <div style="display: flex; flex-direction: column; align-items: stretch; gap: 1rem; flex: 0 0 200px; max-width: 200px; min-width: 160px;">
@@ -37,7 +37,7 @@
           <label for="service">
             🤖 IA de Análise
           </label>
-          <select id="service" name="service">
+          <select id="service" name="service" data-testid="chat-select-ia-service">
           <option value="openai">OpenAI</option>
           <option value="stackspot">StackSpot AI</option>
         </select>
@@ -47,18 +47,18 @@
           <label for="analyse_type">
             📋 Tipo de Análise
           </label>
-          <select id="analyse_type" name="analyse_type">
+          <select id="analyse_type" name="analyse_type" data-testid="chat-select-analysis-type">
             <option value="">Carregando tipos de análise...</option>
         </select>
         </div>
         
-        <button type="submit" class="submit-btn">
+        <button type="submit" class="submit-btn" data-testid="chat-button-submit">
           🚀 Enviar
         </button>
       </div>
     </div>
     </form>
-    <div id="output"></div>
+    <div id="output" data-testid="chat-output-container"></div>
   </div>
   <div id="footer"></div>
   <script type="module" src="js/main.js"></script>
