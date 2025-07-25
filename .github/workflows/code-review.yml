@@ -6,14 +6,16 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write  # Necessário para comentar no PR
+  pull-requests: write
 
 jobs:
   ai-review:
     runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
 
     steps:
-      - name: Checkout repository
+      - name: 🔄 Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -40,12 +42,12 @@ jobs:
           fi
           echo "✅ Todas as dependências foram verificadas"
 
-      - name: 🔄 Gerando diff
+      - name: 🔍 Gerando Diff
         run: |
           echo "Fetching base branch..."
-          git fetch origin release/v1.1.0
+          git fetch origin ${{ github.base_ref }}
           echo "Generating diff..."
-          git diff origin/release/v1.1.0...HEAD > diff.txt
+          git diff origin/${{ github.base_ref }}...HEAD > diff.txt
 
           if [ ! -f diff.txt ] || [ ! -s diff.txt ]; then
             echo "❌ Erro: Não foi possível gerar o diff ou o diff está vazio"
@@ -63,14 +65,10 @@ jobs:
           echo "=== DIFF FILE PREVIEW ==="
           head -n 20 diff.txt
 
-      - name: 🔐 Autenticando com StackSpot
+      - name: 🔐 Gerando Token StackSpot
         run: |
-          echo "🔐 Autenticando com StackSpot..."
-          TOKEN_RESPONSE=$(curl -s --location 'https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token' \
-            --header 'Content-Type: application/x-www-form-urlencoded' \
-            --data-urlencode "client_id=${{ secrets.STACKSPOT_CLIENT_ID }}" \
-            --data-urlencode 'grant_type=client_credentials' \
-            --data-urlencode "client_secret=${{ secrets.STACKSPOT_CLIENT_SECRET }}")
+          echo "Gerando token StackSpot..."
+          TOKEN_RESPONSE=$(curl -s --location 'https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token'             --header 'Content-Type: application/x-www-form-urlencoded'             --data-urlencode "client_id=${{ secrets.STACKSPOT_CLIENT_ID }}"             --data-urlencode 'grant_type=client_credentials'             --data-urlencode "client_secret=${{ secrets.STACKSPOT_CLIENT_SECRET }}")
 
           if echo "$TOKEN_RESPONSE" | jq -e '.access_token' > /dev/null 2>&1; then
             ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
@@ -136,11 +134,7 @@ jobs:
           head -n 40 prompt.txt
 
           echo "=== ENVIANDO REQUISIÇÃO PARA STACKSPOT ==="
-          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --location \
-            'https://genai-inference-app.stackspot.com/v1/agent/01JZ4135ZCD42NN04PRGA4XA1C/chat' \
-            --header 'Content-Type: application/json' \
-            --header "Authorization: $ACCESS_TOKEN" \
-            --data "$(jq -n --arg prompt "$PROMPT_CONTENT" '{
+          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --location             'https://genai-inference-app.stackspot.com/v1/agent/01JZ4135ZCD42NN04PRGA4XA1C/chat'             --header 'Content-Type: application/json'             --header "Authorization: Bearer $ACCESS_TOKEN"             --data "$(jq -n --arg prompt "$PROMPT_CONTENT" '{
               "streaming": false,
               "user_prompt": $prompt,
               "stackspot_knowledge": false,
@@ -171,7 +165,7 @@ jobs:
           echo "" >> final_review.txt
           echo "**PR:** #${{ github.event.pull_request.number }}" >> final_review.txt
           echo "**Branch:** \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`" >> final_review.txt
-          echo "**Commit:** ${{ github.event.pull_request.head.sha }}" >> final_review.txt
+          echo "**Commit:** ${{ github.sha }}" >> final_review.txt
           echo "" >> final_review.txt
           echo "---" >> final_review.txt
           echo "" >> final_review.txt
