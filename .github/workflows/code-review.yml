@@ -179,18 +179,22 @@ jobs:
           echo "🚀 Enviando requisição para StackSpot AI..."
           echo "📊 Tamanho do prompt: $(wc -c < prompt.txt) caracteres"
           
-          # Corrigir problema de escape: usar jq -Rs para processar raw string 
-          # evitando que { seja escapado para {{ causando falsos positivos na IA
-          echo "🔧 Processando prompt com jq para evitar escape incorreto de chaves..."
-          ESCAPED_PROMPT=$(printf '%s' "$PROMPT_CONTENT" | jq -Rs .)
-          echo "✅ Prompt processado. Tamanho após escape: ${#ESCAPED_PROMPT} caracteres"
+          # Corrigir problema de escape: criar JSON usando arquivo temporário
+          # para preservar exatamente o conteúdo original sem escape de caracteres
+          echo "🔧 Criando payload JSON sem escape de caracteres especiais..."
           
-          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --location             "https://genai-inference-app.stackspot.com/v1/agent/${{ secrets.STACKSPOT_AGENT_ID }}/chat"             --header 'Content-Type: application/json'             --header "Authorization: Bearer $ACCESS_TOKEN"             --data "{
-              \"streaming\": false,
-              \"user_prompt\": $ESCAPED_PROMPT,
-              \"stackspot_knowledge\": false,
-              \"return_ks_in_response\": false
-            }")
+          # Criar JSON usando jq mas passando o prompt como arquivo
+          echo "$PROMPT_CONTENT" > prompt_content.tmp
+          jq -n --rawfile prompt prompt_content.tmp '{
+            "streaming": false,
+            "user_prompt": $prompt,
+            "stackspot_knowledge": false,
+            "return_ks_in_response": false
+          }' > payload.json
+          
+          echo "✅ Payload JSON criado. Tamanho: $(wc -c < payload.json) caracteres"
+          
+          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --location             "https://genai-inference-app.stackspot.com/v1/agent/${{ secrets.STACKSPOT_AGENT_ID }}/chat"             --header 'Content-Type: application/json'             --header "Authorization: Bearer $ACCESS_TOKEN"             --data @payload.json)
 
           # Debug: Verificar se a resposta não está vazia
           if [ -z "$RESPONSE" ]; then
@@ -330,7 +334,7 @@ jobs:
         if: always()
         run: |
           echo "🧹 Iniciando limpeza de arquivos temporários..."
-          FILES_TO_CLEAN="diff.txt prompt.txt review.txt final_review.txt"
+          FILES_TO_CLEAN="diff.txt prompt.txt review.txt final_review.txt prompt_content.tmp payload.json"
           for file in $FILES_TO_CLEAN; do
             if [ -f "$file" ]; then
               rm -f "$file"
