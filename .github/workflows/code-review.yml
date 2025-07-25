@@ -179,9 +179,10 @@ jobs:
           echo "🚀 Enviando requisição para StackSpot AI..."
           echo "📊 Tamanho do prompt: $(wc -c < prompt.txt) caracteres"
           
-          echo "🔧 Criando payload JSON com Python para evitar escape de caracteres..."
+          echo "🔧 Criando payload JSON sem escape de caracteres..."
           
-          python3 << 'PYTHON_EOF'
+          # Criar script Python temporário
+          cat > create_payload.py << 'EOF'
 import json
 import sys
 
@@ -201,14 +202,17 @@ payload = {
 with open('payload.json', 'w', encoding='utf-8') as f:
     json.dump(payload, f, ensure_ascii=False, separators=(',', ':'))
 
-print(f"✅ Payload JSON criado com Python. Tamanho: {len(json.dumps(payload, ensure_ascii=False))} caracteres")
+print(f"✅ Payload JSON criado. Tamanho: {len(json.dumps(payload, ensure_ascii=False))} caracteres")
 
 # Debug: mostrar primeiras linhas do prompt que foi processado
 print("🔍 DEBUG - Primeiras 10 linhas do prompt enviado:")
 lines = prompt_content.split('\n')
 for i, line in enumerate(lines[:10]):
     print(f"  {i+1}: {line}")
-PYTHON_EOF
+EOF
+
+          # Executar o script Python
+          python3 create_payload.py
           
           RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --location             "https://genai-inference-app.stackspot.com/v1/agent/${{ secrets.STACKSPOT_AGENT_ID }}/chat"             --header 'Content-Type: application/json'             --header "Authorization: Bearer $ACCESS_TOKEN"             --data @payload.json)
 
@@ -350,7 +354,7 @@ PYTHON_EOF
         if: always()
         run: |
           echo "🧹 Iniciando limpeza de arquivos temporários..."
-          FILES_TO_CLEAN="diff.txt prompt.txt review.txt final_review.txt payload.json"
+          FILES_TO_CLEAN="diff.txt prompt.txt review.txt final_review.txt payload.json create_payload.py"
           for file in $FILES_TO_CLEAN; do
             if [ -f "$file" ]; then
               rm -f "$file"
