@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+  pull-requests: write  # Necessário para comentar no PR
+
 jobs:
   ai-review:
     runs-on: ubuntu-latest
@@ -18,7 +22,6 @@ jobs:
         run: |
           echo "📦 Instalando dependências necessárias..."
           
-          # Instalar jq se não estiver disponível
           if ! command -v jq &> /dev/null; then
             echo "Instalando jq..."
             sudo apt update
@@ -27,7 +30,6 @@ jobs:
             echo "✅ jq já está instalado"
           fi
           
-          # Instalar gh CLI se não estiver disponível
           if ! command -v gh &> /dev/null; then
             echo "Instalando GitHub CLI..."
             curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
@@ -53,7 +55,6 @@ jobs:
             echo "No changes to review" > diff.txt
           fi
           
-          # Limitar tamanho do diff (máximo 50KB)
           DIFF_SIZE=$(wc -c < diff.txt)
           if [ $DIFF_SIZE -gt 51200 ]; then
             echo "⚠️ Diff muito grande ($DIFF_SIZE bytes), truncando..."
@@ -89,7 +90,6 @@ jobs:
         run: |
           echo "🤖 Chamando StackSpot AI para revisão..."
           
-          # Criar arquivo temporário com o prompt
           {
             echo "You are a senior code reviewer."
             echo
@@ -135,9 +135,13 @@ jobs:
           } > prompt.txt
           
           PROMPT_CONTENT=$(cat prompt.txt)
-          
-          # Enviar para a API da StackSpot
-          RESPONSE=$(curl -s --location 'https://genai-inference-app.stackspot.com/v1/agent/01JZ4135ZCD42NN04PRGA4XA1C/chat' \
+
+          echo "=== PROMPT SENDIDO (primeiras 40 linhas) ==="
+          head -n 40 prompt.txt
+
+          echo "=== ENVIANDO REQUISIÇÃO PARA STACKSPOT ==="
+          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" --location \
+            'https://genai-inference-app.stackspot.com/v1/agent/01JZ4135ZCD42NN04PRGA4XA1C/chat' \
             --header 'Content-Type: application/json' \
             --header "Authorization: Bearer $ACCESS_TOKEN" \
             --data "$(jq -n --arg prompt "$PROMPT_CONTENT" '{
@@ -147,8 +151,15 @@ jobs:
               "return_ks_in_response": false
             }')")
 
-          if echo "$RESPONSE" | jq -e '.output_text' > /dev/null 2>&1; then
-            echo "$RESPONSE" | jq -r '.output_text' > review.txt
+          HTTP_STATUS=$(echo "$RESPONSE" | grep HTTP_STATUS | cut -d':' -f2)
+          RESPONSE_BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS/d')
+
+          echo "=== HTTP STATUS: $HTTP_STATUS ==="
+          echo "=== RESPOSTA COMPLETA ==="
+          echo "$RESPONSE_BODY" | jq .
+
+          if echo "$RESPONSE_BODY" | jq -e '.output_text' > /dev/null 2>&1; then
+            echo "$RESPONSE_BODY" | jq -r '.output_text' > review.txt
             echo "✅ Revisão gerada com sucesso"
           else
             echo "⚠️ Falha na análise de código por IA - verifique manualmente" > review.txt
