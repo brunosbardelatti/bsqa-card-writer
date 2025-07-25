@@ -147,7 +147,6 @@ jobs:
             echo "3. **Classificação de Achados**"
             echo "   - **Críticos** – Bugs, logical errors,hardcoded sensitive data, or security vulnerabilities."
             echo "   - **Melhorias** – Refactorings, best practices, performance, linting."
-            echo "   - **Opiniões** – Optional style or clarity improvements."
             echo
             echo "4. **Resumo Final**"
             echo "   - Return **APROVADO** if no critical issues are found."
