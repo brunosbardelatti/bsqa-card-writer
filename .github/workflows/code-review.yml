@@ -185,8 +185,27 @@ jobs:
               "return_ks_in_response": false
             }')")
 
-          HTTP_STATUS=$(echo "$RESPONSE" | grep "###STATUS###" | sed 's/###STATUS###//')
-          RESPONSE_BODY=$(echo "$RESPONSE" | sed '/###STATUS###/d')
+          # Debug: Verificar se a resposta não está vazia
+          if [ -z "$RESPONSE" ]; then
+            echo "❌ Resposta vazia da API StackSpot"
+            exit 1
+          fi
+
+          # Extrair status HTTP corretamente
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n 1 | sed 's/.*###STATUS###//')
+          RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
+
+          # Debug temporário
+          echo "🔍 DEBUG - Tamanho da resposta: ${#RESPONSE} caracteres"
+          echo "🔍 DEBUG - Status HTTP extraído: '$HTTP_STATUS'"
+
+          # Validar se status HTTP é numérico
+          if ! [[ "$HTTP_STATUS" =~ ^[0-9]+$ ]]; then
+            echo "❌ Erro: Status HTTP não é numérico: '$HTTP_STATUS'"
+            echo "🔍 Últimas 5 linhas da resposta completa:"
+            echo "$RESPONSE" | tail -n 5
+            exit 1
+          fi
 
           echo "📡 Status HTTP da resposta: $HTTP_STATUS"
           if [ "$HTTP_STATUS" != "200" ]; then
@@ -198,15 +217,43 @@ jobs:
             echo "⏱️ Tempo de resposta da API: $((SECONDS - AI_START_TIME))s"
           fi
 
+          # Debug: Mostrar início do response body
+          echo "🔍 DEBUG - Primeiros 200 caracteres do response body:"
+          echo "$RESPONSE_BODY" | head -c 200
+          echo ""
+
+          # Validar se response body é JSON válido
+          if ! echo "$RESPONSE_BODY" | jq . > /dev/null 2>&1; then
+            echo "❌ Response body não é JSON válido"
+            echo "📄 Conteúdo recebido:"
+            echo "$RESPONSE_BODY" | head -c 500
+            exit 1
+          fi
+
+          # Extrair resposta da IA
           REVIEW_OUTPUT=$(echo "$RESPONSE_BODY" | jq -r '.message // .output_text // empty')
-          if [ -z "$REVIEW_OUTPUT" ]; then
-            echo "⚠️ Falha na análise de código por IA - verifique manualmente" > review.txt
-            echo "❌ Resposta da IA está vazia ou inválida"
-          else
-            echo "$REVIEW_OUTPUT" > review.txt
-            REVIEW_LENGTH=$(echo "$REVIEW_OUTPUT" | wc -c)
+          
+          # Debug: Verificar extração
+          echo "🔍 DEBUG - REVIEW_OUTPUT extraído: ${#REVIEW_OUTPUT} caracteres"
+          
+          if [ -z "$REVIEW_OUTPUT" ] || [ "$REVIEW_OUTPUT" = "null" ]; then
+            echo "❌ Falha ao extrair resposta da IA"
+            echo "📋 Tentando extrair diretamente da resposta JSON:"
+            # Fallback: tentar extrair de outras formas
+            REVIEW_OUTPUT=$(echo "$RESPONSE_BODY" | jq -r '.message' 2>/dev/null) || \
+            REVIEW_OUTPUT=$(echo "$RESPONSE_BODY" | jq -r '.output_text' 2>/dev/null) || \
+            REVIEW_OUTPUT="⚠️ Falha na análise de código por IA - verifique manualmente"
+          fi
+
+          # Salvar resultado final
+          echo "$REVIEW_OUTPUT" > review.txt
+          REVIEW_LENGTH=$(echo "$REVIEW_OUTPUT" | wc -c)
+          
+          if [ "$REVIEW_LENGTH" -gt 50 ]; then
             echo "✅ Análise da IA concluída com sucesso"
             echo "📊 Tamanho da resposta: $REVIEW_LENGTH caracteres"
+          else
+            echo "⚠️ Resposta da IA muito curta, pode ter havido problema"
           fi
 
           echo "📋 Conteúdo da revisão gerada:"
@@ -248,16 +295,28 @@ jobs:
             echo "⚠️ Arquivo review.txt não encontrado!"
             exit 1
           fi
-          
+
+          # Debug: Mostrar tamanho e início do arquivo de review
+          REVIEW_SIZE=$(wc -c < review.txt)
+          echo "🔍 DEBUG - Tamanho do arquivo review.txt: $REVIEW_SIZE caracteres"
+          echo "🔍 DEBUG - Primeiras 3 linhas do review.txt:"
+          head -n 3 review.txt
+
+          # Verificar se contém palavra REPROVADO
           if grep -q "REPROVADO" review.txt; then
             echo "❌ RESULTADO: REPROVADO"
             echo "🚨 A revisão da IA encontrou problemas críticos."
             echo "📋 O job será falhado para bloquear o merge."
             exit 1
-          else
+          elif grep -q "APROVADO" review.txt; then
             echo "✅ RESULTADO: APROVADO"
             echo "🎉 A revisão da IA aprovou as alterações."
             echo "🚀 O PR pode prosseguir para merge."
+          else
+            echo "⚠️ RESULTADO: INDETERMINADO"
+            echo "🔍 Não foi possível determinar se foi aprovado ou reprovado"
+            echo "📋 Conteúdo do review será incluído no comentário do PR"
+            echo "⚡ Assumindo aprovação para não bloquear o fluxo"
           fi
 
       - name: 🧹 Limpeza
