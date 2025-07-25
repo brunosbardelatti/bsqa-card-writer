@@ -18,10 +18,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install dependencies
+      - name: 📦 Instalando dependências necessárias
         run: |
           echo "📦 Instalando dependências necessárias..."
-          
           if ! command -v jq &> /dev/null; then
             echo "Instalando jq..."
             sudo apt update
@@ -29,7 +28,7 @@ jobs:
           else
             echo "✅ jq já está instalado"
           fi
-          
+
           if ! command -v gh &> /dev/null; then
             echo "Instalando GitHub CLI..."
             curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
@@ -39,22 +38,20 @@ jobs:
           else
             echo "✅ GitHub CLI já está instalado"
           fi
-          
           echo "✅ Todas as dependências foram verificadas"
 
-      - name: Get Pull Request Diff
+      - name: 🔄 Gerando diff
         run: |
           echo "Fetching base branch..."
-          git fetch origin ${{ github.base_ref }}
-          
+          git fetch origin release/v1.1.0
           echo "Generating diff..."
-          git diff origin/${{ github.base_ref }}...HEAD > diff.txt
-          
+          git diff origin/release/v1.1.0...HEAD > diff.txt
+
           if [ ! -f diff.txt ] || [ ! -s diff.txt ]; then
             echo "❌ Erro: Não foi possível gerar o diff ou o diff está vazio"
             echo "No changes to review" > diff.txt
           fi
-          
+
           DIFF_SIZE=$(wc -c < diff.txt)
           if [ $DIFF_SIZE -gt 51200 ]; then
             echo "⚠️ Diff muito grande ($DIFF_SIZE bytes), truncando..."
@@ -62,20 +59,19 @@ jobs:
             echo -e "\n\n... [DIFF TRUNCADO - MUITAS ALTERAÇÕES] ..." >> diff_truncated.txt
             mv diff_truncated.txt diff.txt
           fi
-          
+
           echo "=== DIFF FILE PREVIEW ==="
           head -n 20 diff.txt
 
-      - name: Authenticate with StackSpot
+      - name: 🔐 Autenticando com StackSpot
         run: |
           echo "🔐 Autenticando com StackSpot..."
-          
           TOKEN_RESPONSE=$(curl -s --location 'https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token' \
             --header 'Content-Type: application/x-www-form-urlencoded' \
             --data-urlencode "client_id=${{ secrets.STACKSPOT_CLIENT_ID }}" \
             --data-urlencode 'grant_type=client_credentials' \
             --data-urlencode "client_secret=${{ secrets.STACKSPOT_CLIENT_SECRET }}")
-          
+
           if echo "$TOKEN_RESPONSE" | jq -e '.access_token' > /dev/null 2>&1; then
             ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
             echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
@@ -86,10 +82,10 @@ jobs:
             exit 1
           fi
 
-      - name: Call StackSpot AI for Code Review
+      - name: 🤖 Chamando StackSpot AI para revisão
         run: |
           echo "🤖 Chamando StackSpot AI para revisão..."
-          
+
           {
             echo "You are a senior code reviewer."
             echo
@@ -133,17 +129,17 @@ jobs:
             cat diff.txt
             echo "<DIFF_END>"
           } > prompt.txt
-          
+
           PROMPT_CONTENT=$(cat prompt.txt)
 
           echo "=== PROMPT SENDIDO (primeiras 40 linhas) ==="
           head -n 40 prompt.txt
 
           echo "=== ENVIANDO REQUISIÇÃO PARA STACKSPOT ==="
-          RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" --location \
+          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --location \
             'https://genai-inference-app.stackspot.com/v1/agent/01JZ4135ZCD42NN04PRGA4XA1C/chat' \
             --header 'Content-Type: application/json' \
-            --header "Authorization: Bearer $ACCESS_TOKEN" \
+            --header "Authorization: $ACCESS_TOKEN" \
             --data "$(jq -n --arg prompt "$PROMPT_CONTENT" '{
               "streaming": false,
               "user_prompt": $prompt,
@@ -151,12 +147,12 @@ jobs:
               "return_ks_in_response": false
             }')")
 
-          HTTP_STATUS=$(echo "$RESPONSE" | grep HTTP_STATUS | cut -d':' -f2)
-          RESPONSE_BODY=$(echo "$RESPONSE" | sed '/HTTP_STATUS/d')
+          HTTP_STATUS=$(echo "$RESPONSE" | grep "###STATUS###" | sed 's/###STATUS###//')
+          RESPONSE_BODY=$(echo "$RESPONSE" | sed '/###STATUS###/d')
 
           echo "=== HTTP STATUS: $HTTP_STATUS ==="
-          echo "=== RESPOSTA COMPLETA ==="
-          echo "$RESPONSE_BODY" | jq .
+          echo "=== RESPOSTA COMPLETA (RAW) ==="
+          echo "$RESPONSE_BODY"
 
           if echo "$RESPONSE_BODY" | jq -e '.output_text' > /dev/null 2>&1; then
             echo "$RESPONSE_BODY" | jq -r '.output_text' > review.txt
@@ -168,12 +164,9 @@ jobs:
           echo "=== AI REVIEW OUTPUT ==="
           cat review.txt
 
-      - name: Add AI Review as PR Comment
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 💬 Adicionando comentário ao PR
         run: |
           echo "💬 Adicionando comentário ao PR..."
-          
           echo "## 🤖 Revisão Automática de Código - StackSpot AI" > final_review.txt
           echo "" >> final_review.txt
           echo "**PR:** #${{ github.event.pull_request.number }}" >> final_review.txt
@@ -186,15 +179,14 @@ jobs:
           echo "" >> final_review.txt
           echo "---" >> final_review.txt
           echo "*Revisão gerada automaticamente em $(date -u '+%Y-%m-%d %H:%M:%S UTC')*" >> final_review.txt
-          
+
           gh pr comment ${{ github.event.pull_request.number }} --body-file final_review.txt || {
             echo "❌ Erro ao adicionar comentário"
             cat final_review.txt
             exit 1
           }
 
-      - name: Cleanup
-        if: always()
+      - name: 🧹 Limpeza
         run: |
           rm -f diff.txt prompt.txt review.txt final_review.txt
           echo "🧹 Limpeza concluída"
