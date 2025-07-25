@@ -175,7 +175,7 @@ function bindFormEvents() {
       formData.append('return_ks_in_response', config.returnKsInResponse || false);
     }
     try {
-      const res = await fetch('http://localhost:8000/analyze', {
+      const res = await fetch(window.ApiConfig.buildUrl('/analyze'), {
         method: 'POST',
         body: formData
       });
@@ -237,7 +237,7 @@ async function loadDefaultAI(applyDefaults = true) {
     // Carregar configurações de API do servidor
     let apiConfig = {};
     try {
-      const response = await fetch('http://localhost:8000/api-config');
+      const response = await fetch(window.ApiConfig.buildUrl('/api-config'));
       if (response.ok) {
         apiConfig = await response.json();
       }
@@ -408,7 +408,7 @@ window.addEventListener('focus', async () => {
 // Carregar tipos de análise disponíveis do backend
 async function loadAnalysisTypes() {
   try {
-    const response = await fetch('http://localhost:8000/analysis-types');
+    const response = await fetch(window.ApiConfig.buildUrl('/analysis-types'));
     const data = await response.json();
     const analyseTypeSelect = document.getElementById('analyse_type');
     
