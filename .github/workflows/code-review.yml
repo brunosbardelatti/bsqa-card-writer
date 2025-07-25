@@ -180,16 +180,19 @@ jobs:
             exit 1
           }
 
-      - name: 🧹 Limpeza
-        run: |
-          rm -f diff.txt prompt.txt review.txt final_review.txt
-          echo "🧹 Limpeza concluída"
-
       - name: ⛔ Validando resultado da IA
         run: |
+          echo "=== Conteúdo de review.txt ==="
+          cat review.txt || echo "⚠️ Arquivo review.txt não encontrado!"
           if grep -q "REPROVADO" review.txt; then
             echo "❌ A revisão da IA encontrou problemas críticos. Falhando job."
             exit 1
           else
             echo "✅ A revisão da IA aprovou as alterações."
           fi
+
+      - name: 🧹 Limpeza
+        if: always()
+        run: |
+          rm -f diff.txt prompt.txt review.txt final_review.txt
+          echo "🧹 Limpeza concluída"
