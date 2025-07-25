@@ -179,84 +179,18 @@ jobs:
           echo "🚀 Enviando requisição para StackSpot AI..."
           echo "📊 Tamanho do prompt: $(wc -c < prompt.txt) caracteres"
           
-          echo "🔧 Criando payload JSON sem escape de caracteres..."
+          # Corrigir problema de escape: usar jq -Rs para processar raw string 
+          # evitando que { seja escapado para {{ causando falsos positivos na IA
+          echo "🔧 Processando prompt com jq para evitar escape incorreto de chaves..."
+          ESCAPED_PROMPT=$(printf '%s' "$PROMPT_CONTENT" | jq -Rs .)
+          echo "✅ Prompt processado. Tamanho após escape: ${#ESCAPED_PROMPT} caracteres"
           
-          # Criar script Python temporário
-          cat > create_payload.py << 'EOF'
-import json
-import sys
-
-# Ler o prompt do arquivo
-with open('prompt.txt', 'r', encoding='utf-8') as f:
-    prompt_content = f.read()
-
-# Criar payload JSON
-payload = {
-    "streaming": False,
-    "user_prompt": prompt_content,
-    "stackspot_knowledge": False,
-    "return_ks_in_response": False
-}
-
-# Salvar JSON no arquivo
-with open('payload.json', 'w', encoding='utf-8') as f:
-    json.dump(payload, f, ensure_ascii=False, separators=(',', ':'))
-
-print(f"✅ Payload JSON criado. Tamanho: {len(json.dumps(payload, ensure_ascii=False))} caracteres")
-
-# Debug: mostrar primeiras linhas do prompt que foi processado
-print("🔍 DEBUG - Primeiras 10 linhas do prompt enviado:")
-lines = prompt_content.split('\n')
-for i, line in enumerate(lines[:10]):
-    print(f"  {i+1}: {line}")
-EOF
-
-          # Executar o script Python
-          if ! python3 create_payload.py; then
-            echo "❌ Erro ao executar script Python para criar payload"
-            echo "🔍 Verificando se o arquivo prompt.txt existe..."
-            if [ ! -f prompt.txt ]; then
-              echo "❌ Arquivo prompt.txt não encontrado"
-              exit 1
-            fi
-            echo "📄 Tamanho do prompt.txt: $(wc -c < prompt.txt) caracteres"
-            echo "🔍 Primeiras 5 linhas do prompt.txt:"
-            head -n 5 prompt.txt
-            exit 1
-          fi
-          
-          # Verificar se o payload.json foi criado corretamente
-          if [ ! -f payload.json ]; then
-            echo "❌ Arquivo payload.json não foi criado"
-            exit 1
-          fi
-          
-          PAYLOAD_SIZE=$(wc -c < payload.json)
-          if [ "$PAYLOAD_SIZE" -lt 100 ]; then
-            echo "❌ Arquivo payload.json muito pequeno ($PAYLOAD_SIZE bytes), pode estar corrompido"
-            echo "🔍 Conteúdo do payload.json:"
-            cat payload.json
-            exit 1
-          fi
-          
-          echo "✅ Payload JSON validado com sucesso ($PAYLOAD_SIZE bytes)"
-          
-          # Executar requisição com tratamento de erro melhorado
-          set +e  # Desabilitar exit on error temporariamente
-          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --max-time 60 --retry 1 --location "https://genai-inference-app.stackspot.com/v1/agent/${{ secrets.STACKSPOT_AGENT_ID }}/chat" --header 'Content-Type: application/json' --header "Authorization: Bearer $ACCESS_TOKEN" --data @payload.json)
-          CURL_EXIT_CODE=$?
-          set -e  # Reabilitar exit on error
-          
-          if [ $CURL_EXIT_CODE -ne 0 ]; then
-            echo "❌ Erro na requisição curl (código: $CURL_EXIT_CODE)"
-            case $CURL_EXIT_CODE in
-              6) echo "🔍 Erro: Não foi possível resolver o host" ;;
-              7) echo "🔍 Erro: Falha ao conectar com o servidor" ;;
-              28) echo "🔍 Erro: Timeout (>60s)" ;;
-              *) echo "🔍 Erro curl não identificado. Verifique conectividade." ;;
-            esac
-            exit 1
-          fi
+          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --location             "https://genai-inference-app.stackspot.com/v1/agent/${{ secrets.STACKSPOT_AGENT_ID }}/chat"             --header 'Content-Type: application/json'             --header "Authorization: Bearer $ACCESS_TOKEN"             --data "{
+              \"streaming\": false,
+              \"user_prompt\": $ESCAPED_PROMPT,
+              \"stackspot_knowledge\": false,
+              \"return_ks_in_response\": false
+            }")
 
           # Debug: Verificar se a resposta não está vazia
           if [ -z "$RESPONSE" ]; then
@@ -396,7 +330,7 @@ EOF
         if: always()
         run: |
           echo "🧹 Iniciando limpeza de arquivos temporários..."
-          FILES_TO_CLEAN="diff.txt prompt.txt review.txt final_review.txt payload.json create_payload.py"
+          FILES_TO_CLEAN="diff.txt prompt.txt review.txt final_review.txt"
           for file in $FILES_TO_CLEAN; do
             if [ -f "$file" ]; then
               rm -f "$file"
