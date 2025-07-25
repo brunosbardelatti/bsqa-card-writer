@@ -16,13 +16,29 @@ jobs:
 
       - name: Install dependencies
         run: |
+          echo "📦 Instalando dependências necessárias..."
+          
+          # Instalar jq se não estiver disponível
+          if ! command -v jq &> /dev/null; then
+            echo "Instalando jq..."
+            sudo apt update
+            sudo apt install -y jq
+          else
+            echo "✅ jq já está instalado"
+          fi
+          
           # Instalar gh CLI se não estiver disponível
           if ! command -v gh &> /dev/null; then
+            echo "Instalando GitHub CLI..."
             curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
             echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
             sudo apt update
-            sudo apt install gh
+            sudo apt install -y gh
+          else
+            echo "✅ GitHub CLI já está instalado"
           fi
+          
+          echo "✅ Todas as dependências foram verificadas"
 
       - name: Get Pull Request Diff
         run: |
@@ -82,23 +98,20 @@ jobs:
         run: |
           echo "🤖 Chamando StackSpot AI para revisão..."
           
-          # Preparar o prompt base64 encoded para evitar problemas de escape
-          DIFF_CONTENT=$(cat diff.txt)
-          
           # Criar arquivo temporário com o prompt
-          cat > prompt.txt << 'EOL'
+          cat > prompt.txt << EOF
 You are a senior code reviewer.
 
 You will receive a raw Git diff via the placeholder below.
 This diff compares a feature branch to the homolog branch.
 
 <DIFF_START>
-EOL
+EOF
           
           # Adicionar o conteúdo do diff ao prompt
           cat diff.txt >> prompt.txt
           
-          cat >> prompt.txt << 'EOL'
+          cat >> prompt.txt << EOF
 <DIFF_END>
 
 **Your task:**
@@ -108,21 +121,21 @@ EOL
 3. Classify findings as Críticos, Melhorias, or Opiniões.
 4. Finish with APROVADO or REPROVADO.
 5. If no significant changes or only minor formatting changes, respond with "✅ APROVADO - Nenhuma alteração significativa detectada."
-EOL
+EOF
           
-          # Codificar o prompt em base64 para evitar problemas de escape
-          PROMPT_B64=$(base64 -w 0 prompt.txt)
+          # Ler o prompt do arquivo
+          PROMPT_CONTENT=$(cat prompt.txt)
           
-          # Fazer a requisição usando base64
+          # Criar JSON payload usando jq para escape adequado
           RESPONSE=$(curl -s --location 'https://genai-inference-app.stackspot.com/v1/agent/01JZ4135ZCD42NN04PRGA4XA1C/chat' \
             --header 'Content-Type: application/json' \
             --header "Authorization: Bearer $ACCESS_TOKEN" \
-            --data-raw "{
-              \"streaming\": false,
-              \"user_prompt\": \"$(echo $PROMPT_B64 | base64 -d)\",
-              \"stackspot_knowledge\": false,
-              \"return_ks_in_response\": false
-            }")
+            --data "$(jq -n --arg prompt "$PROMPT_CONTENT" '{
+              "streaming": false,
+              "user_prompt": $prompt,
+              "stackspot_knowledge": false,
+              "return_ks_in_response": false
+            }')")
           
           if [ $? -ne 0 ]; then
             echo "❌ Erro na requisição para StackSpot AI"
@@ -139,6 +152,44 @@ EOL
             echo "⚠️ Falha na análise de código por IA - verifique manualmente" > review.txt
           fi
           
+          # Verificar se a revisão não está vazia ou contém apenas espaços
+          if [ ! -s review.txt ] || [ "$(tr -d '[:space:]' < review.txt)" = "" ]; then
+            echo "⚠️ Revisão vazia detectada, gerando fallback..."
+            cat > review.txt << EOF
+## ⚠️ Revisão Automática Indisponível
+
+A análise automática de código não pôde ser concluída devido a problemas técnicos.
+
+**Recomendações:**
+- Solicite uma revisão manual do código
+- Verifique se as alterações seguem os padrões do projeto
+- Execute os testes localmente antes do merge
+
+**Status:** 🔍 **REQUER REVISÃO MANUAL**
+EOF
+          else
+            # Verificar se a revisão contém conteúdo útil (mais de 10 caracteres significativos)
+            REVIEW_CONTENT=$(tr -d '[:space:]' < review.txt)
+            if [ ${#REVIEW_CONTENT} -lt 10 ]; then
+              echo "⚠️ Revisão muito curta detectada, gerando fallback aprimorado..."
+              cat > review.txt << EOF
+## ⚠️ Revisão Automática Limitada
+
+A análise automática retornou uma resposta muito breve ou inconclusiva.
+
+**Resposta original da IA:** \`$(cat review.txt | tr '\n' ' ' | cut -c 1-100)...\`
+
+**Recomendações:**
+- Solicite uma revisão manual detalhada do código
+- Verifique se as alterações seguem os padrões do projeto
+- Execute os testes localmente antes do merge
+- Considere fazer alterações menores para facilitar a revisão
+
+**Status:** 🔍 **REQUER REVISÃO MANUAL DETALHADA**
+EOF
+            fi
+          fi
+          
           echo "=== AI REVIEW OUTPUT ==="
           cat review.txt
 
@@ -146,11 +197,27 @@ EOL
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "💬 Adicionando comentário ao PR..."
+          echo "💬 Preparando comentário para o PR..."
           
-          if [ ! -f review.txt ] || [ ! -s review.txt ]; then
-            echo "❌ Erro: Arquivo de revisão não encontrado ou vazio"
+          # Verificações finais antes de postar
+          if [ ! -f review.txt ]; then
+            echo "❌ Erro: Arquivo de revisão não encontrado"
             exit 1
+          fi
+          
+          if [ ! -s review.txt ]; then
+            echo "❌ Erro: Arquivo de revisão está vazio"
+            exit 1
+          fi
+          
+          # Verificar se diff.txt existe e tem conteúdo para contexto
+          DIFF_INFO=""
+          if [ -f diff.txt ] && [ -s diff.txt ]; then
+            DIFF_SIZE=$(wc -c < diff.txt)
+            DIFF_LINES=$(wc -l < diff.txt)
+            DIFF_INFO="**Tamanho do diff:** $DIFF_SIZE bytes ($DIFF_LINES linhas)"
+          else
+            DIFF_INFO="**Diff:** Nenhuma alteração detectada"
           fi
           
           # Adicionar cabeçalho ao comentário
@@ -159,19 +226,32 @@ EOL
           echo "**PR:** #${{ github.event.pull_request.number }}" >> final_review.txt
           echo "**Branch:** \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`" >> final_review.txt
           echo "**Commit:** ${{ github.event.pull_request.head.sha }}" >> final_review.txt
+          echo "$DIFF_INFO" >> final_review.txt
           echo "" >> final_review.txt
           echo "---" >> final_review.txt
           echo "" >> final_review.txt
           cat review.txt >> final_review.txt
           echo "" >> final_review.txt
           echo "---" >> final_review.txt
-          echo "*Revisão gerada automaticamente em $(date)*" >> final_review.txt
+          echo "*Revisão gerada automaticamente em $(date -u '+%Y-%m-%d %H:%M:%S UTC')*" >> final_review.txt
+          echo "" >> final_review.txt
+          echo "<details>" >> final_review.txt
+          echo "<summary>ℹ️ Informações do Workflow</summary>" >> final_review.txt
+          echo "" >> final_review.txt
+          echo "- **Workflow:** \`${{ github.workflow }}\`" >> final_review.txt
+          echo "- **Run ID:** [\`${{ github.run_id }}\`](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> final_review.txt
+          echo "- **Triggered by:** ${{ github.actor }}" >> final_review.txt
+          echo "" >> final_review.txt
+          echo "</details>" >> final_review.txt
           
           # Postar comentário
+          echo "Postando comentário no PR #${{ github.event.pull_request.number }}..."
           if gh pr comment ${{ github.event.pull_request.number }} --body-file final_review.txt; then
-            echo "✅ Comentário adicionado com sucesso"
+            echo "✅ Comentário adicionado com sucesso ao PR #${{ github.event.pull_request.number }}"
           else
-            echo "❌ Erro ao adicionar comentário"
+            echo "❌ Erro ao adicionar comentário ao PR"
+            echo "Conteúdo do comentário:"
+            cat final_review.txt
             exit 1
           fi
 
