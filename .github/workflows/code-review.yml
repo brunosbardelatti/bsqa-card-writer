@@ -1,0 +1,183 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          # Instalar gh CLI se não estiver disponível
+          if ! command -v gh &> /dev/null; then
+            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+            sudo apt update
+            sudo apt install gh
+          fi
+
+      - name: Get Pull Request Diff
+        run: |
+          echo "Fetching base branch..."
+          git fetch origin ${{ github.base_ref }}
+          
+          echo "Generating diff..."
+          git diff origin/${{ github.base_ref }}...HEAD > diff.txt
+          
+          # Verificar se o diff foi gerado
+          if [ ! -f diff.txt ] || [ ! -s diff.txt ]; then
+            echo "❌ Erro: Não foi possível gerar o diff ou o diff está vazio"
+            echo "No changes to review" > diff.txt
+          fi
+          
+          # Limitar tamanho do diff (máximo 50KB para evitar problemas com API)
+          if [ -f diff.txt ]; then
+            DIFF_SIZE=$(wc -c < diff.txt)
+            if [ $DIFF_SIZE -gt 51200 ]; then
+              echo "⚠️ Diff muito grande ($DIFF_SIZE bytes), truncando..."
+              head -c 51200 diff.txt > diff_truncated.txt
+              echo -e "\n\n... [DIFF TRUNCADO - MUITAS ALTERAÇÕES] ..." >> diff_truncated.txt
+              mv diff_truncated.txt diff.txt
+            fi
+          fi
+          
+          echo "=== DIFF FILE PREVIEW ==="
+          head -n 20 diff.txt
+
+      - name: Authenticate with StackSpot
+        run: |
+          echo "🔐 Autenticando com StackSpot..."
+          
+          TOKEN_RESPONSE=$(curl -s --location 'https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token' \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode "client_id=${{ secrets.STACKSPOT_CLIENT_ID }}" \
+            --data-urlencode 'grant_type=client_credentials' \
+            --data-urlencode "client_secret=${{ secrets.STACKSPOT_CLIENT_SECRET }}")
+          
+          if [ $? -ne 0 ]; then
+            echo "❌ Erro na requisição de autenticação"
+            exit 1
+          fi
+          
+          # Verificar se a resposta contém token
+          if echo "$TOKEN_RESPONSE" | jq -e '.access_token' > /dev/null 2>&1; then
+            ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
+            echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
+            echo "✅ Autenticação bem-sucedida"
+          else
+            echo "❌ Erro: Token de acesso não encontrado na resposta"
+            echo "Response: $TOKEN_RESPONSE"
+            exit 1
+          fi
+
+      - name: Call StackSpot AI for Code Review
+        run: |
+          echo "🤖 Chamando StackSpot AI para revisão..."
+          
+          # Preparar o prompt base64 encoded para evitar problemas de escape
+          DIFF_CONTENT=$(cat diff.txt)
+          
+          # Criar arquivo temporário com o prompt
+          cat > prompt.txt << 'EOL'
+You are a senior code reviewer.
+
+You will receive a raw Git diff via the placeholder below.
+This diff compares a feature branch to the homolog branch.
+
+<DIFF_START>
+EOL
+          
+          # Adicionar o conteúdo do diff ao prompt
+          cat diff.txt >> prompt.txt
+          
+          cat >> prompt.txt << 'EOL'
+<DIFF_END>
+
+**Your task:**
+
+1. Analyze the diff and automatically detect the programming language or framework.
+2. Provide a code review in Portuguese (Brazil), highlighting only real issues or improvement points.
+3. Classify findings as Críticos, Melhorias, or Opiniões.
+4. Finish with APROVADO or REPROVADO.
+5. If no significant changes or only minor formatting changes, respond with "✅ APROVADO - Nenhuma alteração significativa detectada."
+EOL
+          
+          # Codificar o prompt em base64 para evitar problemas de escape
+          PROMPT_B64=$(base64 -w 0 prompt.txt)
+          
+          # Fazer a requisição usando base64
+          RESPONSE=$(curl -s --location 'https://genai-inference-app.stackspot.com/v1/agent/01JZ4135ZCD42NN04PRGA4XA1C/chat' \
+            --header 'Content-Type: application/json' \
+            --header "Authorization: Bearer $ACCESS_TOKEN" \
+            --data-raw "{
+              \"streaming\": false,
+              \"user_prompt\": \"$(echo $PROMPT_B64 | base64 -d)\",
+              \"stackspot_knowledge\": false,
+              \"return_ks_in_response\": false
+            }")
+          
+          if [ $? -ne 0 ]; then
+            echo "❌ Erro na requisição para StackSpot AI"
+            exit 1
+          fi
+          
+          # Verificar se a resposta contém output_text
+          if echo "$RESPONSE" | jq -e '.output_text' > /dev/null 2>&1; then
+            echo "$RESPONSE" | jq -r '.output_text' > review.txt
+            echo "✅ Revisão gerada com sucesso"
+          else
+            echo "❌ Erro: output_text não encontrado na resposta"
+            echo "Response: $RESPONSE"
+            echo "⚠️ Falha na análise de código por IA - verifique manualmente" > review.txt
+          fi
+          
+          echo "=== AI REVIEW OUTPUT ==="
+          cat review.txt
+
+      - name: Add AI Review as PR Comment
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "💬 Adicionando comentário ao PR..."
+          
+          if [ ! -f review.txt ] || [ ! -s review.txt ]; then
+            echo "❌ Erro: Arquivo de revisão não encontrado ou vazio"
+            exit 1
+          fi
+          
+          # Adicionar cabeçalho ao comentário
+          echo "## 🤖 Revisão Automática de Código - StackSpot AI" > final_review.txt
+          echo "" >> final_review.txt
+          echo "**PR:** #${{ github.event.pull_request.number }}" >> final_review.txt
+          echo "**Branch:** \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`" >> final_review.txt
+          echo "**Commit:** ${{ github.event.pull_request.head.sha }}" >> final_review.txt
+          echo "" >> final_review.txt
+          echo "---" >> final_review.txt
+          echo "" >> final_review.txt
+          cat review.txt >> final_review.txt
+          echo "" >> final_review.txt
+          echo "---" >> final_review.txt
+          echo "*Revisão gerada automaticamente em $(date)*" >> final_review.txt
+          
+          # Postar comentário
+          if gh pr comment ${{ github.event.pull_request.number }} --body-file final_review.txt; then
+            echo "✅ Comentário adicionado com sucesso"
+          else
+            echo "❌ Erro ao adicionar comentário"
+            exit 1
+          fi
+
+      - name: Cleanup
+        if: always()
+        run: |
+          # Limpar arquivos temporários
+          rm -f diff.txt prompt.txt review.txt final_review.txt
+          echo "🧹 Limpeza concluída"
