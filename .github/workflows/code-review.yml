@@ -150,7 +150,8 @@ jobs:
 
           if echo "$RESPONSE_BODY" | jq -e '.output_text' > /dev/null 2>&1; then
             echo "$RESPONSE_BODY" | jq -r '.output_text' > review.txt
-            echo "✅ Revisão gerada com sucesso"
+          elif echo "$RESPONSE_BODY" | jq -e '.message' > /dev/null 2>&1; then
+            echo "$RESPONSE_BODY" | jq -r '.message' > review.txt
           else
             echo "⚠️ Falha na análise de código por IA - verifique manualmente" > review.txt
           fi
