@@ -212,9 +212,51 @@ for i, line in enumerate(lines[:10]):
 EOF
 
           # Executar o script Python
-          python3 create_payload.py
+          if ! python3 create_payload.py; then
+            echo "❌ Erro ao executar script Python para criar payload"
+            echo "🔍 Verificando se o arquivo prompt.txt existe..."
+            if [ ! -f prompt.txt ]; then
+              echo "❌ Arquivo prompt.txt não encontrado"
+              exit 1
+            fi
+            echo "📄 Tamanho do prompt.txt: $(wc -c < prompt.txt) caracteres"
+            echo "🔍 Primeiras 5 linhas do prompt.txt:"
+            head -n 5 prompt.txt
+            exit 1
+          fi
           
-          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --location             "https://genai-inference-app.stackspot.com/v1/agent/${{ secrets.STACKSPOT_AGENT_ID }}/chat"             --header 'Content-Type: application/json'             --header "Authorization: Bearer $ACCESS_TOKEN"             --data @payload.json)
+          # Verificar se o payload.json foi criado corretamente
+          if [ ! -f payload.json ]; then
+            echo "❌ Arquivo payload.json não foi criado"
+            exit 1
+          fi
+          
+          PAYLOAD_SIZE=$(wc -c < payload.json)
+          if [ "$PAYLOAD_SIZE" -lt 100 ]; then
+            echo "❌ Arquivo payload.json muito pequeno ($PAYLOAD_SIZE bytes), pode estar corrompido"
+            echo "🔍 Conteúdo do payload.json:"
+            cat payload.json
+            exit 1
+          fi
+          
+          echo "✅ Payload JSON validado com sucesso ($PAYLOAD_SIZE bytes)"
+          
+          # Executar requisição com tratamento de erro melhorado
+          set +e  # Desabilitar exit on error temporariamente
+          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --max-time 60 --retry 1 --location "https://genai-inference-app.stackspot.com/v1/agent/${{ secrets.STACKSPOT_AGENT_ID }}/chat" --header 'Content-Type: application/json' --header "Authorization: Bearer $ACCESS_TOKEN" --data @payload.json)
+          CURL_EXIT_CODE=$?
+          set -e  # Reabilitar exit on error
+          
+          if [ $CURL_EXIT_CODE -ne 0 ]; then
+            echo "❌ Erro na requisição curl (código: $CURL_EXIT_CODE)"
+            case $CURL_EXIT_CODE in
+              6) echo "🔍 Erro: Não foi possível resolver o host" ;;
+              7) echo "🔍 Erro: Falha ao conectar com o servidor" ;;
+              28) echo "🔍 Erro: Timeout (>60s)" ;;
+              *) echo "🔍 Erro curl não identificado. Verifique conectividade." ;;
+            esac
+            exit 1
+          fi
 
           # Debug: Verificar se a resposta não está vazia
           if [ -z "$RESPONSE" ]; then
