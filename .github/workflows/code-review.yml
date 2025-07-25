@@ -88,12 +88,11 @@ jobs:
             echo "You are a senior code reviewer."
             echo
             echo "You will receive a raw Git diff via {requirements}."
-            echo "This diff compares a feature branch to the homolog branch."
             echo
             echo "**Your task:**"
             echo
             echo "1. Analyze the diff and automatically detect the programming language or framework (e.g., Python, Robot Framework, Node.js, PHP)."
-            echo "   - Apply **best practices, linting rules, and conventions** specific to the detected technology."
+            echo "   - Apply **best practices, linting rules, conventions and security guidelines** specific to the detected technology."
             echo
             echo "2. Provide a **code review in Portuguese (Brazil)** with the following structure:"
             echo "   - **Feedback por Arquivo**: List only the files where there are **problems, issues, or relevant improvement points**."
@@ -101,9 +100,10 @@ jobs:
             echo "     - Provide **objective correction/refactoring suggestions**."
             echo "     - **Explain the practical impact of each issue or suggestion** (e.g., \"isso pode causar falhas intermitentes nos testes\")."
             echo "     - Include **Opiniões** only when they are optional adjustments that improve clarity, performance, or standardization."
+            echo "     - Check for hardcoded values (e.g., API keys, agent IDs, secrets, URLs, tokens, or credentials) and flag them as security risks."
             echo
             echo "3. **Classificação de Achados**"
-            echo "   - **Críticos** – Bugs, logical errors, or security vulnerabilities."
+            echo "   - **Críticos** – Bugs, logical errors,hardcoded sensitive data, or security vulnerabilities."
             echo "   - **Melhorias** – Refactorings, best practices, performance, linting."
             echo "   - **Opiniões** – Optional style or clarity improvements."
             echo
@@ -118,11 +118,11 @@ jobs:
             echo "- Do not describe correct or trivial changes."
             echo "- Provide only **useful technical feedback** (critical issues or real improvements)."
             echo "- Always explain the practical impact of problems or improvements."
+            echo "- Pay special attention to hardcoded values or secrets, recommending the use of environment variables or repository secrets."
             echo "- Do not include the technology detection section in the response."
             echo "- Use markdown (\`\`\`) to show code snippets when necessary."
             echo "- If there are no issues, finish with a brief positive summary and **APROVADO**."
             echo "- If there are problems, finish with a brief summary and **REPROVADO**."
-            echo
             echo "<DIFF_START>"
             cat diff.txt
             echo "<DIFF_END>"
@@ -185,3 +185,12 @@ jobs:
         run: |
           rm -f diff.txt prompt.txt review.txt final_review.txt
           echo "🧹 Limpeza concluída"
+
+      - name: ⛔ Validando resultado da IA
+        run: |
+          if grep -q "REPROVADO" review.txt; then
+            echo "❌ A revisão da IA encontrou problemas críticos. Falhando job."
+            exit 1
+          else
+            echo "✅ A revisão da IA aprovou as alterações."
+          fi

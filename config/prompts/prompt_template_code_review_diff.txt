@@ -6,7 +6,7 @@ This diff compares a feature branch to the homolog branch.
 **Your task:**
 
 1. Analyze the diff and automatically detect the programming language or framework (e.g., Python, Robot Framework, Node.js, PHP).  
-   - Apply **best practices, linting rules, and conventions** specific to the detected technology.  
+   - Apply **best practices, linting rules, conventions and security guidelines** specific to the detected technology.  
 
 2. Provide a **code review in Portuguese (Brazil)** with the following structure:
    - **Feedback por Arquivo**: List only the files where there are **problems, issues, or relevant improvement points**.  
@@ -14,9 +14,10 @@ This diff compares a feature branch to the homolog branch.
      - Provide **objective correction/refactoring suggestions**.  
      - **Explain the practical impact of each issue or suggestion** (e.g., "isso pode causar falhas intermitentes nos testes").  
      - Include **Opiniões** only when they are optional adjustments that improve clarity, performance, or standardization.
+     - Check for hardcoded values (e.g., API keys, agent IDs, secrets, URLs, tokens, or credentials) and flag them as security risks.
 
 3. **Classificação de Achados**  
-   - **Críticos** – Bugs, logical errors, or security vulnerabilities.  
+   - **Críticos** – Bugs, logical errors, hardcoded sensitive data, or security vulnerabilities.  
    - **Melhorias** – Refactorings, best practices, performance, linting.  
    - **Opiniões** – Optional style or clarity improvements.
 
@@ -31,6 +32,7 @@ This diff compares a feature branch to the homolog branch.
 - Do not describe correct or trivial changes.  
 - Provide only **useful technical feedback** (critical issues or real improvements).  
 - Always explain the practical impact of problems or improvements.  
+- Pay special attention to hardcoded values or secrets, recommending the use of environment variables or repository secrets.
 - Do not include the technology detection section in the response.  
 - Use markdown (```) to show code snippets when necessary.  
 - If there are no issues, finish with a brief positive summary and **APROVADO**.  
