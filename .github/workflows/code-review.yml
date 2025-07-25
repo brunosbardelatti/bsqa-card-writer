@@ -145,7 +145,7 @@ jobs:
             echo "     - Check for hardcoded values (e.g., API keys, agent IDs, secrets, URLs, tokens, or credentials) and flag them as security risks."
             echo
             echo "3. **Classificação de Achados**"
-            echo "   - **Críticos** – Bugs, logical errors,hardcoded sensitive data, or security vulnerabilities."
+            echo "   - **Críticos** – Bugs, logical errors, hardcoded sensitive data, or security vulnerabilities."
             echo "   - **Melhorias** – Refactorings, best practices, performance, linting."
             echo
             echo "4. **Resumo Final**"
@@ -162,6 +162,7 @@ jobs:
             echo "- Pay special attention to hardcoded values or secrets, recommending the use of environment variables or repository secrets."
             echo "- Do not include the technology detection section in the response."
             echo "- Use markdown (\`\`\`) to show code snippets when necessary."
+            echo "- If a file contains the comment `excludeFromCodeCoverage`, completely skip the analysis and code review for that specific file."
             echo "- If there are no issues, finish with a brief positive summary and **APROVADO**."
             echo "- If there are problems, finish with a brief summary and **REPROVADO**."
             echo "<DIFF_START>"
