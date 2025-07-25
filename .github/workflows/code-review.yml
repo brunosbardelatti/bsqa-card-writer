@@ -88,31 +88,55 @@ jobs:
       - name: Call StackSpot AI for Code Review
         run: |
           echo "🤖 Chamando StackSpot AI para revisão..."
-
-          # Criar prompt
-          tee prompt.txt <<'EOF'
-You are a senior code reviewer.
-
-You will receive a raw Git diff via the placeholder below.
-This diff compares a feature branch to the homolog branch.
-
-<DIFF_START>
-EOF
-          cat diff.txt >> prompt.txt
-          tee -a prompt.txt <<'EOF'
-<DIFF_END>
-
-**Your task:**
-
-1. Analyze the diff and automatically detect the programming language or framework.
-2. Provide a code review in Portuguese (Brazil), highlighting only real issues or improvement points.
-3. Classify findings as Críticos, Melhorias, or Opiniões.
-4. Finish with APROVADO or REPROVADO.
-5. If no significant changes or only minor formatting changes, respond with "✅ APROVADO - Nenhuma alteração significativa detectada."
-EOF
-
+          
+          # Criar arquivo temporário com o prompt
+          {
+            echo "You are a senior code reviewer."
+            echo
+            echo "You will receive a raw Git diff via {requirements}."
+            echo "This diff compares a feature branch to the homolog branch."
+            echo
+            echo "**Your task:**"
+            echo
+            echo "1. Analyze the diff and automatically detect the programming language or framework (e.g., Python, Robot Framework, Node.js, PHP)."
+            echo "   - Apply **best practices, linting rules, and conventions** specific to the detected technology."
+            echo
+            echo "2. Provide a **code review in Portuguese (Brazil)** with the following structure:"
+            echo "   - **Feedback por Arquivo**: List only the files where there are **problems, issues, or relevant improvement points**."
+            echo "     - Show **only the problematic snippets** using code blocks (\`\`\`), explaining **what is wrong or can be improved**."
+            echo "     - Provide **objective correction/refactoring suggestions**."
+            echo "     - **Explain the practical impact of each issue or suggestion** (e.g., \"isso pode causar falhas intermitentes nos testes\")."
+            echo "     - Include **Opiniões** only when they are optional adjustments that improve clarity, performance, or standardization."
+            echo
+            echo "3. **Classificação de Achados**"
+            echo "   - **Críticos** – Bugs, logical errors, or security vulnerabilities."
+            echo "   - **Melhorias** – Refactorings, best practices, performance, linting."
+            echo "   - **Opiniões** – Optional style or clarity improvements."
+            echo
+            echo "4. **Resumo Final**"
+            echo "   - Return **APROVADO** if no critical issues are found."
+            echo "   - Return **REPROVADO** if critical issues are detected."
+            echo "   - List only the relevant action points."
+            echo
+            echo "---"
+            echo
+            echo "**Important Rules:**"
+            echo "- Do not describe correct or trivial changes."
+            echo "- Provide only **useful technical feedback** (critical issues or real improvements)."
+            echo "- Always explain the practical impact of problems or improvements."
+            echo "- Do not include the technology detection section in the response."
+            echo "- Use markdown (\`\`\`) to show code snippets when necessary."
+            echo "- If there are no issues, finish with a brief positive summary and **APROVADO**."
+            echo "- If there are problems, finish with a brief summary and **REPROVADO**."
+            echo
+            echo "<DIFF_START>"
+            cat diff.txt
+            echo "<DIFF_END>"
+          } > prompt.txt
+          
           PROMPT_CONTENT=$(cat prompt.txt)
           
+          # Enviar para a API da StackSpot
           RESPONSE=$(curl -s --location 'https://genai-inference-app.stackspot.com/v1/agent/01JZ4135ZCD42NN04PRGA4XA1C/chat' \
             --header 'Content-Type: application/json' \
             --header "Authorization: Bearer $ACCESS_TOKEN" \
@@ -129,7 +153,7 @@ EOF
           else
             echo "⚠️ Falha na análise de código por IA - verifique manualmente" > review.txt
           fi
-          
+
           echo "=== AI REVIEW OUTPUT ==="
           cat review.txt
 
