@@ -67,22 +67,64 @@ jobs:
 
       - name: 🔐 Gerando Token StackSpot
         run: |
-          echo "Gerando token StackSpot..."
-          TOKEN_RESPONSE=$(curl -s --location 'https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token'             --header 'Content-Type: application/x-www-form-urlencoded'             --data-urlencode "client_id=${{ secrets.STACKSPOT_CLIENT_ID }}"             --data-urlencode 'grant_type=client_credentials'             --data-urlencode "client_secret=${{ secrets.STACKSPOT_CLIENT_SECRET }}")
+          echo "🔐 Iniciando autenticação StackSpot..."
+          echo "⏰ Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          START_TIME=$SECONDS
+          TOKEN_RESPONSE=$(curl --fail --show-error --max-time 30 --retry 2 -s --location 'https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token' \
+            --header 'Content-Type: application/x-www-form-urlencoded' \
+            --data-urlencode "client_id=${{ secrets.STACKSPOT_CLIENT_ID }}" \
+            --data-urlencode 'grant_type=client_credentials' \
+            --data-urlencode "client_secret=${{ secrets.STACKSPOT_CLIENT_SECRET }}") || {
+            echo "❌ Erro: Falha na requisição para o StackSpot"
+            echo "🔍 Possíveis causas:"
+            echo "  - Timeout de rede (>30s)"
+            echo "  - Endpoint StackSpot indisponível"
+            echo "  - Credenciais inválidas (HTTP 401/403)"
+            echo "  - Erro de conectividade"
+            exit 1
+          }
 
+          # Validar se a resposta é JSON válido
+          if ! echo "$TOKEN_RESPONSE" | jq . > /dev/null 2>&1; then
+            echo "❌ Erro: Resposta não é JSON válido"
+            echo "🔍 Possível resposta em texto plano ou HTML de erro"
+            exit 1
+          fi
+
+          # Verificar se há erro na resposta do StackSpot
+          if echo "$TOKEN_RESPONSE" | jq -e '.error' > /dev/null 2>&1; then
+            ERROR_TYPE=$(echo "$TOKEN_RESPONSE" | jq -r '.error')
+            ERROR_DESC=$(echo "$TOKEN_RESPONSE" | jq -r '.error_description // "Sem descrição"')
+            echo "❌ Erro de autenticação StackSpot: $ERROR_TYPE"
+            echo "📝 Descrição: $ERROR_DESC"
+            echo "🔍 Verifique as credenciais nos secrets do repositório"
+            exit 1
+          fi
+
+          # Verificar se access_token está presente
           if echo "$TOKEN_RESPONSE" | jq -e '.access_token' > /dev/null 2>&1; then
             ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
+            # Validar se o token não está vazio
+            if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
+              echo "❌ Erro: Access token está vazio ou nulo"
+              exit 1
+            fi
+            # Mascarar o token nos logs para segurança
+            echo "::add-mask::$ACCESS_TOKEN"
             echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
-            echo "✅ Autenticação bem-sucedida"
+            echo "✅ Autenticação bem-sucedida - Token obtido e mascarado"
+            echo "⏱️ Duração da autenticação: $((SECONDS - START_TIME))s" || echo "⏱️ Tempo de autenticação registrado"
           else
-            echo "❌ Erro: Token de acesso não encontrado na resposta"
-            echo "Response: $TOKEN_RESPONSE"
+            echo "❌ Erro: Campo 'access_token' não encontrado na resposta"
+            echo "🔍 Verifique se as credenciais estão corretas e se o endpoint retorna a estrutura esperada"
             exit 1
           fi
 
       - name: 🤖 Chamando StackSpot AI para revisão
         run: |
-          echo "🤖 Chamando StackSpot AI para revisão..."
+          echo "🤖 Iniciando análise de código com StackSpot AI..."
+          echo "⏰ Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          AI_START_TIME=$SECONDS
 
           {
             echo "You are a senior code reviewer."
@@ -130,11 +172,13 @@ jobs:
 
           PROMPT_CONTENT=$(cat prompt.txt)
 
-          echo "=== PROMPT SENDIDO (primeiras 40 linhas) ==="
+          echo "📝 Prompt preparado com $(wc -l < prompt.txt) linhas"
+          echo "🔍 Visualizando primeiras 40 linhas do prompt:"
           head -n 40 prompt.txt
 
-          echo "=== ENVIANDO REQUISIÇÃO PARA STACKSPOT ==="
-          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --location             'https://genai-inference-app.stackspot.com/v1/agent/01JZ4135ZCD42NN04PRGA4XA1C/chat'             --header 'Content-Type: application/json'             --header "Authorization: Bearer $ACCESS_TOKEN"             --data "$(jq -n --arg prompt "$PROMPT_CONTENT" '{
+          echo "🚀 Enviando requisição para StackSpot AI..."
+          echo "📊 Tamanho do prompt: $(wc -c < prompt.txt) caracteres"
+          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --location             "https://genai-inference-app.stackspot.com/v1/agent/${{ secrets.STACKSPOT_AGENT_ID }}/chat"             --header 'Content-Type: application/json'             --header "Authorization: Bearer $ACCESS_TOKEN"             --data "$(jq -n --arg prompt "$PROMPT_CONTENT" '{
               "streaming": false,
               "user_prompt": $prompt,
               "stackspot_knowledge": false,
@@ -144,23 +188,36 @@ jobs:
           HTTP_STATUS=$(echo "$RESPONSE" | grep "###STATUS###" | sed 's/###STATUS###//')
           RESPONSE_BODY=$(echo "$RESPONSE" | sed '/###STATUS###/d')
 
-          echo "=== HTTP STATUS: $HTTP_STATUS ==="
-          echo "=== RESPOSTA COMPLETA (RAW) ==="
-          echo "$RESPONSE_BODY"
+          echo "📡 Status HTTP da resposta: $HTTP_STATUS"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Erro na requisição StackSpot (HTTP $HTTP_STATUS)"
+            echo "🔍 Verifique se o token está válido e se o agente está disponível"
+            echo "⏱️ Tempo até falha: $((SECONDS - AI_START_TIME))s"
+          else
+            echo "✅ Requisição StackSpot executada com sucesso"
+            echo "⏱️ Tempo de resposta da API: $((SECONDS - AI_START_TIME))s"
+          fi
 
           REVIEW_OUTPUT=$(echo "$RESPONSE_BODY" | jq -r '.message // .output_text // empty')
           if [ -z "$REVIEW_OUTPUT" ]; then
             echo "⚠️ Falha na análise de código por IA - verifique manualmente" > review.txt
+            echo "❌ Resposta da IA está vazia ou inválida"
           else
             echo "$REVIEW_OUTPUT" > review.txt
+            REVIEW_LENGTH=$(echo "$REVIEW_OUTPUT" | wc -c)
+            echo "✅ Análise da IA concluída com sucesso"
+            echo "📊 Tamanho da resposta: $REVIEW_LENGTH caracteres"
           fi
 
-          echo "=== AI REVIEW OUTPUT ==="
+          echo "📋 Conteúdo da revisão gerada:"
+          echo "----------------------------------------"
           cat review.txt
+          echo "----------------------------------------"
 
       - name: 💬 Adicionando comentário ao PR
         run: |
-          echo "💬 Adicionando comentário ao PR..."
+          echo "💬 Preparando comentário para o PR..."
+          echo "🎯 PR #${{ github.event.pull_request.number }}: ${{ github.head_ref }} → ${{ github.base_ref }}"
           echo "## 🤖 Revisão Automática de Código - StackSpot AI" > final_review.txt
           echo "" >> final_review.txt
           echo "**PR:** #${{ github.event.pull_request.number }}" >> final_review.txt
@@ -174,25 +231,44 @@ jobs:
           echo "---" >> final_review.txt
           echo "*Revisão gerada automaticamente em $(date -u '+%Y-%m-%d %H:%M:%S UTC')*" >> final_review.txt
 
-          gh pr comment ${{ github.event.pull_request.number }} --body-file final_review.txt || {
-            echo "❌ Erro ao adicionar comentário"
+          echo "📤 Enviando comentário para o PR..."
+          gh pr comment ${{ github.event.pull_request.number }} --body-file final_review.txt && {
+            echo "✅ Comentário adicionado com sucesso ao PR #${{ github.event.pull_request.number }}"
+          } || {
+            echo "❌ Erro ao adicionar comentário ao PR"
+            echo "📄 Conteúdo que tentou ser enviado:"
             cat final_review.txt
             exit 1
           }
 
       - name: ⛔ Validando resultado da IA
         run: |
-          echo "=== Conteúdo de review.txt ==="
-          cat review.txt || echo "⚠️ Arquivo review.txt não encontrado!"
+          echo "🔍 Validando resultado da análise de código..."
+          if [ ! -f review.txt ]; then
+            echo "⚠️ Arquivo review.txt não encontrado!"
+            exit 1
+          fi
+          
           if grep -q "REPROVADO" review.txt; then
-            echo "❌ A revisão da IA encontrou problemas críticos. Falhando job."
+            echo "❌ RESULTADO: REPROVADO"
+            echo "🚨 A revisão da IA encontrou problemas críticos."
+            echo "📋 O job será falhado para bloquear o merge."
             exit 1
           else
-            echo "✅ A revisão da IA aprovou as alterações."
+            echo "✅ RESULTADO: APROVADO"
+            echo "🎉 A revisão da IA aprovou as alterações."
+            echo "🚀 O PR pode prosseguir para merge."
           fi
 
       - name: 🧹 Limpeza
         if: always()
         run: |
-          rm -f diff.txt prompt.txt review.txt final_review.txt
-          echo "🧹 Limpeza concluída"
+          echo "🧹 Iniciando limpeza de arquivos temporários..."
+          FILES_TO_CLEAN="diff.txt prompt.txt review.txt final_review.txt"
+          for file in $FILES_TO_CLEAN; do
+            if [ -f "$file" ]; then
+              rm -f "$file"
+              echo "🗑️ Removido: $file"
+            fi
+          done
+          echo "✅ Limpeza concluída com sucesso"
