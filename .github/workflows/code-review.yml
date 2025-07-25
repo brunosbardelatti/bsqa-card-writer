@@ -178,12 +178,19 @@ jobs:
 
           echo "🚀 Enviando requisição para StackSpot AI..."
           echo "📊 Tamanho do prompt: $(wc -c < prompt.txt) caracteres"
-          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --location             "https://genai-inference-app.stackspot.com/v1/agent/${{ secrets.STACKSPOT_AGENT_ID }}/chat"             --header 'Content-Type: application/json'             --header "Authorization: Bearer $ACCESS_TOKEN"             --data "$(jq -n --arg prompt "$PROMPT_CONTENT" '{
-              "streaming": false,
-              "user_prompt": $prompt,
-              "stackspot_knowledge": false,
-              "return_ks_in_response": false
-            }')")
+          
+          # Corrigir problema de escape: usar jq -Rs para processar raw string 
+          # evitando que { seja escapado para {{ causando falsos positivos na IA
+          echo "🔧 Processando prompt com jq para evitar escape incorreto de chaves..."
+          ESCAPED_PROMPT=$(printf '%s' "$PROMPT_CONTENT" | jq -Rs .)
+          echo "✅ Prompt processado. Tamanho após escape: ${#ESCAPED_PROMPT} caracteres"
+          
+          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --location             "https://genai-inference-app.stackspot.com/v1/agent/${{ secrets.STACKSPOT_AGENT_ID }}/chat"             --header 'Content-Type: application/json'             --header "Authorization: Bearer $ACCESS_TOKEN"             --data "{
+              \"streaming\": false,
+              \"user_prompt\": $ESCAPED_PROMPT,
+              \"stackspot_knowledge\": false,
+              \"return_ks_in_response\": false
+            }")
 
           # Debug: Verificar se a resposta não está vazia
           if [ -z "$RESPONSE" ]; then
