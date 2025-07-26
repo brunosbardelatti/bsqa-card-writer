@@ -192,6 +192,11 @@ jobs:
           
           echo "$REVIEW_OUTPUT" > review.txt
           echo "✅ Análise concluída"
+          
+          echo "📋 Conteúdo da análise recebida:"
+          echo "============================================"
+          cat review.txt
+          echo "============================================"
 
       - name: 💬 Comentário no PR
         run: |
