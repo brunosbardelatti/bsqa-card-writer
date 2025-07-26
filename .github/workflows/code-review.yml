@@ -1,4 +1,4 @@
-name: AI Code Review
+name: BSQA Code Review AI
 
 on:
   pull_request:
@@ -22,26 +22,16 @@ jobs:
 
       - name: 🔍 Gerando Diff
         run: |
-          echo "📊 Gerando diff do PR..."
           git fetch origin ${{ github.base_ref }}
           git diff origin/${{ github.base_ref }}...HEAD > diff.txt
-
           if [ ! -f diff.txt ] || [ ! -s diff.txt ]; then
-            echo "⚠️ Diff vazio - criando diff padrão"
             echo "No changes to review" > diff.txt
           fi
 
-          DIFF_SIZE=$(wc -c < diff.txt)
-          echo "📏 Tamanho do diff: $DIFF_SIZE bytes"
-
       - name: 📝 Baixando Prompt do Google Drive
         run: |
-          echo "📥 Baixando prompt template do Google Drive..."
-          
-          # FILE_ID do Google Drive
           FILE_ID="1W2CQkS9WMJ2z1kvDdOh-R51syvhBSshO"
           
-          # Estratégia 1: Download direto com curl
           echo "🔄 Tentativa 1: Download direto (curl)..."
           if curl -L -s --fail --max-time 30 \
             -H "User-Agent: Mozilla/5.0 (Linux; x86_64) AppleWebKit/537.36" \
@@ -50,15 +40,7 @@ jobs:
             [ -s prompt_template.txt ] && \
             ! grep -q "<!DOCTYPE html>" prompt_template.txt; then
             
-            echo "✅ Prompt baixado com sucesso (Estratégia 1)"
-            echo "📊 Tamanho: $(wc -c < prompt_template.txt) bytes"
-            echo "📋 Preview do prompt:"
-            head -n 5 prompt_template.txt
-            
           else
-            echo "⚠️ Estratégia 1 falhou, tentando estratégia 2..."
-            
-            # Estratégia 2: Download com wget
             echo "🔄 Tentativa 2: Download alternativo (wget)..."
             if wget -q --timeout=30 --max-redirect=10 \
               --user-agent="Mozilla/5.0 (Linux; x86_64) AppleWebKit/537.36" \
@@ -67,23 +49,14 @@ jobs:
               [ -s prompt_template.txt ] && \
               ! grep -q "<!DOCTYPE html>" prompt_template.txt; then
               
-              echo "✅ Prompt baixado com sucesso (Estratégia 2)"
-              echo "📊 Tamanho: $(wc -c < prompt_template.txt) bytes"
-              echo "📋 Preview do prompt:"
-              head -n 5 prompt_template.txt
-              
             else
               echo "❌ Ambas as estratégias falharam"
-              echo "🔍 Debug - Conteúdo baixado do Google Drive:"
-              head -n 10 prompt_template.txt
               exit 1
             fi
           fi
 
       - name: 🛠️ Preparando Prompt Final
-        run: |
-          echo "🔧 Montando prompt final com diff..."
-          
+        run: |          
           {
             cat prompt_template.txt
             echo ""
@@ -91,17 +64,13 @@ jobs:
             cat diff.txt
           } > prompt.txt
           
-          echo "✅ Prompt final preparado"
-          echo "📊 Tamanho final: $(wc -c < prompt.txt) bytes"
-          
-          echo "📋 Conteúdo concatenado que será enviado para a IA:"
+          echo "📋 Conteúdo que será enviado para code review AI:"
           echo "============================================"
           cat prompt.txt
           echo "============================================"
 
       - name: 🔐 Autenticação StackSpot
         run: |
-          echo "🔐 Obtendo token StackSpot..."
           
           TOKEN_RESPONSE=$(curl -s --fail --max-time 30 \
             --location 'https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token' \
@@ -134,9 +103,8 @@ jobs:
           echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
           echo "✅ Autenticação bem-sucedida"
 
-      - name: 🤖 Análise com StackSpot AI
+      - name: 🤖 BSQA Code Review AI
         run: |
-          echo "🚀 Enviando para análise da IA..."
           
           PROMPT_CONTENT=$(cat prompt.txt)
           ESCAPED_PROMPT=$(printf '%s' "$PROMPT_CONTENT" | jq -Rs .)
@@ -157,12 +125,12 @@ jobs:
           RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
           
           if [ "$HTTP_STATUS" != "200" ]; then
-            echo "❌ Erro na API StackSpot (HTTP $HTTP_STATUS)"
+            echo "❌ Erro na API (HTTP $HTTP_STATUS)"
             exit 1
           fi
           
           if ! echo "$RESPONSE_BODY" | jq . > /dev/null 2>&1; then
-            echo "❌ Resposta da IA inválida"
+            echo "❌ Resposta do code review AI inválida"
             exit 1
           fi
           
@@ -181,16 +149,14 @@ jobs:
           cat review.txt
           echo "============================================"
 
-      - name: 💬 Comentário no PR
+      - name: 💬 Realizando comentário no PR
         run: |
-          echo "💬 Adicionando comentário ao PR..."
           
           {
-            echo "## 🤖 Revisão Automática de Código - StackSpot AI"
+            echo "## 🤖 Code Review Automática - BSQA"
             echo ""
             echo "**PR:** #${{ github.event.pull_request.number }}"
             echo "**Branch:** \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`"
-            echo "**Prompt Source:** Google Drive"
             echo ""
             echo "---"
             echo ""
@@ -205,7 +171,6 @@ jobs:
 
       - name: ⚡ Validação do Resultado
         run: |
-          echo "🔍 Validando resultado..."
           
           if grep -q "REPROVADO" review.txt; then
             echo "❌ REPROVADO - Problemas críticos encontrados"
