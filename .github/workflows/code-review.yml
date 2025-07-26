@@ -30,8 +30,12 @@ jobs:
 
       - name: 📝 Baixando Prompt do Google Drive
         run: |
+          echo "📥 Baixando prompt template do Google Drive..."
+          
+          # FILE_ID do Google Drive
           FILE_ID="1W2CQkS9WMJ2z1kvDdOh-R51syvhBSshO"
           
+          # Estratégia 1: Download direto com curl
           echo "🔄 Tentativa 1: Download direto (curl)..."
           if curl -L -s --fail --max-time 30 \
             -H "User-Agent: Mozilla/5.0 (Linux; x86_64) AppleWebKit/537.36" \
@@ -40,7 +44,15 @@ jobs:
             [ -s prompt_template.txt ] && \
             ! grep -q "<!DOCTYPE html>" prompt_template.txt; then
             
+            echo "✅ Prompt baixado com sucesso (Estratégia 1)"
+            echo "📊 Tamanho: $(wc -c < prompt_template.txt) bytes"
+            echo "📋 Preview do prompt:"
+            head -n 5 prompt_template.txt
+            
           else
+            echo "⚠️ Estratégia 1 falhou, tentando estratégia 2..."
+            
+            # Estratégia 2: Download com wget
             echo "🔄 Tentativa 2: Download alternativo (wget)..."
             if wget -q --timeout=30 --max-redirect=10 \
               --user-agent="Mozilla/5.0 (Linux; x86_64) AppleWebKit/537.36" \
@@ -49,8 +61,15 @@ jobs:
               [ -s prompt_template.txt ] && \
               ! grep -q "<!DOCTYPE html>" prompt_template.txt; then
               
+              echo "✅ Prompt baixado com sucesso (Estratégia 2)"
+              echo "📊 Tamanho: $(wc -c < prompt_template.txt) bytes"
+              echo "📋 Preview do prompt:"
+              head -n 5 prompt_template.txt
+              
             else
               echo "❌ Ambas as estratégias falharam"
+              echo "🔍 Debug - Conteúdo baixado do Google Drive:"
+              head -n 10 prompt_template.txt
               exit 1
             fi
           fi
