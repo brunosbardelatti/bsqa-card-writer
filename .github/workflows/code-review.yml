@@ -45,8 +45,8 @@ jobs:
         run: |
           echo "📥 Baixando prompt template do Google Drive..."
           
-          # FILE_ID do Google Drive
-          FILE_ID="1jD7xwCOg6l4O0Y3qKpa9-A7V7ExeeK_V"
+                     # FILE_ID do Google Drive
+           FILE_ID="1W2CQkS9WMJ2z1kvDdOh-R51syvhBSshO"
           
           # Estratégia 1: Download direto com User-Agent e follow redirects
           echo "🔄 Tentativa 1: Download direto..."
@@ -105,12 +105,13 @@ jobs:
         run: |
           echo "🔧 Montando prompt final com diff..."
           
-          # Ler template e diff
-          TEMPLATE_CONTENT=$(cat prompt_template.txt)
-          DIFF_CONTENT=$(cat diff.txt)
-          
-          # Substituir {requirements} pelo diff de forma simples
-          echo "$TEMPLATE_CONTENT" | sed "s/{requirements}/$(printf '%s\n' "$DIFF_CONTENT" | sed 's/[[\.*^$()+?{|]/\\&/g')/g" > prompt.txt
+          # Concatenar prompt + diff de forma simples (sem substituições complexas)
+          {
+            cat prompt_template.txt
+            echo ""
+            echo ""
+            cat diff.txt
+          } > prompt.txt
           
           echo "✅ Prompt final preparado"
           echo "📊 Tamanho final: $(wc -c < prompt.txt) bytes"
