@@ -45,21 +45,59 @@ jobs:
         run: |
           echo "📥 Baixando prompt template do Google Drive..."
           
-          # URL de download direto do Google Drive usando FILE_ID
-          GDRIVE_URL="https://drive.google.com/uc?export=download&id=1jD7xwCOg6l4O0Y3qKpa9-A7V7ExeeK_V"
+          # FILE_ID do Google Drive
+          FILE_ID="1jD7xwCOg6l4O0Y3qKpa9-A7V7ExeeK_V"
           
-          if curl -s --fail --max-time 30 "$GDRIVE_URL" -o prompt_template.txt; then
-            if [ -s prompt_template.txt ]; then
-              echo "✅ Prompt baixado com sucesso do Google Drive"
+          # Estratégia 1: Download direto com User-Agent e follow redirects
+          echo "🔄 Tentativa 1: Download direto..."
+          if curl -L -s --fail --max-time 30 \
+            -H "User-Agent: Mozilla/5.0 (Linux; x86_64) AppleWebKit/537.36" \
+            "https://drive.google.com/uc?export=download&id=$FILE_ID" \
+            -o prompt_template.txt; then
+            
+            if [ -s prompt_template.txt ] && ! grep -q "<!DOCTYPE html>" prompt_template.txt; then
+              echo "✅ Prompt baixado com sucesso (Estratégia 1)"
               echo "📊 Tamanho: $(wc -c < prompt_template.txt) bytes"
               echo "📋 Preview do prompt:"
               head -n 5 prompt_template.txt
             else
-              echo "❌ Arquivo baixado está vazio"
-              exit 1
+              echo "⚠️ Estratégia 1 retornou HTML, tentando estratégia 2..."
+              
+              # Estratégia 2: Usar wget
+              echo "🔄 Tentativa 2: Usando wget..."
+              if wget -q --timeout=30 --max-redirect=10 \
+                --user-agent="Mozilla/5.0 (Linux; x86_64) AppleWebKit/537.36" \
+                "https://drive.google.com/uc?export=download&id=$FILE_ID" \
+                -O prompt_template.txt; then
+                
+                if [ -s prompt_template.txt ] && ! grep -q "<!DOCTYPE html>" prompt_template.txt; then
+                  echo "✅ Prompt baixado com sucesso (Estratégia 2)"
+                  echo "📊 Tamanho: $(wc -c < prompt_template.txt) bytes"
+                  echo "📋 Preview do prompt:"
+                  head -n 5 prompt_template.txt
+                else
+                  echo "⚠️ Estratégia 2 também falhou, usando fallback..."
+                  
+                  # Estratégia 3: Fallback - criar prompt básico
+                  echo "🔄 Estratégia 3: Usando prompt local como fallback..."
+                  if [ -f "config/prompts/prompt_template_code_review_diff.txt" ]; then
+                    cp "config/prompts/prompt_template_code_review_diff.txt" prompt_template.txt
+                    echo "✅ Usando prompt local como fallback"
+                    echo "📊 Tamanho: $(wc -c < prompt_template.txt) bytes"
+                  else
+                    echo "❌ Nem Google Drive nem arquivo local disponível"
+                    echo "🔍 Debug - Conteúdo baixado do Google Drive:"
+                    head -n 10 prompt_template.txt
+                    exit 1
+                  fi
+                fi
+              else
+                echo "❌ Wget também falhou"
+                exit 1
+              fi
             fi
           else
-            echo "❌ Falha ao baixar prompt do Google Drive"
+            echo "❌ Falha no curl inicial"
             exit 1
           fi
 
