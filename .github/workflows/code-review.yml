@@ -22,7 +22,6 @@ jobs:
 
       - name: 🔍 Gerando Diff
         run: |
-          echo "📊 Gerando diff do PR..."
           git fetch origin ${{ github.base_ref }}
           git diff origin/${{ github.base_ref }}...HEAD > diff.txt
 
@@ -41,71 +40,56 @@ jobs:
             mv diff_truncated.txt diff.txt
           fi
 
-      - name: 📝 Baixando Prompt do Google Drive
-        run: |
-          echo "📥 Baixando prompt template do Google Drive..."
-          
-                     # FILE_ID do Google Drive
+             - name: 📝 Baixando Prompt do Google Drive
+         run: |
+           echo "📥 Baixando prompt template do Google Drive..."
+           
+           # FILE_ID do Google Drive
            FILE_ID="1W2CQkS9WMJ2z1kvDdOh-R51syvhBSshO"
-          
-          # Estratégia 1: Download direto com User-Agent e follow redirects
-          echo "🔄 Tentativa 1: Download direto..."
-          if curl -L -s --fail --max-time 30 \
-            -H "User-Agent: Mozilla/5.0 (Linux; x86_64) AppleWebKit/537.36" \
-            "https://drive.google.com/uc?export=download&id=$FILE_ID" \
-            -o prompt_template.txt; then
-            
-            if [ -s prompt_template.txt ] && ! grep -q "<!DOCTYPE html>" prompt_template.txt; then
-              echo "✅ Prompt baixado com sucesso (Estratégia 1)"
-              echo "📊 Tamanho: $(wc -c < prompt_template.txt) bytes"
-              echo "📋 Preview do prompt:"
-              head -n 5 prompt_template.txt
-            else
-              echo "⚠️ Estratégia 1 retornou HTML, tentando estratégia 2..."
-              
-              # Estratégia 2: Usar wget
-              echo "🔄 Tentativa 2: Usando wget..."
-              if wget -q --timeout=30 --max-redirect=10 \
-                --user-agent="Mozilla/5.0 (Linux; x86_64) AppleWebKit/537.36" \
-                "https://drive.google.com/uc?export=download&id=$FILE_ID" \
-                -O prompt_template.txt; then
-                
-                if [ -s prompt_template.txt ] && ! grep -q "<!DOCTYPE html>" prompt_template.txt; then
-                  echo "✅ Prompt baixado com sucesso (Estratégia 2)"
-                  echo "📊 Tamanho: $(wc -c < prompt_template.txt) bytes"
-                  echo "📋 Preview do prompt:"
-                  head -n 5 prompt_template.txt
-                else
-                  echo "⚠️ Estratégia 2 também falhou, usando fallback..."
-                  
-                  # Estratégia 3: Fallback - criar prompt básico
-                  echo "🔄 Estratégia 3: Usando prompt local como fallback..."
-                  if [ -f "config/prompts/prompt_template_code_review_diff.txt" ]; then
-                    cp "config/prompts/prompt_template_code_review_diff.txt" prompt_template.txt
-                    echo "✅ Usando prompt local como fallback"
-                    echo "📊 Tamanho: $(wc -c < prompt_template.txt) bytes"
-                  else
-                    echo "❌ Nem Google Drive nem arquivo local disponível"
-                    echo "🔍 Debug - Conteúdo baixado do Google Drive:"
-                    head -n 10 prompt_template.txt
-                    exit 1
-                  fi
-                fi
-              else
-                echo "❌ Wget também falhou"
-                exit 1
-              fi
-            fi
-          else
-            echo "❌ Falha no curl inicial"
-            exit 1
-          fi
+           
+           # Estratégia 1: Download direto com curl
+           echo "🔄 Tentativa 1: Download direto (curl)..."
+           if curl -L -s --fail --max-time 30 \
+             -H "User-Agent: Mozilla/5.0 (Linux; x86_64) AppleWebKit/537.36" \
+             "https://drive.google.com/uc?export=download&id=$FILE_ID" \
+             -o prompt_template.txt && \
+             [ -s prompt_template.txt ] && \
+             ! grep -q "<!DOCTYPE html>" prompt_template.txt; then
+             
+             echo "✅ Prompt baixado com sucesso (Estratégia 1)"
+             echo "📊 Tamanho: $(wc -c < prompt_template.txt) bytes"
+             echo "📋 Preview do prompt:"
+             head -n 5 prompt_template.txt
+             
+           else
+             echo "⚠️ Estratégia 1 falhou, tentando estratégia 2..."
+             
+             # Estratégia 2: Download com wget
+             echo "🔄 Tentativa 2: Download alternativo (wget)..."
+             if wget -q --timeout=30 --max-redirect=10 \
+               --user-agent="Mozilla/5.0 (Linux; x86_64) AppleWebKit/537.36" \
+               "https://drive.google.com/uc?export=download&id=$FILE_ID" \
+               -O prompt_template.txt && \
+               [ -s prompt_template.txt ] && \
+               ! grep -q "<!DOCTYPE html>" prompt_template.txt; then
+               
+               echo "✅ Prompt baixado com sucesso (Estratégia 2)"
+               echo "📊 Tamanho: $(wc -c < prompt_template.txt) bytes"
+               echo "📋 Preview do prompt:"
+               head -n 5 prompt_template.txt
+               
+             else
+               echo "❌ Ambas as estratégias falharam"
+               echo "🔍 Debug - Conteúdo baixado do Google Drive:"
+               head -n 10 prompt_template.txt
+               exit 1
+             fi
+           fi
 
       - name: 🛠️ Preparando Prompt Final
         run: |
           echo "🔧 Montando prompt final com diff..."
           
-          # Concatenar prompt + diff de forma simples (sem substituições complexas)
           {
             cat prompt_template.txt
             echo ""
@@ -115,6 +99,11 @@ jobs:
           
           echo "✅ Prompt final preparado"
           echo "📊 Tamanho final: $(wc -c < prompt.txt) bytes"
+          
+          echo "📋 Conteúdo concatenado que será enviado para a IA:"
+          echo "============================================"
+          cat prompt.txt
+          echo "============================================"
 
       - name: 🔐 Autenticação StackSpot
         run: |
