@@ -20,321 +20,177 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 📦 Instalando dependências necessárias
-        run: |
-          echo "📦 Instalando dependências necessárias..."
-          if ! command -v jq &> /dev/null; then
-            echo "Instalando jq..."
-            sudo apt update
-            sudo apt install -y jq
-          else
-            echo "✅ jq já está instalado"
-          fi
-
-          if ! command -v gh &> /dev/null; then
-            echo "Instalando GitHub CLI..."
-            curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-            echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-            sudo apt update
-            sudo apt install -y gh
-          else
-            echo "✅ GitHub CLI já está instalado"
-          fi
-          echo "✅ Todas as dependências foram verificadas"
-
       - name: 🔍 Gerando Diff
         run: |
-          echo "Fetching base branch..."
+          echo "📊 Gerando diff do PR..."
           git fetch origin ${{ github.base_ref }}
-          echo "Generating diff..."
           git diff origin/${{ github.base_ref }}...HEAD > diff.txt
 
           if [ ! -f diff.txt ] || [ ! -s diff.txt ]; then
-            echo "❌ Erro: Não foi possível gerar o diff ou o diff está vazio"
+            echo "⚠️ Diff vazio - criando diff padrão"
             echo "No changes to review" > diff.txt
           fi
 
           DIFF_SIZE=$(wc -c < diff.txt)
+          echo "📏 Tamanho do diff: $DIFF_SIZE bytes"
+          
           if [ $DIFF_SIZE -gt 51200 ]; then
-            echo "⚠️ Diff muito grande ($DIFF_SIZE bytes), truncando..."
+            echo "✂️ Truncando diff (muito grande)..."
             head -c 51200 diff.txt > diff_truncated.txt
             echo -e "\n\n... [DIFF TRUNCADO - MUITAS ALTERAÇÕES] ..." >> diff_truncated.txt
             mv diff_truncated.txt diff.txt
           fi
 
-          echo "=== DIFF FILE PREVIEW ==="
-          head -n 20 diff.txt
-
-      - name: 🔐 Gerando Token StackSpot
+      - name: 📝 Baixando Prompt do Google Drive
         run: |
-          echo "🔐 Iniciando autenticação StackSpot..."
-          echo "⏰ Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          START_TIME=$SECONDS
-          TOKEN_RESPONSE=$(curl --fail --show-error --max-time 30 --retry 2 -s --location 'https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token' \
+          echo "📥 Baixando prompt template do Google Drive..."
+          
+          # URL de download direto do Google Drive usando FILE_ID
+          GDRIVE_URL="https://drive.google.com/uc?export=download&id=1jD7xwCOg6l4O0Y3qKpa9-A7V7ExeeK_V"
+          
+          if curl -s --fail --max-time 30 "$GDRIVE_URL" -o prompt_template.txt; then
+            if [ -s prompt_template.txt ]; then
+              echo "✅ Prompt baixado com sucesso do Google Drive"
+              echo "📊 Tamanho: $(wc -c < prompt_template.txt) bytes"
+              echo "📋 Preview do prompt:"
+              head -n 5 prompt_template.txt
+            else
+              echo "❌ Arquivo baixado está vazio"
+              exit 1
+            fi
+          else
+            echo "❌ Falha ao baixar prompt do Google Drive"
+            exit 1
+          fi
+
+      - name: 🛠️ Preparando Prompt Final
+        run: |
+          echo "🔧 Montando prompt final com diff..."
+          
+          # Ler template e diff
+          TEMPLATE_CONTENT=$(cat prompt_template.txt)
+          DIFF_CONTENT=$(cat diff.txt)
+          
+          # Substituir {requirements} pelo diff de forma simples
+          echo "$TEMPLATE_CONTENT" | sed "s/{requirements}/$(printf '%s\n' "$DIFF_CONTENT" | sed 's/[[\.*^$()+?{|]/\\&/g')/g" > prompt.txt
+          
+          echo "✅ Prompt final preparado"
+          echo "📊 Tamanho final: $(wc -c < prompt.txt) bytes"
+
+      - name: 🔐 Autenticação StackSpot
+        run: |
+          echo "🔐 Obtendo token StackSpot..."
+          
+          TOKEN_RESPONSE=$(curl -s --fail --max-time 30 \
+            --location 'https://idm.stackspot.com/stackspot-freemium/oidc/oauth/token' \
             --header 'Content-Type: application/x-www-form-urlencoded' \
             --data-urlencode "client_id=${{ secrets.STACKSPOT_CLIENT_ID }}" \
             --data-urlencode 'grant_type=client_credentials' \
             --data-urlencode "client_secret=${{ secrets.STACKSPOT_CLIENT_SECRET }}") || {
-            echo "❌ Erro: Falha na requisição para o StackSpot"
-            echo "🔍 Possíveis causas:"
-            echo "  - Timeout de rede (>30s)"
-            echo "  - Endpoint StackSpot indisponível"
-            echo "  - Credenciais inválidas (HTTP 401/403)"
-            echo "  - Erro de conectividade"
+            echo "❌ Falha na autenticação StackSpot"
             exit 1
           }
-
-          # Validar se a resposta é JSON válido
+          
           if ! echo "$TOKEN_RESPONSE" | jq . > /dev/null 2>&1; then
-            echo "❌ Erro: Resposta não é JSON válido"
-            echo "🔍 Possível resposta em texto plano ou HTML de erro"
+            echo "❌ Resposta de autenticação inválida"
             exit 1
           fi
-
-          # Verificar se há erro na resposta do StackSpot
+          
           if echo "$TOKEN_RESPONSE" | jq -e '.error' > /dev/null 2>&1; then
-            ERROR_TYPE=$(echo "$TOKEN_RESPONSE" | jq -r '.error')
-            ERROR_DESC=$(echo "$TOKEN_RESPONSE" | jq -r '.error_description // "Sem descrição"')
-            echo "❌ Erro de autenticação StackSpot: $ERROR_TYPE"
-            echo "📝 Descrição: $ERROR_DESC"
-            echo "🔍 Verifique as credenciais nos secrets do repositório"
+            ERROR=$(echo "$TOKEN_RESPONSE" | jq -r '.error_description // .error')
+            echo "❌ Erro de autenticação: $ERROR"
             exit 1
           fi
-
-          # Verificar se access_token está presente
-          if echo "$TOKEN_RESPONSE" | jq -e '.access_token' > /dev/null 2>&1; then
-            ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
-            # Validar se o token não está vazio
-            if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
-              echo "❌ Erro: Access token está vazio ou nulo"
-              exit 1
-            fi
-            # Mascarar o token nos logs para segurança
-            echo "::add-mask::$ACCESS_TOKEN"
-            echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
-            echo "✅ Autenticação bem-sucedida - Token obtido e mascarado"
-            echo "⏱️ Duração da autenticação: $((SECONDS - START_TIME))s" || echo "⏱️ Tempo de autenticação registrado"
-          else
-            echo "❌ Erro: Campo 'access_token' não encontrado na resposta"
-            echo "🔍 Verifique se as credenciais estão corretas e se o endpoint retorna a estrutura esperada"
+          
+          ACCESS_TOKEN=$(echo "$TOKEN_RESPONSE" | jq -r '.access_token')
+          if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
+            echo "❌ Token não encontrado na resposta"
             exit 1
           fi
+          
+          echo "::add-mask::$ACCESS_TOKEN"
+          echo "ACCESS_TOKEN=$ACCESS_TOKEN" >> $GITHUB_ENV
+          echo "✅ Autenticação bem-sucedida"
 
-      - name: 🤖 Chamando StackSpot AI para revisão
+      - name: 🤖 Análise com StackSpot AI
         run: |
-          echo "🤖 Iniciando análise de código com StackSpot AI..."
-          echo "⏰ Timestamp: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
-          AI_START_TIME=$SECONDS
-
-          {
-            echo "You are a senior code reviewer."
-            echo
-            echo "You will receive a raw Git diff via {requirements}."
-            echo
-            echo "**Your task:**"
-            echo
-            echo "1. Analyze the diff and automatically detect the programming language or framework (e.g., Python, Robot Framework, Node.js, PHP)."
-            echo "   - Apply **best practices, linting rules, conventions and security guidelines** specific to the detected technology."
-            echo
-            echo "2. Provide a **code review in Portuguese (Brazil)** with the following structure:"
-            echo "   - **Feedback por Arquivo**: List only the files where there are **problems, issues, or relevant improvement points**."
-            echo "     - Show **only the problematic snippets** using code blocks (\`\`\`), explaining **what is wrong or can be improved**."
-            echo "     - Provide **objective correction/refactoring suggestions**."
-            echo "     - **Explain the practical impact of each issue or suggestion** (e.g., \"isso pode causar falhas intermitentes nos testes\")."
-            echo "     - Include **Opiniões** only when they are optional adjustments that improve clarity, performance, or standardization."
-            echo "     - Check for hardcoded values (e.g., API keys, agent IDs, secrets, URLs, tokens, or credentials) and flag them as security risks."
-            echo
-            echo "3. **Classificação de Achados**"
-            echo "   - **Críticos** – Bugs, logical errors, hardcoded sensitive data, or security vulnerabilities."
-            echo "   - **Melhorias** – Refactorings, best practices, performance, linting."
-            echo
-            echo "4. **Resumo Final**"
-            echo "   - Return **APROVADO** if no critical issues are found."
-            echo "   - Return **REPROVADO** if critical issues are detected."
-            echo "   - List only the relevant action points."
-            echo
-            echo "---"
-            echo
-            echo "**Important Rules:**"
-            echo "- Do not describe correct or trivial changes."
-            echo "- Provide only **useful technical feedback** (critical issues or real improvements)."
-            echo "- Always explain the practical impact of problems or improvements."
-            echo "- Pay special attention to hardcoded values or secrets, recommending the use of environment variables or repository secrets."
-            echo "- Do not include the technology detection section in the response."
-            echo "- Use markdown (\`\`\`) to show code snippets when necessary."
-            echo "- If a file contains the comment `excludeFromCodeCoverage`, completely skip the analysis and code review for that specific file."
-            echo "- If there are no issues, finish with a brief positive summary and **APROVADO**."
-            echo "- If there are problems, finish with a brief summary and **REPROVADO**."
-            echo "<DIFF_START>"
-            cat diff.txt
-            echo "<DIFF_END>"
-          } > prompt.txt
-
+          echo "🚀 Enviando para análise da IA..."
+          
           PROMPT_CONTENT=$(cat prompt.txt)
-
-          echo "📝 Prompt preparado com $(wc -l < prompt.txt) linhas"
-          echo "🔍 Visualizando primeiras 40 linhas do prompt:"
-          head -n 40 prompt.txt
-
-          echo "🚀 Enviando requisição para StackSpot AI..."
-          echo "📊 Tamanho do prompt: $(wc -c < prompt.txt) caracteres"
-          
-          # Corrigir problema de escape: usar jq -Rs para processar raw string 
-          # evitando que { seja escapado para {{ causando falsos positivos na IA
-          echo "🔧 Processando prompt com jq para evitar escape incorreto de chaves..."
           ESCAPED_PROMPT=$(printf '%s' "$PROMPT_CONTENT" | jq -Rs .)
-          echo "✅ Prompt processado. Tamanho após escape: ${#ESCAPED_PROMPT} caracteres"
           
-          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" --location             "https://genai-inference-app.stackspot.com/v1/agent/${{ secrets.STACKSPOT_AGENT_ID }}/chat"             --header 'Content-Type: application/json'             --header "Authorization: Bearer $ACCESS_TOKEN"             --data "{
+          RESPONSE=$(curl -s -w "\n###STATUS###%{http_code}" \
+            --max-time 60 \
+            --location "https://genai-inference-app.stackspot.com/v1/agent/${{ secrets.STACKSPOT_AGENT_ID }}/chat" \
+            --header 'Content-Type: application/json' \
+            --header "Authorization: Bearer $ACCESS_TOKEN" \
+            --data "{
               \"streaming\": false,
               \"user_prompt\": $ESCAPED_PROMPT,
               \"stackspot_knowledge\": false,
               \"return_ks_in_response\": false
             }")
-
-          # Debug: Verificar se a resposta não está vazia
-          if [ -z "$RESPONSE" ]; then
-            echo "❌ Resposta vazia da API StackSpot"
-            exit 1
-          fi
-
-          # Extrair status HTTP corretamente
+          
           HTTP_STATUS=$(echo "$RESPONSE" | tail -n 1 | sed 's/.*###STATUS###//')
           RESPONSE_BODY=$(echo "$RESPONSE" | sed '$d')
-
-          # Debug temporário
-          echo "🔍 DEBUG - Tamanho da resposta: ${#RESPONSE} caracteres"
-          echo "🔍 DEBUG - Status HTTP extraído: '$HTTP_STATUS'"
-
-          # Validar se status HTTP é numérico
-          if ! [[ "$HTTP_STATUS" =~ ^[0-9]+$ ]]; then
-            echo "❌ Erro: Status HTTP não é numérico: '$HTTP_STATUS'"
-            echo "🔍 Últimas 5 linhas da resposta completa:"
-            echo "$RESPONSE" | tail -n 5
-            exit 1
-          fi
-
-          echo "📡 Status HTTP da resposta: $HTTP_STATUS"
-          if [ "$HTTP_STATUS" != "200" ]; then
-            echo "❌ Erro na requisição StackSpot (HTTP $HTTP_STATUS)"
-            echo "🔍 Verifique se o token está válido e se o agente está disponível"
-            echo "⏱️ Tempo até falha: $((SECONDS - AI_START_TIME))s"
-          else
-            echo "✅ Requisição StackSpot executada com sucesso"
-            echo "⏱️ Tempo de resposta da API: $((SECONDS - AI_START_TIME))s"
-          fi
-
-          # Debug: Mostrar início do response body
-          echo "🔍 DEBUG - Primeiros 200 caracteres do response body:"
-          echo "$RESPONSE_BODY" | head -c 200
-          echo ""
-
-          # Validar se response body é JSON válido
-          if ! echo "$RESPONSE_BODY" | jq . > /dev/null 2>&1; then
-            echo "❌ Response body não é JSON válido"
-            echo "📄 Conteúdo recebido:"
-            echo "$RESPONSE_BODY" | head -c 500
-            exit 1
-          fi
-
-          # Extrair resposta da IA
-          REVIEW_OUTPUT=$(echo "$RESPONSE_BODY" | jq -r '.message // .output_text // empty')
           
-          # Debug: Verificar extração
-          echo "🔍 DEBUG - REVIEW_OUTPUT extraído: ${#REVIEW_OUTPUT} caracteres"
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "❌ Erro na API StackSpot (HTTP $HTTP_STATUS)"
+            exit 1
+          fi
+          
+          if ! echo "$RESPONSE_BODY" | jq . > /dev/null 2>&1; then
+            echo "❌ Resposta da IA inválida"
+            exit 1
+          fi
+          
+          REVIEW_OUTPUT=$(echo "$RESPONSE_BODY" | jq -r '.message // .output_text // empty')
           
           if [ -z "$REVIEW_OUTPUT" ] || [ "$REVIEW_OUTPUT" = "null" ]; then
             echo "❌ Falha ao extrair resposta da IA"
-            echo "📋 Tentando extrair diretamente da resposta JSON:"
-            # Fallback: tentar extrair de outras formas
-            REVIEW_OUTPUT=$(echo "$RESPONSE_BODY" | jq -r '.message' 2>/dev/null) || \
-            REVIEW_OUTPUT=$(echo "$RESPONSE_BODY" | jq -r '.output_text' 2>/dev/null) || \
-            REVIEW_OUTPUT="⚠️ Falha na análise de código por IA - verifique manualmente"
+            exit 1
           fi
-
-          # Salvar resultado final
-          echo "$REVIEW_OUTPUT" > review.txt
-          REVIEW_LENGTH=$(echo "$REVIEW_OUTPUT" | wc -c)
           
-          if [ "$REVIEW_LENGTH" -gt 50 ]; then
-            echo "✅ Análise da IA concluída com sucesso"
-            echo "📊 Tamanho da resposta: $REVIEW_LENGTH caracteres"
-          else
-            echo "⚠️ Resposta da IA muito curta, pode ter havido problema"
-          fi
+          echo "$REVIEW_OUTPUT" > review.txt
+          echo "✅ Análise concluída"
 
-          echo "📋 Conteúdo da revisão gerada:"
-          echo "----------------------------------------"
-          cat review.txt
-          echo "----------------------------------------"
-
-      - name: 💬 Adicionando comentário ao PR
+      - name: 💬 Comentário no PR
         run: |
-          echo "💬 Preparando comentário para o PR..."
-          echo "🎯 PR #${{ github.event.pull_request.number }}: ${{ github.head_ref }} → ${{ github.base_ref }}"
-          echo "## 🤖 Revisão Automática de Código - StackSpot AI" > final_review.txt
-          echo "" >> final_review.txt
-          echo "**PR:** #${{ github.event.pull_request.number }}" >> final_review.txt
-          echo "**Branch:** \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`" >> final_review.txt
-          echo "**Commit:** ${{ github.sha }}" >> final_review.txt
-          echo "" >> final_review.txt
-          echo "---" >> final_review.txt
-          echo "" >> final_review.txt
-          cat review.txt >> final_review.txt
-          echo "" >> final_review.txt
-          echo "---" >> final_review.txt
-          echo "*Revisão gerada automaticamente em $(date -u '+%Y-%m-%d %H:%M:%S UTC')*" >> final_review.txt
+          echo "💬 Adicionando comentário ao PR..."
+          
+          {
+            echo "## 🤖 Revisão Automática de Código - StackSpot AI"
+            echo ""
+            echo "**PR:** #${{ github.event.pull_request.number }}"
+            echo "**Branch:** \`${{ github.head_ref }}\` → \`${{ github.base_ref }}\`"
+            echo "**Prompt Source:** Google Drive"
+            echo ""
+            echo "---"
+            echo ""
+            cat review.txt
+            echo ""
+            echo "---"
+            echo "*Gerado em $(date -u '+%Y-%m-%d %H:%M:%S UTC')*"
+          } > final_review.txt
+          
+          gh pr comment ${{ github.event.pull_request.number }} --body-file final_review.txt
+          echo "✅ Comentário adicionado com sucesso"
 
-          echo "📤 Enviando comentário para o PR..."
-          gh pr comment ${{ github.event.pull_request.number }} --body-file final_review.txt && {
-            echo "✅ Comentário adicionado com sucesso ao PR #${{ github.event.pull_request.number }}"
-          } || {
-            echo "❌ Erro ao adicionar comentário ao PR"
-            echo "📄 Conteúdo que tentou ser enviado:"
-            cat final_review.txt
-            exit 1
-          }
-
-      - name: ⛔ Validando resultado da IA
+      - name: ⚡ Validação do Resultado
         run: |
-          echo "🔍 Validando resultado da análise de código..."
-          if [ ! -f review.txt ]; then
-            echo "⚠️ Arquivo review.txt não encontrado!"
-            exit 1
-          fi
-
-          # Debug: Mostrar tamanho e início do arquivo de review
-          REVIEW_SIZE=$(wc -c < review.txt)
-          echo "🔍 DEBUG - Tamanho do arquivo review.txt: $REVIEW_SIZE caracteres"
-          echo "🔍 DEBUG - Primeiras 3 linhas do review.txt:"
-          head -n 3 review.txt
-
-          # Verificar se contém palavra REPROVADO
+          echo "🔍 Validando resultado..."
+          
           if grep -q "REPROVADO" review.txt; then
-            echo "❌ RESULTADO: REPROVADO"
-            echo "🚨 A revisão da IA encontrou problemas críticos."
-            echo "📋 O job será falhado para bloquear o merge."
+            echo "❌ REPROVADO - Problemas críticos encontrados"
             exit 1
           elif grep -q "APROVADO" review.txt; then
-            echo "✅ RESULTADO: APROVADO"
-            echo "🎉 A revisão da IA aprovou as alterações."
-            echo "🚀 O PR pode prosseguir para merge."
+            echo "✅ APROVADO - Código pode prosseguir"
           else
-            echo "⚠️ RESULTADO: INDETERMINADO"
-            echo "🔍 Não foi possível determinar se foi aprovado ou reprovado"
-            echo "📋 Conteúdo do review será incluído no comentário do PR"
-            echo "⚡ Assumindo aprovação para não bloquear o fluxo"
+            echo "⚠️ INDETERMINADO - Assumindo aprovação"
           fi
 
       - name: 🧹 Limpeza
         if: always()
         run: |
-          echo "🧹 Iniciando limpeza de arquivos temporários..."
-          FILES_TO_CLEAN="diff.txt prompt.txt review.txt final_review.txt"
-          for file in $FILES_TO_CLEAN; do
-            if [ -f "$file" ]; then
-              rm -f "$file"
-              echo "🗑️ Removido: $file"
-            fi
-          done
-          echo "✅ Limpeza concluída com sucesso"
+          rm -f diff.txt prompt_template.txt prompt.txt review.txt final_review.txt
+          echo "✅ Arquivos temporários removidos"
