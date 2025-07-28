@@ -1,4 +1,4 @@
-## 🤖 Code Review Automática - BSQA
+## 🤖 Review powered by BSQA
 
 **PR:** #{{PR_NUMBER}}  
 **Título:** {{PR_TITLE}}  
