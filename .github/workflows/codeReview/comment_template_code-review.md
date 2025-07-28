@@ -3,9 +3,8 @@
 **PR:** #{{PR_NUMBER}}  
 **Título:** {{PR_TITLE}}  
 **Branch:** `{{HEAD}}` → `{{BASE}}`  
-**Status Code Review:** {{STATUS}}
 
-<details open><summary>📋 Resultado da análise</summary>
+<details open><summary>📋 Resultado da análise: {{STATUS}}</summary>
 
 {{REVIEW_CONTENT}}
 
