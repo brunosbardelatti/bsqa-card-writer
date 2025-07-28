@@ -9,10 +9,10 @@ permissions:
   pull-requests: write
 
 jobs:
-  call-code-review:
-    uses: brunosbardelatti/bsqa_code_review/.github/workflows/ai-code-review.yml@main
+  code-review:
+    uses: brunosbardelatti/bsqa-centralizador/.github/workflows/ai-code-review.yml@main
     with:
-      gist_url: "https://gist.githubusercontent.com/brunosbardelatti/f49bcfbabcc3489b4549283cae00cfd7/raw/0fc8468c1c9db6f98a628e912e99233accc376be/prompt_template_code_review_diff.txt"
+      gist_url: https://gist.githubusercontent.com/brunosbardelatti/f49bcfbabcc3489b4549283cae00cfd7/raw/c50d1107c3ff2ae3bb58c53c443208da73fb80bb/prompt_template_code_review_diff.txt
     secrets:
       STACKSPOT_CLIENT_ID: ${{ secrets.STACKSPOT_CLIENT_ID }}
       STACKSPOT_CLIENT_SECRET: ${{ secrets.STACKSPOT_CLIENT_SECRET }}
