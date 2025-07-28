@@ -1,4 +1,4 @@
-name: BSQA Code Review
+name: Code Review powered by BSQA AI
 
 on:
   pull_request:
