@@ -41,13 +41,13 @@ function highlightActivePage() {
 export function generateBreadcrumbs(items) {
   const breadcrumbs = items.map((item, index) => {
     if (index === items.length - 1) {
-      return `<span>${item.text}</span>`;
+      return `<span data-testid="breadcrumb-current">${item.text}</span>`;
     } else {
-      return `<a href="${item.url}">${item.text}</a>`;
+      return `<a href="${item.url}" data-testid="breadcrumb-link">${item.text}</a>`;
     }
   }).join(' > ');
   
-  return `<div class="breadcrumbs">${breadcrumbs}</div>`;
+  return `<div class="breadcrumbs" data-testid="breadcrumbs-container">${breadcrumbs}</div>`;
 }
 
 // Função para adicionar breadcrumbs baseado na página atual
@@ -93,9 +93,9 @@ export function addBreadcrumbs() {
   // Substituir o conteúdo do breadcrumb
   breadcrumbsContainer.innerHTML = breadcrumbItems.map((item, index) => {
     if (index === breadcrumbItems.length - 1) {
-      return `<span>${item.text}</span>`;
+      return `<span data-testid="breadcrumb-current">${item.text}</span>`;
     } else {
-      return `<a href="${item.url}">${item.text}</a>`;
+      return `<a href="${item.url}" data-testid="breadcrumb-link">${item.text}</a>`;
     }
   }).join(' > ');
 }
@@ -240,7 +240,7 @@ export function convertMarkdownToHtml(markdown) {
     const languageLabel = getLanguageLabel(language);
     const escapedCode = escapeHtml(code.trim());
     
-    return `<div class="code-block"><div class="code-header"><span class="code-language">${languageLabel}</span><button class="copy-btn" onclick="copyCode(this)" title="Copiar código"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" style="color: inherit;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2"/></svg></button></div><pre><code class="language-${language}" data-language="${language}">${escapedCode}</code></pre></div>`;
+    return `<div class="code-block" data-testid="syntax-code-block"><div class="code-header"><span class="code-language" data-testid="syntax-language-label">${languageLabel}</span><button class="copy-btn" onclick="copyCode(this)" title="Copiar código" data-testid="syntax-button-copy"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" style="color: inherit;"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2"/></svg></button></div><pre><code class="language-${language}" data-language="${language}" data-testid="syntax-code-content">${escapedCode}</code></pre></div>`;
   });
   
   // Código inline

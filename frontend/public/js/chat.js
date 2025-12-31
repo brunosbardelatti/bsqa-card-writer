@@ -92,7 +92,7 @@ function bindFormEvents() {
     serviceSelect.disabled = true;
     analyseTypeSelect.disabled = true;
     
-    output.innerHTML = '<div class="loading">Processando requisição...</div>';
+          output.innerHTML = '<div class="loading" data-testid="chat-loading">Processando requisição...</div>';
     const file = fileInput.files[0];
     const requirements = document.getElementById('requirements').value;
     const service = document.getElementById('service').value;
@@ -100,7 +100,7 @@ function bindFormEvents() {
     const formData = new FormData();
 
     if (file && requirements.trim()) {
-      output.innerHTML = '<div class="error">Use apenas um método de entrada: arquivo ou texto.</div>';
+              output.innerHTML = '<div class="error" data-testid="chat-error-input-method">Use apenas um método de entrada: arquivo ou texto.</div>';
       // Reabilitar elementos em caso de erro
       submitBtn.disabled = false;
       dropZone.style.pointerEvents = 'auto';
@@ -129,7 +129,7 @@ function bindFormEvents() {
       const fileName = file.name.toLowerCase();
       const isAllowed = allowedTypes.includes(fileType) || fileName.endsWith('.pdf') || fileName.endsWith('.txt') || fileName.endsWith('.json');
       if (!isAllowed) {
-        output.innerHTML = '<div class="error">Tipos de arquivo aceitos: <b>PDF (.pdf)</b>, <b>TXT (.txt)</b> e <b>JSON (.json)</b>. Outros formatos não são suportados.</div>';
+        output.innerHTML = '<div class="error" data-testid="chat-error-file-type">Tipos de arquivo aceitos: <b>PDF (.pdf)</b>, <b>TXT (.txt)</b> e <b>JSON (.json)</b>. Outros formatos não são suportados.</div>';
         // Reabilitar elementos em caso de erro
         submitBtn.disabled = false;
         dropZone.style.pointerEvents = 'auto';
@@ -146,7 +146,7 @@ function bindFormEvents() {
         return;
       }
       if (file.size > 100 * 1024 * 1024) {
-        output.innerHTML = '<div class="error">Arquivo maior que o tamanho de 100MB suportado. Tente com outro arquivo.</div>';
+        output.innerHTML = '<div class="error" data-testid="chat-error-file-size">Arquivo maior que o tamanho de 100MB suportado. Tente com outro arquivo.</div>';
         // Reabilitar elementos em caso de erro
         submitBtn.disabled = false;
         dropZone.style.pointerEvents = 'auto';
@@ -175,13 +175,13 @@ function bindFormEvents() {
       formData.append('return_ks_in_response', config.returnKsInResponse || false);
     }
     try {
-      const res = await fetch('http://localhost:8000/analyze', {
+      const res = await fetch(window.apiConfig.buildUrl('/analyze'), {
         method: 'POST',
         body: formData
       });
       const data = await res.json();
       if (!res.ok) {
-        output.innerHTML = `<div class="error">${data.detail}</div>`;
+        output.innerHTML = `<div class="error" data-testid="chat-error-api">${data.detail}</div>`;
       } else {
         let message = data.result && data.result.message ? data.result.message : data.result;
         
@@ -189,13 +189,13 @@ function bindFormEvents() {
         message = message.replace(/^\s+/, ''); // Remove espaços no início
         
         output.innerHTML = `
-          <div class="result-container">
-            <button class="copy-btn" onclick="copyToClipboard(this)" data-text="${encodeURIComponent(message)}" title="Copiar resposta" style="position: sticky !important; top: 0.5rem !important; right: 0.5rem !important; left: auto !important; float: right !important; margin: 0.5rem !important; z-index: 10 !important;">
+          <div class="result-container" data-testid="chat-result-container">
+            <button class="copy-btn" onclick="copyToClipboard(this)" data-text="${encodeURIComponent(message)}" title="Copiar resposta" style="position: sticky !important; top: 0.5rem !important; right: 0.5rem !important; left: auto !important; float: right !important; margin: 0.5rem !important; z-index: 10 !important;" data-testid="chat-button-copy-result">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h6a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z"/>
               </svg>
             </button>
-            <div class="result">${message.replace(/\n/g, '<br>')}</div>
+            <div class="result" data-testid="chat-result-content">${message.replace(/\n/g, '<br>')}</div>
           </div>
         `;
         fileInput.value = '';
@@ -203,7 +203,7 @@ function bindFormEvents() {
         updateDropFeedback();
       }
     } catch (err) {
-      output.innerHTML = `<div class="error">${err}</div>`;
+      output.innerHTML = `<div class="error" data-testid="chat-error-general">${err}</div>`;
     } finally {
       submitBtn.disabled = false;
       // Reabilitar elementos de upload
@@ -237,7 +237,7 @@ async function loadDefaultAI(applyDefaults = true) {
     // Carregar configurações de API do servidor
     let apiConfig = {};
     try {
-      const response = await fetch('http://localhost:8000/api-config');
+      const response = await fetch(window.apiConfig.buildUrl('/api-config'));
       if (response.ok) {
         apiConfig = await response.json();
       }
@@ -266,7 +266,7 @@ async function loadDefaultAI(applyDefaults = true) {
     
     if (enabledAIs.length === 0) {
       // Nenhuma IA configurada
-      serviceSelect.innerHTML = '<option value="">❌ Nenhuma IA configurada</option>';
+      serviceSelect.innerHTML = '<option value="" data-testid="chat-option-no-ai">❌ Nenhuma IA configurada</option>';
       serviceSelect.disabled = true;
       
       // Desabilitar botão de envio
@@ -279,11 +279,12 @@ async function loadDefaultAI(applyDefaults = true) {
       // Mostrar mensagem de aviso
       const warningDiv = document.createElement('div');
       warningDiv.style.cssText = 'background: rgba(244, 67, 54, 0.1); color: #f44336; padding: 1rem; border-radius: 6px; margin-top: 1rem; border: 1px solid #f44336;';
+      warningDiv.setAttribute('data-testid', 'chat-warning-no-ai');
       warningDiv.innerHTML = `
-        <strong>⚠️ Nenhuma IA configurada</strong><br>
-        Para usar o BSQA Card Writer, você precisa configurar pelo menos uma IA nas configurações.
+        <strong data-testid="chat-warning-title">⚠️ Nenhuma IA configurada</strong><br>
+        <span data-testid="chat-warning-message">Para usar o BSQA Card Writer, você precisa configurar pelo menos uma IA nas configurações.</span>
         <br><br>
-        <a href="config.html" style="color: #f44336; text-decoration: underline;">→ Ir para Configurações</a>
+        <a href="config.html" style="color: #f44336; text-decoration: underline;" data-testid="chat-warning-link-config">→ Ir para Configurações</a>
       `;
       
       // Inserir aviso após o formulário
@@ -301,6 +302,7 @@ async function loadDefaultAI(applyDefaults = true) {
       const option = document.createElement('option');
       option.value = ai.value;
       option.textContent = ai.label;
+      option.setAttribute('data-testid', `chat-option-ai-${ai.value}`);
       serviceSelect.appendChild(option);
     });
     
@@ -322,7 +324,8 @@ async function loadDefaultAI(applyDefaults = true) {
     
     // Definir tipo de análise padrão apenas se for um recarregamento real da página E applyDefaults for true
     if (window.pageReloaded && applyDefaults && preferences.defaultAnalyseType) {
-      document.getElementById('analyse_type').value = preferences.defaultAnalyseType;
+      // Armazenar o valor padrão para ser aplicado após o carregamento dos tipos de análise
+      window.defaultAnalysisTypeToApply = preferences.defaultAnalyseType;
     }
     
     // Resetar a flag apenas se applyDefaults for true
@@ -408,7 +411,7 @@ window.addEventListener('focus', async () => {
 // Carregar tipos de análise disponíveis do backend
 async function loadAnalysisTypes() {
   try {
-    const response = await fetch('http://localhost:8000/analysis-types');
+    const response = await fetch(window.apiConfig.buildUrl('/analysis-types'));
     const data = await response.json();
     const analyseTypeSelect = document.getElementById('analyse_type');
     
@@ -420,17 +423,18 @@ async function loadAnalysisTypes() {
       const option = document.createElement('option');
       option.value = value;
       option.textContent = label;
+      option.setAttribute('data-testid', `chat-option-analysis-${value}`);
       analyseTypeSelect.appendChild(option);
     });
     
     // Armazenar placeholders globalmente para uso posterior
     window.analysisPlaceholders = data.placeholders || {};
     
-    // Aplicar configuração padrão apenas se for um recarregamento real da página
-    const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
-    if (window.pageReloaded && config.preferences && config.preferences.defaultAnalyseType) {
-      analyseTypeSelect.value = config.preferences.defaultAnalyseType;
-      // Não resetar a flag aqui, pois ela será resetada em loadDefaultAI()
+    // Aplicar configuração padrão - usar a variável global definida em loadDefaultAI()
+    if (window.defaultAnalysisTypeToApply) {
+      analyseTypeSelect.value = window.defaultAnalysisTypeToApply;
+      // Limpar a variável após usar
+      window.defaultAnalysisTypeToApply = null;
     }
     
     // Atualizar placeholder inicial
@@ -443,6 +447,12 @@ async function loadAnalysisTypes() {
     // Fallback para opções padrão em caso de erro
     const analyseTypeSelect = document.getElementById('analyse_type');
     analyseTypeSelect.innerHTML = generateAnalysisOptionsHTML();
+    
+    // Aplicar configuração padrão no fallback também
+    if (window.defaultAnalysisTypeToApply) {
+      analyseTypeSelect.value = window.defaultAnalysisTypeToApply;
+      window.defaultAnalysisTypeToApply = null;
+    }
     
     // Placeholders de fallback
     window.analysisPlaceholders = ANALYSIS_PLACEHOLDERS;

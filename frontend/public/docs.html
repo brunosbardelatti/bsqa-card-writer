@@ -8,21 +8,21 @@
   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 </head>
 <body>
-  <div id="header"></div>
-  <div class="container">
+  <div id="header" data-testid="docs-header-container"></div>
+  <div class="container" data-testid="docs-main-container">
     <!-- Breadcrumbs -->
-    <div class="breadcrumbs">
+    <div class="breadcrumbs" data-testid="docs-breadcrumbs-container">
       <!-- Breadcrumbs serão preenchidos dinamicamente -->
     </div>
     
     <!-- Conteúdo da documentação -->
-    <div id="docsContent">
-      <div class="loading">
-        <p><em>Carregando documentação...</em></p>
+    <div id="docsContent" data-testid="docs-content-container">
+      <div class="loading" data-testid="docs-loading">
+        <p data-testid="docs-loading-text"><em>Carregando documentação...</em></p>
       </div>
     </div>
   </div>
-  <div id="footer"></div>
+  <div id="footer" data-testid="docs-footer-container"></div>
   
   <script type="module" src="js/main.js"></script>
   <script type="module" src="js/docs.js"></script>
