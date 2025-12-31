@@ -8,39 +8,39 @@
   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 </head>
 <body>
-  <div id="header"></div>
+  <div id="header" data-testid="index-header-container"></div>
   
-  <div class="container">
+  <div class="container" data-testid="index-main-container">
     <!-- Breadcrumbs -->
-    <div class="breadcrumbs">
+    <div class="breadcrumbs" data-testid="index-breadcrumbs-container">
       <!-- Breadcrumbs serão preenchidos dinamicamente -->
     </div>
     
     <!-- Hero Section -->
-    <div class="hero-section">
-      <div class="hero-features">
-        <a href="chat.html" class="feature-card-link">
+    <div class="hero-section" data-testid="index-hero-section">
+      <div class="hero-features" data-testid="index-hero-features">
+        <a href="chat.html" class="feature-card-link" data-testid="hero-card-chat-inteligente">
           <div class="feature-card">
             <span class="feature-icon">💬</span>
             <h3>Chat Inteligente</h3>
             <p>Análise avançada com IA, casos de teste, automação e code review</p>
           </div>
         </a>
-        <a href="config.html" class="feature-card-link">
+        <a href="config.html" class="feature-card-link" data-testid="hero-card-configuracoes">
           <div class="feature-card">
             <span class="feature-icon">⚙️</span>
             <h3>Configurações Flexíveis</h3>
             <p>Personalize sua experiência</p>
           </div>
         </a>
-        <a href="config.html#ai-config" class="feature-card-link">
+        <a href="config.html#ai-config" class="feature-card-link" data-testid="hero-card-multiplas-ias">
           <div class="feature-card">
             <span class="feature-icon">🤖</span>
             <h3>Múltiplas IA's</h3>
             <p>OpenAI e StackSpot AI integradas</p>
           </div>
         </a>
-        <a href="config.html#template-config" class="feature-card-link">
+        <a href="config.html#template-config" class="feature-card-link" data-testid="hero-card-multiplos-templates">
           <div class="feature-card">
             <span class="feature-icon">📋</span>
             <h3>Múltiplos Templates</h3>
@@ -51,46 +51,46 @@
     </div>
 
     <!-- Analysis Types -->
-    <div class="analysis-types">
-      <h2>📊 Tipos de Chat e Análise Disponíveis</h2>
-              <div class="types-grid">
-          <a href="chat.html?type=card_QA_writer" class="type-card-link">
+    <div class="analysis-types" data-testid="index-analysis-types-section">
+      <h2 data-testid="index-analysis-types-title">📊 Tipos de Chat e Análise Disponíveis</h2>
+              <div class="types-grid" data-testid="index-analysis-types-grid">
+          <a href="chat.html?type=card_QA_writer" class="type-card-link" data-testid="analysis-type-card-qa-writer">
             <div class="type-card">
               <h4>🎯 Card QA Writer</h4>
               <p>Análise de cards descritos por PM/PO para geração do card de QA contendo casos de testes</p>
             </div>
           </a>
-          <a href="chat.html?type=test_case_flow_classifier" class="type-card-link">
+          <a href="chat.html?type=test_case_flow_classifier" class="type-card-link" data-testid="analysis-type-test-case-flow">
             <div class="type-card">
               <h4>🔄 Test Case Flow Generator</h4>
               <p>Geração e classificação de casos de teste por fluxo, separando em Fluxo principal, exceção e alternativo</p>
             </div>
           </a>
-          <a href="chat.html?type=swagger_postman" class="type-card-link">
+          <a href="chat.html?type=swagger_postman" class="type-card-link" data-testid="analysis-type-swagger-postman">
             <div class="type-card">
               <h4>📡 Swagger Postman Generator</h4>
               <p>Geração de coleções Postman com testes implmentados a partir de Swagger</p>
             </div>
           </a>
-          <a href="chat.html?type=swagger_python" class="type-card-link">
+          <a href="chat.html?type=swagger_python" class="type-card-link" data-testid="analysis-type-swagger-python">
             <div class="type-card">
               <h4>🐍 Swagger Python Generator</h4>
               <p>Geração de testes automatizados em Python a partir de Swagger</p>
             </div>
           </a>
-          <a href="chat.html?type=robot_api_generator" class="type-card-link">
+          <a href="chat.html?type=robot_api_generator" class="type-card-link" data-testid="analysis-type-curl-robot">
             <div class="type-card">
               <h4>🤖 Curl Robot API Generator</h4>
               <p>Automação de testes em Robot Framework a partir de comandos cURL</p>
             </div>
           </a>
-          <a href="chat.html?type=swagger_robot_generator" class="type-card-link">
+          <a href="chat.html?type=swagger_robot_generator" class="type-card-link" data-testid="analysis-type-swagger-robot">
             <div class="type-card">
               <h4>🔧 Swagger Robot Generator</h4>
               <p>Geração de estrutura completa de automação Robot Framework a partir de Swagger</p>
             </div>
           </a>
-          <a href="chat.html?type=code_review_diff" class="type-card-link">
+          <a href="chat.html?type=code_review_diff" class="type-card-link" data-testid="analysis-type-code-review">
             <div class="type-card">
               <h4>🔍 Code Review Analyzer</h4>
               <p>Análise técnica de diffs do Git com feedback em português</p>
@@ -101,7 +101,7 @@
 
   </div>
 
-  <div id="footer"></div>
+  <div id="footer" data-testid="index-footer-container"></div>
   <script type="module" src="js/main.js"></script>
   <script type="module" src="js/index.js"></script>
 </body>
