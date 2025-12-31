@@ -1,110 +1,49 @@
+// apiConfig.js - Configuração dinâmica da API baseURL
+
 /**
- * Sistema de Configuração Dinâmica de API
- * 
- * Este módulo fornece configuração automática de URLs da API baseada no ambiente.
- * Suporta detecção automática entre desenvolvimento (localhost) e produção,
- * com possibilidade de override manual via window.API_BASE_URL.
- * 
- * Funcionalidades:
- * - 🏠 Desenvolvimento: http://localhost:8000 (auto-detectado)
- * - 🌐 Produção: https://domain.com (auto-detectado baseado no hostname)
- * - ⚙️ Override manual: window.API_BASE_URL
- * - 🔧 Zero configuração necessária para deployments padrão
+ * Detecta automaticamente a baseURL da API baseado no ambiente
+ * @returns {string} A baseURL da API
  */
-
-class ApiConfig {
-    constructor() {
-        this.baseUrl = this.detectEnvironment();
-        console.log(`[ApiConfig] Ambiente detectado: ${this.baseUrl}`);
-    }
-
-    /**
-     * Detecta automaticamente o ambiente baseado no hostname atual
-     * @returns {string} URL base da API
-     */
-    detectEnvironment() {
-        // Permite override manual via window.API_BASE_URL
-        if (window.API_BASE_URL) {
-            console.log(`[ApiConfig] Usando override manual: ${window.API_BASE_URL}`);
-            return window.API_BASE_URL;
-        }
-
-        const hostname = window.location.hostname;
-        const protocol = window.location.protocol;
-        
-        // Ambiente de desenvolvimento (localhost)
-        if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            return 'http://localhost:8000';
-        }
-        
-        // Ambiente de produção - usa o mesmo protocolo e hostname
-        const port = window.location.port;
-        const baseUrl = `${protocol}//${hostname}${port ? ':' + port : ''}`;
-        
-        // Se estiver rodando em uma porta específica diferente de 80/443, assume que é desenvolvimento
-        if (port && port !== '80' && port !== '443' && port !== '8080') {
-            return `${baseUrl.replace(':' + port, '')}:8000`;
-        }
-        
-        return baseUrl;
-    }
-
-    /**
-     * Constrói uma URL completa para um endpoint da API
-     * @param {string} endpoint - O endpoint da API (ex: '/config', '/analyze')
-     * @returns {string} URL completa para o endpoint
-     */
-    buildUrl(endpoint) {
-        // Remove barra inicial duplicada se existir
-        const cleanEndpoint = endpoint.startsWith('/') ? endpoint : '/' + endpoint;
-        const fullUrl = `${this.baseUrl}${cleanEndpoint}`;
-        
-        console.log(`[ApiConfig] Construindo URL: ${endpoint} -> ${fullUrl}`);
-        return fullUrl;
-    }
-
-    /**
-     * Retorna a URL base atual
-     * @returns {string} URL base da API
-     */
-    getBaseUrl() {
-        return this.baseUrl;
-    }
-
-    /**
-     * Permite alterar a URL base manualmente (útil para testes)
-     * @param {string} newBaseUrl - Nova URL base
-     */
-    setBaseUrl(newBaseUrl) {
-        this.baseUrl = newBaseUrl;
-        console.log(`[ApiConfig] URL base alterada para: ${newBaseUrl}`);
-    }
-
-    /**
-     * Verifica se a configuração atual é para ambiente de desenvolvimento
-     * @returns {boolean} true se for ambiente de desenvolvimento
-     */
-    isDevelopment() {
-        return this.baseUrl.includes('localhost') || this.baseUrl.includes('127.0.0.1');
-    }
-
-    /**
-     * Verifica se a configuração atual é para ambiente de produção
-     * @returns {boolean} true se for ambiente de produção
-     */
-    isProduction() {
-        return !this.isDevelopment();
-    }
+function getApiBaseUrl() {
+  // Se há uma variável global definida, usar ela (para override manual)
+  if (window.API_BASE_URL) {
+    return window.API_BASE_URL;
+  }
+  
+  // Detectar baseado no hostname atual
+  const hostname = window.location.hostname;
+  const port = window.location.port;
+  const protocol = window.location.protocol;
+  
+  // Ambiente de desenvolvimento local
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return `${protocol}//${hostname}:8000`;
+  }
+  
+  // Ambiente de produção ou outros
+  // Assume que a API está no mesmo domínio, porta padrão
+  return `${protocol}//${hostname}`;
 }
 
-// Instância global para uso em toda a aplicação
-window.apiConfig = new ApiConfig();
-
-// Exporta para uso como módulo ES6 se necessário
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = ApiConfig;
+/**
+ * Constrói URL completa para chamada da API
+ * @param {string} endpoint - O endpoint da API (ex: '/analyze', '/config')
+ * @returns {string} A URL completa
+ */
+function buildApiUrl(endpoint) {
+  const baseUrl = getApiBaseUrl();
+  // Garante que o endpoint comece com /
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return `${baseUrl}${cleanEndpoint}`;
 }
 
-// Log de inicialização
-console.log(`[ApiConfig] Sistema inicializado - Base URL: ${window.apiConfig.getBaseUrl()}`);
-console.log(`[ApiConfig] Ambiente: ${window.apiConfig.isDevelopment() ? 'Desenvolvimento' : 'Produção'}`); 
+// Exportar as funções
+window.ApiConfig = {
+  getBaseUrl: getApiBaseUrl,
+  buildUrl: buildApiUrl
+};
+
+// Log da configuração detectada (apenas em development)
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  console.log(`[API Config] Base URL detectada: ${getApiBaseUrl()}`);
+} 

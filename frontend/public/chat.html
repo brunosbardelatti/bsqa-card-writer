@@ -8,47 +8,47 @@
   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 </head>
 <body>
-  <div id="header" data-testid="chat-header-container"></div>
-  <div class="container" data-testid="chat-main-container">
+  <div id="header"></div>
+  <div class="container">
     <!-- Breadcrumbs -->
-    <div class="breadcrumbs" data-testid="chat-breadcrumbs-container">
+    <div class="breadcrumbs">
       <!-- Breadcrumbs serão preenchidos dinamicamente -->
     </div>
     
-    <h1 data-testid="chat-page-title">💬 Chat de Análise</h1>
-    <p class="subtitle" data-testid="chat-page-subtitle">Insira seus requisitos e receba sugestões de casos de teste com IA</p>
+    <h1>💬 Chat de Análise</h1>
+    <p class="subtitle">Insira seus requisitos e receba sugestões de casos de teste com IA</p>
     
-    <form id="reqForm" data-testid="chat-form">
-    <label style="width: 100%;" data-testid="chat-label-requirements">
-      <textarea id="requirements" name="requirements" rows="10" placeholder="Digite seus requisitos aqui ou selecione um arquivo" data-testid="chat-input-requirements"></textarea>
+    <form id="reqForm">
+    <label style="width: 100%;">
+      <textarea id="requirements" name="requirements" rows="10" placeholder="Digite seus requisitos aqui ou selecione um arquivo" data-testid="chat-textarea-requirements"></textarea>
     </label>
-    <div style="display: flex; flex-direction: row; align-items: flex-start; width: 100%; gap: 1rem; margin-top: 0.5rem;" data-testid="chat-controls-container">
-      <div style="flex: 1; min-width: 220px;" data-testid="chat-file-upload-container">
+    <div style="display: flex; flex-direction: row; align-items: flex-start; width: 100%; gap: 1rem; margin-top: 0.5rem;">
+      <div style="flex: 1; min-width: 220px;">
         <div class="drop-zone" id="dropZone" data-testid="chat-drop-zone">
           Arraste e solte seu PDF, TXT ou JSON aqui<br>
-          <span style="color: #ffffff; text-decoration: underline;" data-testid="chat-file-choose-text">Escolha um arquivo</span>
-          <input type="file" id="fileInput" name="file" accept=".pdf,.txt,.json" data-testid="chat-input-file">
+          <span style="color: #ffffff; text-decoration: underline;">Escolha um arquivo</span>
+          <input type="file" id="fileInput" name="file" accept=".pdf,.txt,.json" data-testid="chat-file-input">
           <div class="drop-feedback" id="dropFeedback" style="display:none;" data-testid="chat-drop-feedback"></div>
           <button class="drop-remove-btn" id="dropRemoveBtn" style="display:none;" title="Remover arquivo" data-testid="chat-button-remove-file">×</button>
         </div>
       </div>
-      <div style="display: flex; flex-direction: column; align-items: stretch; gap: 1rem; flex: 0 0 200px; max-width: 200px; min-width: 160px;" data-testid="chat-settings-container">
-        <div class="select-group" data-testid="chat-select-group-ai">
-          <label for="service" data-testid="chat-label-ai-service">
+      <div style="display: flex; flex-direction: column; align-items: stretch; gap: 1rem; flex: 0 0 200px; max-width: 200px; min-width: 160px;">
+        <div class="select-group">
+          <label for="service">
             🤖 IA de Análise
           </label>
-          <select id="service" name="service" data-testid="chat-select-ai-service">
-          <option value="openai" data-testid="chat-option-openai">OpenAI</option>
-          <option value="stackspot" data-testid="chat-option-stackspot">StackSpot AI</option>
+          <select id="service" name="service" data-testid="chat-select-ia-service">
+          <option value="openai">OpenAI</option>
+          <option value="stackspot">StackSpot AI</option>
         </select>
         </div>
         
-        <div class="select-group" data-testid="chat-select-group-analysis-type">
-          <label for="analyse_type" data-testid="chat-label-analysis-type">
+        <div class="select-group">
+          <label for="analyse_type">
             📋 Tipo de Análise
           </label>
           <select id="analyse_type" name="analyse_type" data-testid="chat-select-analysis-type">
-            <option value="" data-testid="chat-option-loading">Carregando tipos de análise...</option>
+            <option value="">Carregando tipos de análise...</option>
         </select>
         </div>
         
@@ -60,9 +60,9 @@
     </form>
     <div id="output" data-testid="chat-output-container"></div>
   </div>
-  <div id="footer" data-testid="chat-footer-container"></div>
-  <script src="js/apiConfig.js"></script>
+  <div id="footer"></div>
   <script type="module" src="js/main.js"></script>
-  <script type="module" src="js/chat.js"></script>
+  <script src="js/apiConfig.js"></script>
+<script type="module" src="js/chat.js"></script>
 </body>
 </html>

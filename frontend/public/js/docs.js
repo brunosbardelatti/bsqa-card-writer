@@ -38,10 +38,10 @@ async function loadDocumentation() {
     console.error('Erro ao carregar documentação:', error);
     document.getElementById('docsContent').innerHTML = `
       <div class="error-message" data-testid="docs-error-container">
-        <h2 data-testid="docs-error-title">❌ Erro ao carregar documentação</h2>
-        <p data-testid="docs-error-message">Não foi possível carregar o arquivo de documentação.</p>
-        <p data-testid="docs-error-details"><strong>Erro:</strong> ${error.message}</p>
-        <button onclick="window.location.reload()" class="retry-btn" data-testid="docs-button-retry">
+        <h2>❌ Erro ao carregar documentação</h2>
+        <p>Não foi possível carregar o arquivo de documentação.</p>
+        <p><strong>Erro:</strong> ${error.message}</p>
+        <button onclick="window.location.reload()" class="retry-btn" data-testid="docs-retry-button">
           🔄 Tentar novamente
         </button>
       </div>
