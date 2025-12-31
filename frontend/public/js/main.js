@@ -209,9 +209,10 @@ export const ANALYSIS_PLACEHOLDERS = {
 };
 
 // Função para gerar HTML das opções de análise
-export function generateAnalysisOptionsHTML(selectedValue = '') {
+export function generateAnalysisOptionsHTML(selectedValue = '', prefix = '') {
+  const testIdPrefix = prefix || 'option-analysis';
   return Object.entries(ANALYSIS_TYPES)
-    .map(([value, label]) => `<option value="${value}"${selectedValue === value ? ' selected' : ''}>${label}</option>`)
+    .map(([value, label]) => `<option value="${value}"${selectedValue === value ? ' selected' : ''} data-testid="${testIdPrefix}-${value}">${label}</option>`)
     .join('');
 }
 

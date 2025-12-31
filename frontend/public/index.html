@@ -8,17 +8,17 @@
   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 </head>
 <body>
-  <div id="header"></div>
+  <div id="header" data-testid="index-header-container"></div>
   
-  <div class="container">
+  <div class="container" data-testid="index-main-container">
     <!-- Breadcrumbs -->
-    <div class="breadcrumbs">
+    <div class="breadcrumbs" data-testid="index-breadcrumbs-container">
       <!-- Breadcrumbs serão preenchidos dinamicamente -->
     </div>
     
     <!-- Hero Section -->
-    <div class="hero-section">
-      <div class="hero-features">
+    <div class="hero-section" data-testid="index-hero-section">
+      <div class="hero-features" data-testid="index-hero-features">
         <a href="chat.html" class="feature-card-link" data-testid="hero-card-chat-inteligente">
           <div class="feature-card">
             <span class="feature-icon">💬</span>
@@ -51,9 +51,9 @@
     </div>
 
     <!-- Analysis Types -->
-    <div class="analysis-types">
-      <h2>📊 Tipos de Chat e Análise Disponíveis</h2>
-              <div class="types-grid">
+    <div class="analysis-types" data-testid="index-analysis-types-section">
+      <h2 data-testid="index-analysis-types-title">📊 Tipos de Chat e Análise Disponíveis</h2>
+              <div class="types-grid" data-testid="index-analysis-types-grid">
           <a href="chat.html?type=card_QA_writer" class="type-card-link" data-testid="analysis-type-card-qa-writer">
             <div class="type-card">
               <h4>🎯 Card QA Writer</h4>
@@ -101,7 +101,7 @@
 
   </div>
 
-  <div id="footer"></div>
+  <div id="footer" data-testid="index-footer-container"></div>
   <script type="module" src="js/main.js"></script>
   <script type="module" src="js/index.js"></script>
 </body>

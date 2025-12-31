@@ -92,7 +92,7 @@ function bindFormEvents() {
     serviceSelect.disabled = true;
     analyseTypeSelect.disabled = true;
     
-    output.innerHTML = '<div class="loading">Processando requisição...</div>';
+    output.innerHTML = '<div class="loading" data-testid="chat-loading-message">Processando requisição...</div>';
     const file = fileInput.files[0];
     const requirements = document.getElementById('requirements').value;
     const service = document.getElementById('service').value;
@@ -100,7 +100,7 @@ function bindFormEvents() {
     const formData = new FormData();
 
     if (file && requirements.trim()) {
-      output.innerHTML = '<div class="error">Use apenas um método de entrada: arquivo ou texto.</div>';
+      output.innerHTML = '<div class="error" data-testid="chat-error-message">Use apenas um método de entrada: arquivo ou texto.</div>';
       // Reabilitar elementos em caso de erro
       submitBtn.disabled = false;
       dropZone.style.pointerEvents = 'auto';
@@ -129,7 +129,7 @@ function bindFormEvents() {
       const fileName = file.name.toLowerCase();
       const isAllowed = allowedTypes.includes(fileType) || fileName.endsWith('.pdf') || fileName.endsWith('.txt') || fileName.endsWith('.json');
       if (!isAllowed) {
-        output.innerHTML = '<div class="error">Tipos de arquivo aceitos: <b>PDF (.pdf)</b>, <b>TXT (.txt)</b> e <b>JSON (.json)</b>. Outros formatos não são suportados.</div>';
+        output.innerHTML = '<div class="error" data-testid="chat-error-message">Tipos de arquivo aceitos: <b>PDF (.pdf)</b>, <b>TXT (.txt)</b> e <b>JSON (.json)</b>. Outros formatos não são suportados.</div>';
         // Reabilitar elementos em caso de erro
         submitBtn.disabled = false;
         dropZone.style.pointerEvents = 'auto';
@@ -146,7 +146,7 @@ function bindFormEvents() {
         return;
       }
       if (file.size > 100 * 1024 * 1024) {
-        output.innerHTML = '<div class="error">Arquivo maior que o tamanho de 100MB suportado. Tente com outro arquivo.</div>';
+        output.innerHTML = '<div class="error" data-testid="chat-error-message">Arquivo maior que o tamanho de 100MB suportado. Tente com outro arquivo.</div>';
         // Reabilitar elementos em caso de erro
         submitBtn.disabled = false;
         dropZone.style.pointerEvents = 'auto';
@@ -279,11 +279,12 @@ async function loadDefaultAI(applyDefaults = true) {
       // Mostrar mensagem de aviso
       const warningDiv = document.createElement('div');
       warningDiv.style.cssText = 'background: rgba(244, 67, 54, 0.1); color: #f44336; padding: 1rem; border-radius: 6px; margin-top: 1rem; border: 1px solid #f44336;';
+      warningDiv.setAttribute('data-testid', 'chat-warning-no-ai-configured');
       warningDiv.innerHTML = `
         <strong>⚠️ Nenhuma IA configurada</strong><br>
         Para usar o BSQA Card Writer, você precisa configurar pelo menos uma IA nas configurações.
         <br><br>
-        <a href="config.html" style="color: #f44336; text-decoration: underline;">→ Ir para Configurações</a>
+        <a href="config.html" style="color: #f44336; text-decoration: underline;" data-testid="chat-link-go-to-config">→ Ir para Configurações</a>
       `;
       
       // Inserir aviso após o formulário
@@ -301,6 +302,7 @@ async function loadDefaultAI(applyDefaults = true) {
       const option = document.createElement('option');
       option.value = ai.value;
       option.textContent = ai.label;
+      option.setAttribute('data-testid', `chat-option-ia-${ai.value}`);
       serviceSelect.appendChild(option);
     });
     
@@ -420,6 +422,7 @@ async function loadAnalysisTypes() {
       const option = document.createElement('option');
       option.value = value;
       option.textContent = label;
+      option.setAttribute('data-testid', `chat-option-analysis-type-${value}`);
       analyseTypeSelect.appendChild(option);
     });
     
@@ -442,7 +445,7 @@ async function loadAnalysisTypes() {
     console.error('Erro ao carregar tipos de análise:', error);
     // Fallback para opções padrão em caso de erro
     const analyseTypeSelect = document.getElementById('analyse_type');
-    analyseTypeSelect.innerHTML = generateAnalysisOptionsHTML();
+    analyseTypeSelect.innerHTML = generateAnalysisOptionsHTML('', 'chat-option-analysis-type');
     
     // Placeholders de fallback
     window.analysisPlaceholders = ANALYSIS_PLACEHOLDERS;

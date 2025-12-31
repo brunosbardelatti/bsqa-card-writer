@@ -15,24 +15,24 @@
       <!-- Breadcrumbs serão preenchidos dinamicamente -->
     </div>
     
-    <h1>⚙️ Configurações do Usuário</h1>
-    <div class="config-section">
-      <h2>👤 Informações Pessoais</h2>
-      <div class="config-item">
-        <label for="userName">Nome do Usuário <span title="Seu nome completo para identificação nos documentos gerados" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+    <h1 data-testid="config-title">⚙️ Configurações do Usuário</h1>
+    <div class="config-section" data-testid="config-section-personal-info">
+      <h2 data-testid="config-section-personal-info-title">👤 Informações Pessoais</h2>
+      <div class="config-item" data-testid="config-item-user-name">
+        <label for="userName" data-testid="config-label-user-name">Nome do Usuário <span title="Seu nome completo para identificação nos documentos gerados" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
         <input type="text" id="userName" placeholder="Seu nome completo" data-testid="config-input-user-name">
       </div>
-      <div class="config-item">
-        <label for="userEmail">Email <span title="Seu email para contato e identificação" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+      <div class="config-item" data-testid="config-item-user-email">
+        <label for="userEmail" data-testid="config-label-user-email">Email <span title="Seu email para contato e identificação" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
         <input type="email" id="userEmail" placeholder="seu@email.com" data-testid="config-input-user-email">
       </div>
-      <div class="config-item">
-        <label for="userCompany">Empresa <span title="Nome da sua empresa para personalização dos documentos" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+      <div class="config-item" data-testid="config-item-user-company">
+        <label for="userCompany" data-testid="config-label-user-company">Empresa <span title="Nome da sua empresa para personalização dos documentos" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
         <input type="text" id="userCompany" placeholder="Nome da empresa" data-testid="config-input-user-company">
       </div>
     </div>
-    <div class="config-section">
-      <h2>📋 Preferências de Saída</h2>
+    <div class="config-section" data-testid="config-section-preferences">
+      <h2 data-testid="config-section-preferences-title">📋 Preferências de Saída</h2>
       <div class="checkbox-item">
         <input type="checkbox" id="autoCopy" data-testid="config-checkbox-auto-copy">
         <label for="autoCopy">Copiar resultado automaticamente <span title="Copia automaticamente o resultado para a área de transferência após a geração" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
@@ -47,35 +47,35 @@
         <span style="color: var(--muted-text); font-size: 0.8em; margin-left: 0.5rem;">(Em desenvolvimento)</span>
       </div>
     </div>
-    <div class="config-section">
-      <h2>🎨 Configurações de Interface</h2>
-      <div class="config-item">
-        <label for="theme">Tema <span title="Escolha entre tema escuro, claro ou automático baseado nas configurações do sistema" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+    <div class="config-section" data-testid="config-section-interface">
+      <h2 data-testid="config-section-interface-title">🎨 Configurações de Interface</h2>
+      <div class="config-item" data-testid="config-item-theme">
+        <label for="theme" data-testid="config-label-theme">Tema <span title="Escolha entre tema escuro, claro ou automático baseado nas configurações do sistema" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
         <select id="theme" data-testid="config-select-theme">
-          <option value="dark">Escuro (Padrão)</option>
-          <option value="light">Claro</option>
-          <option value="auto">Automático</option>
+          <option value="dark" data-testid="config-option-theme-dark">Escuro (Padrão)</option>
+          <option value="light" data-testid="config-option-theme-light">Claro</option>
+          <option value="auto" data-testid="config-option-theme-auto">Automático</option>
         </select>
       </div>
     </div>
-    <div class="config-section" id="ai-config">
-      <h2>🤖 Configurações de IA</h2>
-              <div class="config-item" id="template-config">
-          <label for="defaultAnalyseType">Tipo de Análise Padrão <span title="Selecione o tipo de análise que será usado por padrão" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+    <div class="config-section" id="ai-config" data-testid="config-section-ai">
+      <h2 data-testid="config-section-ai-title">🤖 Configurações de IA</h2>
+              <div class="config-item" id="template-config" data-testid="config-item-default-analysis-type">
+          <label for="defaultAnalyseType" data-testid="config-label-default-analysis-type">Tipo de Análise Padrão <span title="Selecione o tipo de análise que será usado por padrão" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
           <select id="defaultAnalyseType" data-testid="config-select-default-analysis-type">
             <option value="">Carregando tipos de análise...</option>
           </select>
         </div>
-      <div class="config-item">
-        <label for="defaultAI">IA Padrão <span title="Selecione qual IA será usada por padrão: OpenAI ou StackSpot AI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
+      <div class="config-item" data-testid="config-item-default-ai">
+        <label for="defaultAI" data-testid="config-label-default-ai">IA Padrão <span title="Selecione qual IA será usada por padrão: OpenAI ou StackSpot AI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
         <select id="defaultAI" data-testid="config-select-default-ai">
-          <option value="openai">OpenAI</option>
-          <option value="stackspot">StackSpot AI</option>
+          <option value="openai" data-testid="config-option-default-ai-openai">OpenAI</option>
+          <option value="stackspot" data-testid="config-option-default-ai-stackspot">StackSpot AI</option>
         </select>
         <div id="defaultAIWarning" style="display:none; color: #f44336; font-size: 0.95em; margin-top: 0.5rem;" data-testid="config-warning-default-ai"></div>
       </div>
-      <fieldset style="border: 2px solid #4caf50; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
-        <legend style="color: #4caf50; font-weight: bold; padding: 0 0.5rem;">OpenAI</legend>
+      <fieldset style="border: 2px solid #4caf50; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;" data-testid="config-fieldset-openai">
+        <legend style="color: #4caf50; font-weight: bold; padding: 0 0.5rem;" data-testid="config-legend-openai">OpenAI</legend>
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
           <label>🔑 Configurações OpenAI <span title="Configurações necessárias para usar a OpenAI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
           <div style="display: flex; align-items: center;">
@@ -92,8 +92,8 @@
           <input type="text" id="maxTokens" placeholder="1000" value="1000" data-testid="config-input-max-tokens">
         </div>
       </fieldset>
-      <fieldset style="border: 2px solid #2196f3; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;">
-        <legend style="color: #2196f3; font-weight: bold; padding: 0 0.5rem;">StackSpot AI</legend>
+      <fieldset style="border: 2px solid #2196f3; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;" data-testid="config-fieldset-stackspot">
+        <legend style="color: #2196f3; font-weight: bold; padding: 0 0.5rem;" data-testid="config-legend-stackspot">StackSpot AI</legend>
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
           <label>🔑 Configurações StackSpot AI <span title="Configurações necessárias para usar o StackSpot AI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
           <div style="display: flex; align-items: center;">
