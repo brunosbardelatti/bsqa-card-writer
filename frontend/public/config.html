@@ -4,11 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>⚙️ Configurações - BSQA Card Writer</title>
+  
+  <!-- Preload de componentes críticos (REFACT.md - FASE 3) -->
+  <link rel="preload" href="components/header.html" as="fetch" crossorigin>
+  <link rel="preload" href="components/footer.html" as="fetch" crossorigin>
+  
   <link rel="stylesheet" href="assets/style.css">
   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 </head>
 <body>
   <div id="header" data-testid="config-header-container"></div>
+  <div class="skeleton skeleton-header"></div>
   <div class="container" data-testid="config-main-container">
     <!-- Breadcrumbs -->
     <div class="breadcrumbs" data-testid="config-breadcrumbs-container">
@@ -148,6 +154,7 @@
   </div>
   <div id="modal" data-testid="config-modal-container"></div>
   <div id="footer" data-testid="config-footer-container"></div>
+  <div class="skeleton skeleton-footer"></div>
   <script src="js/apiConfig.js"></script>
   <script type="module" src="js/main.js"></script>
   <script src="js/apiConfig.js"></script>

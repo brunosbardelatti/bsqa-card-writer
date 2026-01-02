@@ -544,7 +544,9 @@ async function loadAnalysisTypes() {
       defaultAnalyseTypeSelect.value = config.preferences.defaultAnalyseType;
     }
   } catch (error) {
-    console.error('Erro ao carregar tipos de análise:', error);
+    if (window.safeErrorLog) {
+      window.safeErrorLog('Erro ao carregar tipos de análise:', error);
+    }
     // Fallback para opções padrão em caso de erro
     const defaultAnalyseTypeSelect = document.getElementById('defaultAnalyseType');
     defaultAnalyseTypeSelect.innerHTML = generateAnalysisOptionsHTML('', 'config-option-analysis');

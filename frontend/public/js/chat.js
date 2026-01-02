@@ -242,7 +242,10 @@ async function loadDefaultAI(applyDefaults = true) {
         apiConfig = await response.json();
       }
     } catch (error) {
-      console.log('Erro ao carregar configurações de API:', error);
+      // Log seguro - não expor detalhes do erro em produção
+      if (window.safeErrorLog) {
+        window.safeErrorLog('Erro ao carregar configurações de API:', error);
+      }
     }
     
     // Determinar quais IAs estão habilitadas
@@ -346,7 +349,9 @@ async function loadDefaultAI(applyDefaults = true) {
     }
     
   } catch (error) {
-    console.log('Erro ao carregar IA padrão:', error);
+    if (window.safeErrorLog) {
+      window.safeErrorLog('Erro ao carregar IA padrão:', error);
+    }
   }
 }
 
@@ -442,7 +447,9 @@ async function loadAnalysisTypes() {
     // Adicionar listener para mudanças no tipo de análise
     analyseTypeSelect.addEventListener('change', updatePlaceholder);
   } catch (error) {
-    console.error('Erro ao carregar tipos de análise:', error);
+    if (window.safeErrorLog) {
+      window.safeErrorLog('Erro ao carregar tipos de análise:', error);
+    }
     // Fallback para opções padrão em caso de erro
     const analyseTypeSelect = document.getElementById('analyse_type');
     analyseTypeSelect.innerHTML = generateAnalysisOptionsHTML('', 'chat-option-analysis-type');

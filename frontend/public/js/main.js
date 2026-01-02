@@ -1,6 +1,142 @@
 // main.js - Funções utilitárias globais e carregamento de componentes
 
-// Carregar componente HTML em um seletor
+/**
+ * Verifica se está em ambiente de desenvolvimento
+ * @returns {boolean} True se estiver em desenvolvimento
+ */
+function isDevelopment() {
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1';
+}
+
+/**
+ * Log seguro - apenas em desenvolvimento
+ * Não expõe informações sensíveis em produção
+ * @param {...any} args - Argumentos para log
+ */
+function safeLog(...args) {
+  if (isDevelopment()) {
+    console.log(...args);
+  }
+}
+
+/**
+ * Error log seguro - apenas em desenvolvimento
+ * @param {...any} args - Argumentos para log de erro
+ */
+function safeErrorLog(...args) {
+  if (isDevelopment()) {
+    console.error(...args);
+  }
+}
+
+// Exportar funções de log seguras
+window.safeLog = safeLog;
+window.safeErrorLog = safeErrorLog;
+window.isDevelopment = isDevelopment;
+
+// ============================================
+// CACHE DE COMPONENTES (REFACT.md - FASE 1)
+// ============================================
+
+/**
+ * Versão dos componentes - incrementar quando header/footer mudarem
+ * Formato: MAJOR.MINOR.PATCH (Semantic Versioning)
+ * 
+ * Histórico de Versões:
+ * - 1.0.0: Versão inicial com cache LocalStorage
+ * - 1.1.0: Estilos movidos de inline para CSS (REFACT_HEADER_FOOTER.md)
+ */
+const COMPONENTS_VERSION = '1.2.0'; // Atualizado após REFACT_INCONSISTENCIAS.md
+const CACHE_KEY_PREFIX = 'bsqa-component-';
+
+/**
+ * Carrega componente com cache no localStorage
+ * @param {string} selector - Seletor CSS do elemento alvo
+ * @param {string} url - URL do componente
+ * @param {string} componentName - Nome do componente para cache
+ */
+async function loadComponentWithCache(selector, url, componentName) {
+  const el = document.querySelector(selector);
+  if (!el) return;
+  
+  const cacheKey = `${CACHE_KEY_PREFIX}${componentName}`;
+  const cacheVersionKey = `${cacheKey}-version`;
+  
+  // Verificar se existe cache válido
+  const cachedVersion = localStorage.getItem(cacheVersionKey);
+  const cachedContent = localStorage.getItem(cacheKey);
+  
+  if (cachedVersion === COMPONENTS_VERSION && cachedContent) {
+    // Cache válido - usar imediatamente
+    el.innerHTML = cachedContent;
+    safeLog(`✅ ${componentName} carregado do cache (${cachedContent.length} bytes)`);
+    return;
+  }
+  
+  // Cache inválido ou inexistente - fazer fetch
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+    }
+    
+    const content = await resp.text();
+    
+    // Inserir no DOM
+    el.innerHTML = content;
+    
+    // Salvar no cache
+    try {
+      localStorage.setItem(cacheKey, content);
+      localStorage.setItem(cacheVersionKey, COMPONENTS_VERSION);
+      safeLog(`📥 ${componentName} carregado via HTTP e cacheado (${content.length} bytes)`);
+    } catch (storageError) {
+      // LocalStorage pode estar cheio ou desabilitado
+      safeErrorLog(`⚠️ Não foi possível cachear ${componentName}:`, storageError.message);
+    }
+    
+  } catch (error) {
+    safeErrorLog(`❌ Erro ao carregar ${componentName}:`, error);
+    
+    // Fallback: tentar usar cache antigo se existir
+    if (cachedContent) {
+      el.innerHTML = cachedContent;
+      safeLog(`⚠️ Usando cache antigo de ${componentName} (versão ${cachedVersion || 'desconhecida'})`);
+    } else {
+      // Se não há cache, mostrar mensagem de erro no elemento
+      el.innerHTML = `<div style="color: red; padding: 1rem;">❌ Erro ao carregar ${componentName}</div>`;
+    }
+  }
+}
+
+/**
+ * Limpa cache de componentes
+ * Útil para forçar reload após atualizações
+ */
+export function clearComponentsCache() {
+  let clearedCount = 0;
+  const keys = Object.keys(localStorage);
+  
+  keys.forEach(key => {
+    if (key.startsWith(CACHE_KEY_PREFIX)) {
+      localStorage.removeItem(key);
+      clearedCount++;
+    }
+  });
+  
+  safeLog(`🗑️ Cache de componentes limpo (${clearedCount} itens removidos)`);
+  return clearedCount;
+}
+
+// Expor globalmente para debug no console
+window.clearComponentsCache = clearComponentsCache;
+
+// ============================================
+// FUNÇÕES DE CARREGAMENTO (COMPATIBILIDADE)
+// ============================================
+
+// Carregar componente HTML em um seletor (legacy - mantida para compatibilidade)
 async function loadComponent(selector, url) {
   const el = document.querySelector(selector);
   if (el) {
@@ -11,14 +147,30 @@ async function loadComponent(selector, url) {
 
 // Carregar header e footer se existirem na página
 export async function loadCommonComponents() {
-  await loadComponent('#header', 'components/header.html');
-  await loadComponent('#footer', 'components/footer.html');
+  const startTime = performance.now();
+  
+  // Carregar header e footer em paralelo com cache
+  // Promise.all garante que ambos sejam carregados simultaneamente
+  await Promise.all([
+    loadComponentWithCache('#header', 'components/header.html', 'header'),
+    loadComponentWithCache('#footer', 'components/footer.html', 'footer')
+  ]);
   
   // Destacar página ativa no menu
   highlightActivePage();
   
   // Adicionar breadcrumbs se existir container
   addBreadcrumbs();
+  
+  // Métricas de performance (apenas em desenvolvimento)
+  const endTime = performance.now();
+  const loadTime = (endTime - startTime).toFixed(2);
+  safeLog(`⏱️ Componentes carregados em ${loadTime}ms`);
+  
+  // Expor métrica para análise
+  if (isDevelopment()) {
+    window.componentLoadTime = parseFloat(loadTime);
+  }
 }
 
 // Destacar a página ativa no menu de navegação
@@ -61,16 +213,16 @@ export function addBreadcrumbs() {
   
   // Adicionar página atual baseado no nome do arquivo
   switch (currentPage) {
+    case 'tools.html':
+      breadcrumbItems = [
+        { text: '🏠 Home', url: 'index.html' },
+        { text: '🧰 Tools', url: 'tools.html' }
+      ];
+      break;
     case 'config.html':
       breadcrumbItems = [
         { text: 'Home', url: 'index.html' },
         { text: 'Configurações', url: '' }
-      ];
-      break;
-    case 'docs.html':
-      breadcrumbItems = [
-        { text: 'Home', url: 'index.html' },
-        { text: 'Documentação', url: '' }
       ];
       break;
     case 'chat.html':
@@ -130,6 +282,9 @@ export function applyTheme(theme) {
     root.style.setProperty('--syntax-property', '#005cc5');
     root.style.setProperty('--syntax-value', '#032f62');
     root.style.setProperty('--syntax-selector', '#d73a49');
+    // Card headers para tema claro
+    root.style.setProperty('--card-header-bg', '#e3f2fd');
+    root.style.setProperty('--card-header-secondary-bg', '#f5f5f5');
   } else if (theme === 'dark') {
     root.style.setProperty('--bg-color', '#0f0f0f');
     root.style.setProperty('--text-color', '#ffffff');
@@ -157,6 +312,9 @@ export function applyTheme(theme) {
     root.style.setProperty('--syntax-property', '#ff628c');
     root.style.setProperty('--syntax-value', '#a8ff60');
     root.style.setProperty('--syntax-selector', '#ff9d00');
+    // Card headers para tema escuro
+    root.style.setProperty('--card-header-bg', '#252525');
+    root.style.setProperty('--card-header-secondary-bg', '#2a2a2a');
   } else if (theme === 'auto') {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     applyTheme(prefersDark ? 'dark' : 'light');
@@ -172,7 +330,7 @@ export function loadThemeFromConfig() {
       applyTheme(preferences.theme);
     }
   } catch (error) {
-    console.log('Erro ao carregar tema:', error);
+    safeErrorLog('Erro ao carregar tema:', error);
   }
 }
 
@@ -333,7 +491,7 @@ window.copyCode = function(button) {
       button.classList.remove('copied');
     }, 2000);
   }).catch(err => {
-    console.error('Erro ao copiar:', err);
+    safeErrorLog('Erro ao copiar:', err);
     // Fallback para navegadores antigos
     const textArea = document.createElement('textarea');
     textArea.value = text;

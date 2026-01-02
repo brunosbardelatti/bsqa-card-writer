@@ -100,7 +100,6 @@ BSQA-card-Writer/
 │       ├── index.html             # Home page
 │       ├── chat.html              # Interface de chat
 │       ├── config.html            # Página de configurações
-│       ├── docs.html              # Documentação
 │       ├── 📁 assets/
 │       │   ├── style.css          # Estilos globais
 │       │   └── favicon.ico        # Ícone
@@ -109,11 +108,9 @@ BSQA-card-Writer/
 │       │   ├── index.js           # Lógica da home
 │       │   ├── chat.js            # Lógica do chat
 │       │   └── config.js          # Lógica de configurações
-│       ├── 📁 components/
-│       │   ├── header.html        # Header reutilizável
-│       │   └── footer.html        # Footer reutilizável
-│       └── 📁 docs/
-│           └── software-requirements.md
+│       └── 📁 components/
+│           ├── header.html        # Header reutilizável
+│           └── footer.html        # Footer reutilizável
 ├── 📁 config/
 │   ├── requirements.txt           # Dependências Python
 │   ├── user_config.json          # Configurações do usuário
@@ -218,7 +215,6 @@ Se preferir configurar manualmente:
 - **Home**: http://localhost:8501/index.html
 - **Chat**: http://localhost:8501/chat.html
 - **Configurações**: http://localhost:8501/config.html
-- **Documentação**: http://localhost:8501/docs.html
 - **Backend**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
 
@@ -267,10 +263,6 @@ make stop-front    # Para apenas o frontend
 - **Temas**: Escuro, claro e automático
 - **Persistência**: Configurações salvas automaticamente
 
-### **📋 Documentação**
-- **Software Requirements**: Documentação técnica completa
-- **Release Notes**: Histórico de funcionalidades
-- **Navegação Intuitiva**: Menu header em todas as páginas
 
 ---
 
@@ -316,7 +308,6 @@ make stop-front    # Para apenas o frontend
 - ✅ **Sistema de Temas**: Dark/light/auto
 - ✅ **Configurações Avançadas**: Interface completa
 - ✅ **Responsividade**: Mobile e desktop
-- ✅ **Documentação**: Completa e atualizada
 
 ### **🔄 Próximas Funcionalidades**
 - 🔄 **Histórico de Análises**: Visualizar e reutilizar análises anteriores
