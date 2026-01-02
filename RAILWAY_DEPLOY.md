@@ -15,11 +15,13 @@ Este guia explica como fazer deploy do **BSQA Card Writer** na plataforma Railwa
 ### **Opção 1: Configuração Automática (Recomendada)**
 
 O projeto já está configurado com os arquivos necessários:
-- ✅ `railway.json` - Configuração do Railpack
-- ✅ `Procfile` - Comando de inicialização
+- ✅ `requirements.txt` - Dependências Python (na raiz para detecção automática)
+- ✅ `railway.json` - Configuração do Railway
 - ✅ `railway.toml` - Configuração alternativa
+- ✅ `railpack.toml` - Configuração do Railpack para forçar detecção Python
+- ✅ `Procfile` - Comando de inicialização
 
-O Railway detectará automaticamente que é um projeto Python e usará as configurações.
+O Railway detectará automaticamente que é um projeto Python através do `requirements.txt` na raiz e usará as configurações.
 
 ### **Opção 2: Configuração Manual no Dashboard**
 
@@ -99,9 +101,13 @@ Após o deploy bem-sucedido, você terá acesso a:
 ### **Erro: "Railpack could not determine how to build the app"**
 
 **Solução**: Verifique se os arquivos de configuração estão na raiz:
+- ✅ `requirements.txt` (na raiz - obrigatório para detecção Python)
 - ✅ `railway.json` ou `railway.toml`
+- ✅ `railpack.toml` (configuração do Railpack)
 - ✅ `Procfile`
-- ✅ `config/requirements.txt`
+- ✅ Arquivos Python em `backend/` (para detecção)
+
+**Importante**: O `requirements.txt` DEVE estar na raiz do projeto para o Railpack detectar Python automaticamente.
 
 ### **Erro: "Module not found"**
 
@@ -134,10 +140,12 @@ bsqa-card-writer/
 ├── backend/              # Código do backend
 ├── frontend/            # Arquivos estáticos do frontend
 ├── config/              # Configurações e dependências
-│   ├── requirements.txt # Dependências Python
+│   ├── requirements.txt # Dependências Python (backup)
 │   └── .env            # Variáveis de ambiente (não commitado)
+├── requirements.txt     # Dependências Python (raiz - para detecção)
 ├── railway.json        # Configuração do Railway (raiz)
 ├── railway.toml        # Configuração alternativa (raiz)
+├── railpack.toml       # Configuração do Railpack (raiz)
 ├── Procfile            # Comando de start (raiz)
 └── README.md           # Documentação
 ```
