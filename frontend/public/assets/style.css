@@ -1013,18 +1013,18 @@ input[type="checkbox"] {
 }
 
 .nav-tabs .nav-link:hover {
-  background: var(--bg-color);
-  color: var(--text-color);
-  border-color: var(--accent-color);
-  border-bottom-color: var(--muted-text);
+  background: var(--card-bg) !important;
+  color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  border-bottom-color: var(--muted-text) !important;
   z-index: 1;
 }
 
 .nav-tabs .nav-link.active {
-  background: var(--bg-color);
-  color: var(--accent-color);
-  border-color: var(--accent-color);
-  border-bottom-color: var(--bg-color);
+  background: var(--bg-color) !important;
+  color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  border-bottom-color: var(--bg-color) !important;
   font-weight: 600;
   z-index: 2;
   margin-bottom: -1px;
@@ -1337,21 +1337,27 @@ input[type="checkbox"] {
   margin-top: 0.25em;
   margin-left: -1.5em;
   vertical-align: top;
-  background-color: var(--card-bg);
-  border: 1px solid var(--muted-text);
+  background-color: var(--card-bg) !important;
+  border: 1px solid var(--muted-text) !important;
   appearance: none;
   cursor: pointer;
+  transition: all 0.3s;
 }
 
 .form-check-input:checked {
-  background-color: var(--accent-color);
-  border-color: var(--accent-color);
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
 }
 
 .form-check-input:focus {
-  border-color: var(--accent-color);
+  border-color: var(--accent-color) !important;
   outline: 0;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb, 255, 255, 255), 0.25) !important;
+}
+
+.form-check-label {
+  color: var(--text-color) !important;
+  cursor: pointer;
 }
 
 .form-check-label {
@@ -1456,6 +1462,19 @@ input[type="checkbox"] {
 .input-group .btn {
   border-left: 0;
   border-radius: 0 6px 6px 0;
+  border-color: var(--muted-text);
+}
+
+.input-group .btn.btn-utility {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-color) !important;
+  border-color: var(--muted-text) !important;
+}
+
+.input-group .btn.btn-utility:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: var(--text-color) !important;
+  border-color: var(--accent-color) !important;
 }
 
 /* Collapse */
@@ -1631,16 +1650,19 @@ body {
 .card-header.bg-primary {
   background-color: var(--accent-color) !important;
   color: var(--bg-color) !important;
+  border-bottom-color: var(--accent-color) !important;
 }
 
 .card-header.bg-secondary {
   background-color: var(--muted-text) !important;
   color: var(--bg-color) !important;
+  border-bottom-color: var(--muted-text) !important;
 }
 
 .card-header.bg-success {
   background-color: #4caf50 !important;
   color: #fff !important;
+  border-bottom-color: #4caf50 !important;
 }
 
 .card-body {
@@ -1703,11 +1725,12 @@ body {
   color: var(--bg-color) !important;
 }
 
-/* Garantir que botões usem o tema */
+/* Garantir que botões usem o tema - seguindo padrão do projeto */
 .btn-primary {
   background-color: var(--accent-color) !important;
   border-color: var(--accent-color) !important;
   color: var(--bg-color) !important;
+  transition: all 0.3s !important;
 }
 
 .btn-primary:hover,
@@ -1715,19 +1738,39 @@ body {
   background-color: var(--muted-text) !important;
   border-color: var(--muted-text) !important;
   color: var(--bg-color) !important;
+  transform: translateY(-1px) !important;
+}
+
+.btn-primary:active {
+  transform: translateY(0) !important;
 }
 
 .btn-secondary {
   background-color: var(--card-bg) !important;
   border-color: var(--muted-text) !important;
   color: var(--text-color) !important;
+  transition: all 0.3s !important;
 }
 
 .btn-secondary:hover,
 .btn-secondary:focus {
-  background-color: var(--accent-color) !important;
+  background-color: var(--bg-color) !important;
   border-color: var(--accent-color) !important;
-  color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+}
+
+.btn-utility {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-color) !important;
+  border-color: var(--muted-text) !important;
+  transition: all 0.3s !important;
+}
+
+.btn-utility:hover,
+.btn-utility:focus {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: var(--text-color) !important;
+  border-color: var(--accent-color) !important;
 }
 
 /* Garantir que alerts usem o tema */
