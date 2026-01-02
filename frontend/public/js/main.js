@@ -35,7 +35,104 @@ window.safeLog = safeLog;
 window.safeErrorLog = safeErrorLog;
 window.isDevelopment = isDevelopment;
 
-// Carregar componente HTML em um seletor
+// ============================================
+// CACHE DE COMPONENTES (REFACT.md - FASE 1)
+// ============================================
+
+/**
+ * Versão dos componentes - incrementar quando header/footer mudarem
+ * Formato: MAJOR.MINOR.PATCH (Semantic Versioning)
+ */
+const COMPONENTS_VERSION = '1.0.0';
+const CACHE_KEY_PREFIX = 'bsqa-component-';
+
+/**
+ * Carrega componente com cache no localStorage
+ * @param {string} selector - Seletor CSS do elemento alvo
+ * @param {string} url - URL do componente
+ * @param {string} componentName - Nome do componente para cache
+ */
+async function loadComponentWithCache(selector, url, componentName) {
+  const el = document.querySelector(selector);
+  if (!el) return;
+  
+  const cacheKey = `${CACHE_KEY_PREFIX}${componentName}`;
+  const cacheVersionKey = `${cacheKey}-version`;
+  
+  // Verificar se existe cache válido
+  const cachedVersion = localStorage.getItem(cacheVersionKey);
+  const cachedContent = localStorage.getItem(cacheKey);
+  
+  if (cachedVersion === COMPONENTS_VERSION && cachedContent) {
+    // Cache válido - usar imediatamente
+    el.innerHTML = cachedContent;
+    safeLog(`✅ ${componentName} carregado do cache (${cachedContent.length} bytes)`);
+    return;
+  }
+  
+  // Cache inválido ou inexistente - fazer fetch
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+    }
+    
+    const content = await resp.text();
+    
+    // Inserir no DOM
+    el.innerHTML = content;
+    
+    // Salvar no cache
+    try {
+      localStorage.setItem(cacheKey, content);
+      localStorage.setItem(cacheVersionKey, COMPONENTS_VERSION);
+      safeLog(`📥 ${componentName} carregado via HTTP e cacheado (${content.length} bytes)`);
+    } catch (storageError) {
+      // LocalStorage pode estar cheio ou desabilitado
+      safeErrorLog(`⚠️ Não foi possível cachear ${componentName}:`, storageError.message);
+    }
+    
+  } catch (error) {
+    safeErrorLog(`❌ Erro ao carregar ${componentName}:`, error);
+    
+    // Fallback: tentar usar cache antigo se existir
+    if (cachedContent) {
+      el.innerHTML = cachedContent;
+      safeLog(`⚠️ Usando cache antigo de ${componentName} (versão ${cachedVersion || 'desconhecida'})`);
+    } else {
+      // Se não há cache, mostrar mensagem de erro no elemento
+      el.innerHTML = `<div style="color: red; padding: 1rem;">❌ Erro ao carregar ${componentName}</div>`;
+    }
+  }
+}
+
+/**
+ * Limpa cache de componentes
+ * Útil para forçar reload após atualizações
+ */
+export function clearComponentsCache() {
+  let clearedCount = 0;
+  const keys = Object.keys(localStorage);
+  
+  keys.forEach(key => {
+    if (key.startsWith(CACHE_KEY_PREFIX)) {
+      localStorage.removeItem(key);
+      clearedCount++;
+    }
+  });
+  
+  safeLog(`🗑️ Cache de componentes limpo (${clearedCount} itens removidos)`);
+  return clearedCount;
+}
+
+// Expor globalmente para debug no console
+window.clearComponentsCache = clearComponentsCache;
+
+// ============================================
+// FUNÇÕES DE CARREGAMENTO (COMPATIBILIDADE)
+// ============================================
+
+// Carregar componente HTML em um seletor (legacy - mantida para compatibilidade)
 async function loadComponent(selector, url) {
   const el = document.querySelector(selector);
   if (el) {
@@ -46,14 +143,30 @@ async function loadComponent(selector, url) {
 
 // Carregar header e footer se existirem na página
 export async function loadCommonComponents() {
-  await loadComponent('#header', 'components/header.html');
-  await loadComponent('#footer', 'components/footer.html');
+  const startTime = performance.now();
+  
+  // Carregar header e footer em paralelo com cache
+  // Promise.all garante que ambos sejam carregados simultaneamente
+  await Promise.all([
+    loadComponentWithCache('#header', 'components/header.html', 'header'),
+    loadComponentWithCache('#footer', 'components/footer.html', 'footer')
+  ]);
   
   // Destacar página ativa no menu
   highlightActivePage();
   
   // Adicionar breadcrumbs se existir container
   addBreadcrumbs();
+  
+  // Métricas de performance (apenas em desenvolvimento)
+  const endTime = performance.now();
+  const loadTime = (endTime - startTime).toFixed(2);
+  safeLog(`⏱️ Componentes carregados em ${loadTime}ms`);
+  
+  // Expor métrica para análise
+  if (isDevelopment()) {
+    window.componentLoadTime = parseFloat(loadTime);
+  }
 }
 
 // Destacar a página ativa no menu de navegação

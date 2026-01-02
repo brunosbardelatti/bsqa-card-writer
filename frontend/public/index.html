@@ -4,11 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>🏠 Home - BSQA Card Writer</title>
+  
+  <!-- Preload de componentes críticos (REFACT.md - FASE 3) -->
+  <link rel="preload" href="components/header.html" as="fetch" crossorigin>
+  <link rel="preload" href="components/footer.html" as="fetch" crossorigin>
+  
   <link rel="stylesheet" href="assets/style.css">
   <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
 </head>
 <body>
   <div id="header" data-testid="index-header-container"></div>
+  <div class="skeleton skeleton-header"></div>
   
   <div class="container" data-testid="index-main-container">
     <!-- Breadcrumbs -->
@@ -102,6 +108,7 @@
   </div>
 
   <div id="footer" data-testid="index-footer-container"></div>
+  <div class="skeleton skeleton-footer"></div>
   <script type="module" src="js/main.js"></script>
   <script type="module" src="js/index.js"></script>
 </body>
