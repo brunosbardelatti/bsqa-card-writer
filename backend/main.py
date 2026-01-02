@@ -58,7 +58,6 @@ try:
         assets_path = os.path.join(frontend_path, "assets")
         js_path = os.path.join(frontend_path, "js")
         components_path = os.path.join(frontend_path, "components")
-        docs_path = os.path.join(frontend_path, "docs")
         
         if os.path.exists(assets_path):
             app.mount("/assets", StaticFiles(directory=assets_path), name="assets")
@@ -66,8 +65,6 @@ try:
             app.mount("/js", StaticFiles(directory=js_path), name="js")
         if os.path.exists(components_path):
             app.mount("/components", StaticFiles(directory=components_path), name="components")
-        if os.path.exists(docs_path):
-            app.mount("/docs", StaticFiles(directory=docs_path), name="docs")
         
         # Rotas para as páginas HTML principais
         @app.get("/")
@@ -96,13 +93,6 @@ try:
             config_file = os.path.join(frontend_path, "config.html")
             if os.path.exists(config_file):
                 return FileResponse(config_file)
-            return JSONResponse({"error": "Frontend not found"}, status_code=404)
-        
-        @app.get("/docs.html")
-        async def read_docs():
-            docs_file = os.path.join(frontend_path, "docs.html")
-            if os.path.exists(docs_file):
-                return FileResponse(docs_file)
             return JSONResponse({"error": "Frontend not found"}, status_code=404)
         
         print(f"[DEBUG] Frontend routes configured successfully")

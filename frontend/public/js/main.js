@@ -102,12 +102,6 @@ export function addBreadcrumbs() {
         { text: 'Configurações', url: '' }
       ];
       break;
-    case 'docs.html':
-      breadcrumbItems = [
-        { text: 'Home', url: 'index.html' },
-        { text: 'Documentação', url: '' }
-      ];
-      break;
     case 'chat.html':
       breadcrumbItems = [
         { text: 'Home', url: 'index.html' },

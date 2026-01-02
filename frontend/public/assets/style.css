@@ -518,67 +518,6 @@ button:disabled {
   font-size: 0.8rem;
 }
 
-/* Estilos para documentação */
-#docsContent {
-  background: var(--card-bg);
-  padding: 2rem;
-  border-radius: 10px;
-  max-width: 800px;
-  width: 100%;
-  margin: 0 auto;
-}
-
-#docsContent h1 {
-  color: var(--text-color);
-  border-bottom: 2px solid var(--accent-color);
-  padding-bottom: 0.5rem;
-  margin-bottom: 1.5rem;
-  font-weight: 700;
-}
-
-#docsContent h2 {
-  color: var(--text-color);
-  margin-top: 2rem;
-  margin-bottom: 1rem;
-  border-bottom: 1px solid var(--muted-text);
-  padding-bottom: 0.5rem;
-}
-
-#docsContent h3 {
-  color: var(--text-color);
-  margin-top: 1.5rem;
-  margin-bottom: 0.5rem;
-}
-
-#docsContent h4 {
-  color: var(--text-color);
-  margin-top: 1.25rem;
-  margin-bottom: 0.5rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-#docsContent p {
-  margin-bottom: 1rem;
-  line-height: 1.6;
-}
-
-#docsContent ul, #docsContent ol {
-  margin-bottom: 1rem;
-  padding-left: 2rem;
-}
-
-#docsContent li {
-  margin-bottom: 0.5rem;
-}
-
-#docsContent pre {
-  background: var(--bg-color);
-  padding: 1rem;
-  border-radius: 6px;
-  overflow-x: auto;
-  margin: 1rem 0;
-}
 
 /* Blocos de código melhorados */
 .code-block {
@@ -777,24 +716,6 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
   font-weight: 500;
 }
 
-/* Melhorar espaçamento de listas */
-#docsContent ul, #docsContent ol {
-  margin-bottom: 1rem;
-  padding-left: 2rem;
-}
-
-#docsContent li {
-  margin-bottom: 0.5rem;
-  line-height: 1.6;
-}
-
-#docsContent blockquote {
-  border-left: 4px solid var(--accent-color);
-  padding-left: 1rem;
-  margin: 1rem 0;
-  font-style: italic;
-  color: var(--muted-text);
-}
 
 /* Mensagens de erro */
 .error-message {

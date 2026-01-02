@@ -7,7 +7,6 @@ frontend/public/
 ├── 📄 index.html              # Home page da aplicação
 ├── 📄 chat.html               # Página principal de chat e análise
 ├── 📄 config.html             # Página de configurações do usuário
-├── 📄 docs.html               # Página de documentação
 ├── 📁 assets/                 # Recursos estáticos
 │   ├── 📄 style.css           # Estilos globais da aplicação
 │   └── 📄 favicon.ico         # Ícone do site
@@ -15,13 +14,10 @@ frontend/public/
 │   ├── 📄 main.js             # Utilitários globais e componentes
 │   ├── 📄 index.js            # Lógica específica da home page
 │   ├── 📄 chat.js             # Lógica específica da página de chat
-│   ├── 📄 config.js           # Lógica específica da página de configurações
-│   └── 📄 docs.js             # Lógica específica da página de documentação
-├── 📁 components/             # Componentes HTML reutilizáveis
-│   ├── 📄 header.html         # Cabeçalho da aplicação
-│   └── 📄 footer.html         # Rodapé da aplicação
-└── 📁 docs/                   # Documentação
-    └── 📄 software-requirements.md  # Documentação técnica
+│   └── 📄 config.js           # Lógica específica da página de configurações
+└── 📁 components/             # Componentes HTML reutilizáveis
+    ├── 📄 header.html         # Cabeçalho da aplicação
+    └── 📄 footer.html         # Rodapé da aplicação
 ```
 
 ## 🎯 **Responsabilidades dos Arquivos**
@@ -30,7 +26,6 @@ frontend/public/
 - **`index.html`**: Home page com cards interativos e navegação
 - **`chat.html`**: Interface principal para análise de requisitos e chat com IA
 - **`config.html`**: Interface para configurações do usuário e APIs
-- **`docs.html`**: Página de documentação técnica
 
 ### **📁 Assets:**
 - **`style.css`**: Sistema completo de estilos com temas (dark/light/auto)
@@ -41,14 +36,10 @@ frontend/public/
 - **`index.js`**: Lógica específica da home page (animações, contadores, interações)
 - **`chat.js`**: Lógica específica da página de chat (formulário, upload, análise, tipos de IA)
 - **`config.js`**: Lógica específica da página de configurações (salvamento, validação, testes de API)
-- **`docs.js`**: Lógica específica da página de documentação (carregamento de markdown)
 
 ### **📁 Components:**
-- **`header.html`**: Cabeçalho reutilizável com navegação (Home, Chat, Docs, Config)
+- **`header.html`**: Cabeçalho reutilizável com navegação (Home, Chat, Config)
 - **`footer.html`**: Rodapé reutilizável com links e informações
-
-### **📁 Docs:**
-- **`software-requirements.md`**: Documentação técnica completa em markdown
 
 ## 🔧 **Características Técnicas**
 
@@ -98,10 +89,6 @@ frontend/public/
 - **Persistência**: Configurações salvas automaticamente
 - **Anchors**: Navegação para seções específicas (#ai-config, #template-config)
 
-### **📋 Documentação (docs.html)**
-- **Software Requirements**: Documentação técnica completa
-- **Markdown Renderizado**: Conversão automática para HTML
-- **Navegação**: Menu header consistente
 
 ## 🚀 **Funcionalidades Implementadas**
 
@@ -138,7 +125,6 @@ frontend/public/
 1. **Home**: Abra `index.html` para acessar a home page
 2. **Chat**: Acesse `chat.html` para análise de requisitos
 3. **Configuração**: Acesse `config.html` para personalizar
-4. **Documentação**: Acesse `docs.html` para ver a documentação
 
 ### **Navegação:**
 - **Header Menu**: Navegação consistente em todas as páginas
@@ -177,12 +163,6 @@ frontend/public/
 - Header com navegação consistente
 - Footer com informações e links
 - Carregamento dinâmico via JavaScript
-
-### **Pasta `docs/`:**
-- Documentação técnica em markdown
-- Conversão automática para HTML
-- Navegação integrada
-- Conteúdo atualizado
 
 ## 🎯 **Melhorias Implementadas**
 
