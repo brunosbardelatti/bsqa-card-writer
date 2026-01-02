@@ -35,7 +35,9 @@ async function loadDocumentation() {
     applySyntaxHighlighting();
     
   } catch (error) {
-    console.error('Erro ao carregar documentação:', error);
+    if (window.safeErrorLog) {
+      window.safeErrorLog('Erro ao carregar documentação:', error);
+    }
     document.getElementById('docsContent').innerHTML = `
       <div class="error-message" data-testid="docs-error-container">
         <h2>❌ Erro ao carregar documentação</h2>

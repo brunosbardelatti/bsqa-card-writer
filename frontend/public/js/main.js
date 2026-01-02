@@ -1,5 +1,40 @@
 // main.js - Funções utilitárias globais e carregamento de componentes
 
+/**
+ * Verifica se está em ambiente de desenvolvimento
+ * @returns {boolean} True se estiver em desenvolvimento
+ */
+function isDevelopment() {
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1';
+}
+
+/**
+ * Log seguro - apenas em desenvolvimento
+ * Não expõe informações sensíveis em produção
+ * @param {...any} args - Argumentos para log
+ */
+function safeLog(...args) {
+  if (isDevelopment()) {
+    console.log(...args);
+  }
+}
+
+/**
+ * Error log seguro - apenas em desenvolvimento
+ * @param {...any} args - Argumentos para log de erro
+ */
+function safeErrorLog(...args) {
+  if (isDevelopment()) {
+    console.error(...args);
+  }
+}
+
+// Exportar funções de log seguras
+window.safeLog = safeLog;
+window.safeErrorLog = safeErrorLog;
+window.isDevelopment = isDevelopment;
+
 // Carregar componente HTML em um seletor
 async function loadComponent(selector, url) {
   const el = document.querySelector(selector);
@@ -172,7 +207,7 @@ export function loadThemeFromConfig() {
       applyTheme(preferences.theme);
     }
   } catch (error) {
-    console.log('Erro ao carregar tema:', error);
+    safeErrorLog('Erro ao carregar tema:', error);
   }
 }
 
@@ -333,7 +368,7 @@ window.copyCode = function(button) {
       button.classList.remove('copied');
     }, 2000);
   }).catch(err => {
-    console.error('Erro ao copiar:', err);
+    safeErrorLog('Erro ao copiar:', err);
     // Fallback para navegadores antigos
     const textArea = document.createElement('textarea');
     textArea.value = text;

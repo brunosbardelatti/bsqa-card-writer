@@ -84,5 +84,6 @@ export function highlightAnalysisType(typeName) {
 // Função para mostrar estatísticas de uso (futuro)
 export function showUsageStats() {
   // Esta função pode ser implementada no futuro para mostrar estatísticas
-  console.log('Estatísticas de uso serão implementadas em versões futuras');
+  // Estatísticas de uso serão implementadas em versões futuras
+  // Removido log desnecessário
 } 

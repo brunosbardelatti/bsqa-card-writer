@@ -1,6 +1,25 @@
 // apiConfig.js - Configuração dinâmica da API baseURL
 
 /**
+ * Verifica se está em ambiente de desenvolvimento
+ * @returns {boolean} True se estiver em desenvolvimento
+ */
+function isDevelopment() {
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1';
+}
+
+/**
+ * Log seguro - apenas em desenvolvimento
+ * @param {...any} args - Argumentos para log
+ */
+function safeLog(...args) {
+  if (isDevelopment()) {
+    console.log(...args);
+  }
+}
+
+/**
  * Detecta automaticamente a baseURL da API baseado no ambiente
  * @returns {string} A baseURL da API
  */
@@ -16,7 +35,7 @@ function getApiBaseUrl() {
   const protocol = window.location.protocol;
   
   // Ambiente de desenvolvimento local
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+  if (isDevelopment()) {
     return `${protocol}//${hostname}:8000`;
   }
   
@@ -34,7 +53,14 @@ function buildApiUrl(endpoint) {
   const baseUrl = getApiBaseUrl();
   // Garante que o endpoint comece com /
   const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
-  return `${baseUrl}${cleanEndpoint}`;
+  const fullUrl = `${baseUrl}${cleanEndpoint}`;
+  
+  // Log seguro apenas em desenvolvimento (sem expor URL completa)
+  if (isDevelopment()) {
+    safeLog(`[ApiConfig] Construindo URL: ${cleanEndpoint} -> ${fullUrl}`);
+  }
+  
+  return fullUrl;
 }
 
 // Exportar as funções
@@ -43,7 +69,7 @@ window.ApiConfig = {
   buildUrl: buildApiUrl
 };
 
-// Log da configuração detectada (apenas em development)
-if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-  console.log(`[API Config] Base URL detectada: ${getApiBaseUrl()}`);
+// Log da configuração detectada (apenas em development, sem expor URL completa)
+if (isDevelopment()) {
+  safeLog(`[API Config] Base URL detectada: ${getApiBaseUrl()}`);
 } 
