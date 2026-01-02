@@ -5,6 +5,9 @@
   --accent-color: #ffffff;
   --text-color: #f4f4f4;
   --muted-text: #bbbbbb;
+  --border-color: #404040;
+  --result-bg: #2a2a2a;
+  --result-text: #f4f4f4;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -857,6 +860,47 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
   width: 100%;
   margin: 0 auto;
 }
+
+/* Container para Tools - mais largo */
+[data-testid="tools-main-container"] {
+  max-width: 1200px;
+}
+
+/* Card Headers com cores específicas - adaptar para tema */
+.card-header.bg-secondary {
+  background: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  border-bottom: 1px solid var(--muted-text);
+}
+
+.card-header.bg-primary {
+  background: var(--accent-color) !important;
+  color: var(--bg-color) !important;
+  border-bottom: 1px solid var(--accent-color);
+}
+
+.card-header.bg-success {
+  background: #4caf50 !important;
+  color: #fff !important;
+  border-bottom: 1px solid #4caf50;
+}
+
+/* Remover text-white do Bootstrap */
+.text-white {
+  color: var(--text-color) !important;
+}
+
+.card-header.text-white {
+  color: var(--bg-color) !important;
+}
+
+.card-header.bg-primary.text-white {
+  color: var(--bg-color) !important;
+}
+
+.card-header.bg-success.text-white {
+  color: #fff !important;
+}
 .config-section {
   margin-bottom: 2rem;
   padding-bottom: 1.5rem;
@@ -896,9 +940,7 @@ input[type="checkbox"] {
   cursor: not-allowed;
 }
 /* Botões de ação na página de configurações */
-.save-btn {
-  /* Estilos específicos removidos - agora usa as classes padrão */
-}
+/* .save-btn usa as classes padrão definidas acima */
 
 /* Layout responsivo para botões de ação */
 @media (max-width: 600px) {
@@ -926,4 +968,880 @@ input[type="checkbox"] {
   background: rgba(244, 67, 54, 0.2);
   color: #f44336;
   border: 1px solid #f44336;
+}
+
+/* === Estilos para Tools Page === */
+/* Sobrescrever Bootstrap para usar tema do projeto */
+
+/* Tabs Navigation */
+.nav-tabs {
+  border-bottom: 1px solid var(--muted-text);
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  align-items: flex-end;
+  position: relative;
+}
+
+.nav-tabs .nav-item {
+  margin-bottom: 0;
+}
+
+.nav-tabs .nav-link {
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--muted-text);
+  border-bottom: 1px solid var(--muted-text);
+  border-radius: 6px 6px 0 0;
+  padding: 0.75rem 1.25rem;
+  margin-right: 0.25rem;
+  margin-bottom: 0;
+  transition: all 0.3s;
+  cursor: pointer;
+  font-size: 0.9rem;
+  position: relative;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: bottom;
+}
+
+/* Garantir que tabs que não estão na última linha tenham borda inferior */
+.nav-tabs .nav-link:not(.active) {
+  margin-bottom: 0;
+}
+
+.nav-tabs .nav-link:hover {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border-color: var(--accent-color);
+  border-bottom-color: var(--muted-text);
+  z-index: 1;
+}
+
+.nav-tabs .nav-link.active {
+  background: var(--bg-color);
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+  border-bottom-color: var(--bg-color);
+  font-weight: 600;
+  z-index: 2;
+  margin-bottom: -1px;
+  position: relative;
+}
+
+/* Garantir que a linha de delimitação fique sempre visível abaixo de todas as tabs */
+.nav-tabs::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--muted-text);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Quando tabs quebram em múltiplas linhas, garantir que os botões da segunda linha não sobreponham */
+/* O padding-bottom do .nav-tabs garante espaço para a linha de delimitação */
+
+/* Tab Content */
+.tab-content {
+  padding: 1.5rem 0;
+  margin-top: 0;
+  position: relative;
+  z-index: 0;
+}
+
+.tab-pane {
+  display: none;
+}
+
+.tab-pane.active {
+  display: block;
+}
+
+.tab-pane.fade {
+  transition: opacity 0.15s linear;
+}
+
+.tab-pane.fade:not(.show) {
+  opacity: 0;
+}
+
+.tab-pane.fade.show {
+  opacity: 1;
+}
+
+/* Grid System (Bootstrap-like) */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -0.75rem;
+}
+
+[class*="col-"] {
+  padding: 0 0.75rem;
+  flex: 1 0 0%;
+}
+
+.col-md-6 {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .col-md-6 {
+    width: 50%;
+  }
+  .col-md-3 {
+    width: 25%;
+  }
+  .col-md-4 {
+    width: 33.333333%;
+  }
+  .col-md-5 {
+    width: 41.666667%;
+  }
+  .col-md-8 {
+    width: 66.666667%;
+  }
+  .col-md-9 {
+    width: 75%;
+  }
+  .col-md-12 {
+    width: 100%;
+  }
+}
+
+.col-lg-4 {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.col-lg-6 {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+@media (min-width: 992px) {
+  .col-lg-4 {
+    width: 33.333333%;
+  }
+  .col-lg-6 {
+    width: 50%;
+  }
+}
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--muted-text);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+.card-header {
+  background: var(--bg-color);
+  border-bottom: 1px solid var(--muted-text);
+  padding: 1rem 1.5rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.card-body {
+  padding: 1.5rem;
+  color: var(--text-color);
+}
+
+.card h5 {
+  color: var(--text-color);
+  margin: 0;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 0.35em 0.65em;
+  font-size: 0.875em;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: 4px;
+  background: var(--muted-text);
+  color: var(--bg-color);
+}
+
+.badge.bg-primary {
+  background: var(--accent-color);
+  color: var(--bg-color);
+}
+
+.badge.bg-success {
+  background: #4caf50;
+  color: #fff;
+}
+
+.badge.bg-info {
+  background: #2196F3;
+  color: #fff;
+}
+
+.badge.bg-warning {
+  background: #ff9800;
+  color: #000;
+}
+
+.badge.bg-secondary {
+  background: var(--muted-text);
+  color: var(--bg-color);
+}
+
+/* Buttons - Adaptar classes Bootstrap */
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+  vertical-align: middle;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background: var(--accent-color);
+  color: var(--bg-color);
+  border-color: var(--accent-color);
+}
+
+.btn-primary:hover {
+  background: var(--muted-text);
+  color: var(--bg-color);
+  border-color: var(--muted-text);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: var(--card-bg);
+  color: var(--text-color);
+  border-color: var(--muted-text);
+}
+
+.btn-secondary:hover {
+  background: var(--bg-color);
+  color: var(--text-color);
+  border-color: var(--accent-color);
+}
+
+.btn-utility {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-color);
+  border-color: var(--muted-text);
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+}
+
+.btn-utility:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--text-color);
+  border-color: var(--accent-color);
+}
+
+.btn-sm {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+}
+
+.btn.w-100 {
+  width: 100%;
+}
+
+/* Form Controls - Adaptar Bootstrap */
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-color);
+  background-color: var(--card-bg);
+  border: 1px solid var(--muted-text);
+  border-radius: 6px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-control:focus {
+  color: var(--text-color);
+  background-color: var(--card-bg);
+  border-color: var(--accent-color);
+  outline: 0;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.form-control:read-only {
+  background-color: var(--bg-color);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.form-select {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--text-color);
+  background-color: var(--card-bg);
+  border: 1px solid var(--muted-text);
+  border-radius: 6px;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.form-select:focus {
+  border-color: var(--accent-color);
+  outline: 0;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+/* Form Check */
+.form-check {
+  display: block;
+  min-height: 1.5rem;
+  padding-left: 1.5em;
+  margin-bottom: 0.125rem;
+}
+
+.form-check-input {
+  width: 1em;
+  height: 1em;
+  margin-top: 0.25em;
+  margin-left: -1.5em;
+  vertical-align: top;
+  background-color: var(--card-bg);
+  border: 1px solid var(--muted-text);
+  appearance: none;
+  cursor: pointer;
+}
+
+.form-check-input:checked {
+  background-color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.form-check-input:focus {
+  border-color: var(--accent-color);
+  outline: 0;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+.form-check-label {
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.form-check-inline {
+  display: inline-block;
+  margin-right: 1rem;
+}
+
+/* Alerts */
+.alert {
+  position: relative;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+
+.alert-danger {
+  color: #f44336;
+  background-color: rgba(244, 67, 54, 0.1);
+  border-color: #f44336;
+}
+
+.alert-warning {
+  color: #ff9800;
+  background-color: rgba(255, 152, 0, 0.1);
+  border-color: #ff9800;
+}
+
+.alert-info {
+  color: #2196F3;
+  background-color: rgba(33, 150, 243, 0.1);
+  border-color: #2196F3;
+}
+
+.alert-success {
+  color: #4caf50;
+  background-color: rgba(76, 175, 80, 0.1);
+  border-color: #4caf50;
+}
+
+/* Utilities */
+.mb-2 { margin-bottom: 0.5rem !important; }
+.mb-3 { margin-bottom: 1rem !important; }
+.mb-4 { margin-bottom: 1.5rem !important; }
+.mt-2 { margin-top: 0.5rem !important; }
+.mt-3 { margin-top: 1rem !important; }
+.mt-4 { margin-top: 1.5rem !important; }
+.mt-5 { margin-top: 3rem !important; }
+.m-1 { margin: 0.25rem !important; }
+
+.d-flex { display: flex !important; }
+.d-none { display: none !important; }
+.d-block { display: block !important; }
+.d-grid { display: grid !important; }
+
+.flex-wrap { flex-wrap: wrap !important; }
+.flex-fill { flex: 1 1 auto !important; }
+.flex-column { flex-direction: column !important; }
+
+.gap-2 { gap: 0.5rem !important; }
+.gap-3 { gap: 1rem !important; }
+
+.justify-content-end { justify-content: flex-end !important; }
+.justify-content-between { justify-content: space-between !important; }
+.align-items-center { align-items: center !important; }
+.align-items-end { align-items: flex-end !important; }
+
+.text-center { text-align: center !important; }
+.text-break { word-break: break-word !important; }
+.text-muted { color: var(--muted-text) !important; }
+.text-dark { color: var(--bg-color) !important; }
+.text-danger { color: #f44336 !important; }
+.text-warning { color: #ff9800 !important; }
+
+.fw-bold { font-weight: 700 !important; }
+
+.w-100 { width: 100% !important; }
+
+.ms-auto { margin-left: auto !important; }
+
+/* Input Group */
+.input-group {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  width: 100%;
+}
+
+.input-group .form-control {
+  position: relative;
+  flex: 1 1 auto;
+  width: 1%;
+  min-width: 0;
+}
+
+.input-group .btn {
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
+}
+
+/* Collapse */
+.collapse:not(.show) {
+  display: none;
+}
+
+.collapse.show {
+  display: block;
+}
+
+/* Pre/Code */
+pre {
+  background: var(--bg-color);
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  color: var(--text-color);
+  border: 1px solid var(--muted-text);
+}
+
+.font-monospace {
+  font-family: 'Courier New', monospace;
+}
+
+/* Generator Cards */
+.generator-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.generator-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+}
+
+/* Responsive adjustments for Tools */
+@media (max-width: 768px) {
+  .nav-tabs {
+    flex-direction: column;
+  }
+  
+  .nav-tabs .nav-link {
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    margin-right: 0;
+  }
+  
+  .nav-tabs .nav-link.active {
+    border-bottom-color: var(--accent-color);
+  }
+  
+  .container {
+    max-width: 100%;
+    padding: 1rem;
+  }
+  
+  [class*="col-"] {
+    width: 100% !important;
+    margin-bottom: 1rem;
+  }
+}
+
+/* Estilos adicionais para Tools - Headings */
+.tab-pane h3 {
+  color: var(--text-color);
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  border-bottom: 1px solid var(--muted-text);
+  padding-bottom: 0.5rem;
+}
+
+.tab-pane h5 {
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+
+/* List unstyled */
+.list-unstyled {
+  padding-left: 0;
+  list-style: none;
+}
+
+.list-unstyled li {
+  margin-bottom: 0.5rem;
+}
+
+/* Small text */
+.small {
+  font-size: 0.875rem;
+}
+
+/* Form text */
+.form-text {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--muted-text);
+}
+
+/* Border utilities */
+.border-secondary {
+  border-color: var(--muted-text) !important;
+}
+
+/* Height utilities */
+.h-100 {
+  height: 100% !important;
+}
+
+/* G-4 spacing */
+.g-4 {
+  --bs-gutter-x: 1.5rem;
+  --bs-gutter-y: 1.5rem;
+}
+
+.g-3 {
+  --bs-gutter-x: 1rem;
+  --bs-gutter-y: 1rem;
+}
+
+/* Form switch */
+.form-switch .form-check-input {
+  width: 2em;
+  margin-left: -2.5em;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%28255, 255, 255, 0.25%29'/%3e%3c/svg%3e");
+  background-position: left center;
+  border-radius: 2em;
+  transition: background-position 0.15s ease-in-out;
+}
+
+.form-switch .form-check-input:checked {
+  background-position: right center;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+}
+
+/* ============================================
+   ESTILOS ESPECÍFICOS PARA PÁGINA TOOLS
+   Garantir que Bootstrap respeite o tema
+   ============================================ */
+
+/* Sobrescrever variáveis Bootstrap para usar tema do projeto */
+:root {
+  --bs-primary-rgb: var(--accent-color-rgb, 255, 255, 255);
+  --bs-secondary-rgb: var(--muted-text-rgb, 187, 187, 187);
+}
+
+/* Garantir que o body use as variáveis CSS do tema */
+body {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+}
+
+/* Garantir que containers e elementos principais usem o tema */
+.container,
+.container-fluid {
+  background-color: transparent;
+  color: var(--text-color);
+}
+
+/* Garantir que cards usem o tema */
+.card {
+  background-color: var(--card-bg) !important;
+  border-color: var(--muted-text) !important;
+  color: var(--text-color) !important;
+}
+
+.card-header {
+  background-color: var(--bg-color) !important;
+  border-bottom-color: var(--muted-text) !important;
+  color: var(--text-color) !important;
+}
+
+.card-header.bg-primary {
+  background-color: var(--accent-color) !important;
+  color: var(--bg-color) !important;
+}
+
+.card-header.bg-secondary {
+  background-color: var(--muted-text) !important;
+  color: var(--bg-color) !important;
+}
+
+.card-header.bg-success {
+  background-color: #4caf50 !important;
+  color: #fff !important;
+}
+
+.card-body {
+  background-color: transparent;
+  color: var(--text-color) !important;
+}
+
+/* Garantir que form controls usem o tema */
+.form-control,
+.form-select {
+  background-color: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--muted-text) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 0.25rem rgba(var(--accent-color-rgb, 255, 255, 255), 0.25) !important;
+}
+
+.form-control:read-only {
+  background-color: var(--bg-color) !important;
+  opacity: 0.7;
+}
+
+.form-label {
+  color: var(--text-color) !important;
+}
+
+/* Garantir que badges usem o tema */
+.badge {
+  color: var(--bg-color) !important;
+}
+
+.badge.bg-primary {
+  background-color: var(--accent-color) !important;
+  color: var(--bg-color) !important;
+}
+
+.badge.bg-success {
+  background-color: #4caf50 !important;
+  color: #fff !important;
+}
+
+.badge.bg-info {
+  background-color: #17a2b8 !important;
+  color: #fff !important;
+}
+
+.badge.bg-warning {
+  background-color: #ffc107 !important;
+  color: #000 !important;
+}
+
+.badge.bg-secondary {
+  background-color: var(--muted-text) !important;
+  color: var(--bg-color) !important;
+}
+
+/* Garantir que botões usem o tema */
+.btn-primary {
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  color: var(--bg-color) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--muted-text) !important;
+  border-color: var(--muted-text) !important;
+  color: var(--bg-color) !important;
+}
+
+.btn-secondary {
+  background-color: var(--card-bg) !important;
+  border-color: var(--muted-text) !important;
+  color: var(--text-color) !important;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+  background-color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  color: var(--bg-color) !important;
+}
+
+/* Garantir que alerts usem o tema */
+.alert-info {
+  background-color: rgba(var(--accent-color-rgb, 255, 255, 255), 0.1) !important;
+  border-color: rgba(var(--accent-color-rgb, 255, 255, 255), 0.3) !important;
+  color: var(--accent-color) !important;
+}
+
+.alert-danger {
+  background-color: rgba(220, 53, 69, 0.1) !important;
+  border-color: rgba(220, 53, 69, 0.3) !important;
+  color: #dc3545 !important;
+}
+
+.alert-warning {
+  background-color: rgba(255, 193, 7, 0.1) !important;
+  border-color: rgba(255, 193, 7, 0.3) !important;
+  color: #ffc107 !important;
+}
+
+/* Garantir que pre/code usem o tema */
+pre {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  border-color: var(--muted-text) !important;
+}
+
+code {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+}
+
+/* Garantir que text-muted use o tema */
+.text-muted {
+  color: var(--muted-text) !important;
+}
+
+/* Garantir que h1, h2, h3, etc. usem o tema */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-color) !important;
+}
+
+/* Garantir que p e outros elementos de texto usem o tema */
+p, span, div, li, td, th {
+  color: var(--text-color);
+}
+
+/* Garantir que links usem o tema */
+a {
+  color: var(--accent-color);
+}
+
+a:hover {
+  color: var(--muted-text);
+}
+
+/* Garantir que breadcrumbs usem o tema */
+.breadcrumbs {
+  color: var(--text-color) !important;
+}
+
+.breadcrumbs a {
+  color: var(--accent-color) !important;
+}
+
+.breadcrumbs a:hover {
+  color: var(--muted-text) !important;
+}
+
+/* Garantir que header e footer usem o tema (sobrescrever Bootstrap) */
+header {
+  background-color: transparent !important;
+  color: var(--text-color) !important;
+}
+
+header h1 {
+  color: var(--text-color) !important;
+}
+
+header .subtitle {
+  color: var(--muted-text) !important;
+}
+
+header .header-nav {
+  background-color: transparent !important;
+}
+
+header .nav-btn {
+  background-color: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--muted-text) !important;
+}
+
+header .nav-btn:hover {
+  background-color: var(--accent-color) !important;
+  color: var(--bg-color) !important;
+  border-color: var(--accent-color) !important;
+}
+
+footer {
+  background-color: transparent !important;
+  color: var(--text-color) !important;
+}
+
+footer a {
+  color: var(--text-color) !important;
+}
+
+footer a:hover {
+  color: var(--accent-color) !important;
+}
+
+/* Garantir que subtítulo use o tema */
+.subtitle {
+  color: var(--muted-text) !important;
 } 
