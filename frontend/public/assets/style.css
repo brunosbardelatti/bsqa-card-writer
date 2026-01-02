@@ -2186,4 +2186,78 @@ footer a:hover {
 .skeleton-footer {
   pointer-events: none;
   user-select: none;
+}
+
+/* ============================================
+   HEADER COMPONENT (REFACT_HEADER_FOOTER.md)
+   Estilos movidos de inline para CSS
+   ============================================ */
+
+header {
+  width: 100%;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.header-nav {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  padding: 1rem;
+}
+
+header h1 {
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+header .subtitle {
+  color: var(--muted-text);
+  font-size: 1rem;
+  max-width: 800px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* ============================================
+   FOOTER COMPONENT (REFACT_HEADER_FOOTER.md)
+   Estilos movidos de inline para CSS
+   ============================================ */
+
+footer {
+  margin-top: 3rem;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--card-bg);
+}
+
+footer a {
+  margin: 0 0.5rem;
+  color: var(--accent-color);
+  text-decoration: none;
+  transition: all 0.3s;
+  font-weight: 500;
+}
+
+footer a:hover {
+  color: var(--muted-text);
+  text-decoration: underline;
+}
+
+footer div:last-child {
+  margin-top: 0.5rem;
+  opacity: 0.8;
+  font-size: 0.85rem;
+}
+
+footer span {
+  margin: 0 0.5rem;
+  color: var(--muted-text);
 } 
