@@ -8,6 +8,20 @@
   --border-color: #404040;
   --result-bg: #2a2a2a;
   --result-text: #f4f4f4;
+  
+  /* Cores Semânticas Adaptativas */
+  --success-color: #4caf50;
+  --success-color-rgb: 76, 175, 80;
+  --info-color: #2196F3;
+  --info-color-rgb: 33, 150, 243;
+  --warning-color: #ff9800;
+  --warning-color-rgb: 255, 152, 0;
+  --danger-color: #f44336;
+  --danger-color-rgb: 244, 67, 54;
+  
+  /* Cores de card headers */
+  --card-header-bg: #252525;
+  --card-header-secondary-bg: #2a2a2a;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -870,39 +884,44 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
 }
 
 /* Card Headers com cores específicas - adaptar para tema */
-.card-header.bg-secondary {
-  background: var(--bg-color) !important;
+.card-header {
+  background: var(--card-header-bg) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  padding: 1rem 1.5rem;
+  font-weight: 600;
   color: var(--text-color) !important;
-  border-bottom: 1px solid var(--muted-text);
+}
+
+.card-header.bg-secondary {
+  background: var(--card-header-secondary-bg) !important;
+  color: var(--text-color) !important;
+  border-bottom: 1px solid var(--border-color) !important;
 }
 
 .card-header.bg-primary {
   background: var(--accent-color) !important;
   color: var(--bg-color) !important;
-  border-bottom: 1px solid var(--accent-color);
+  border-bottom: 1px solid var(--accent-color) !important;
 }
 
 .card-header.bg-success {
-  background: #4caf50 !important;
+  background: var(--success-color) !important;
   color: #fff !important;
-  border-bottom: 1px solid #4caf50;
+  border-bottom: 1px solid var(--success-color) !important;
 }
 
-/* Remover text-white do Bootstrap */
+/* Texto sempre contrastante */
 .text-white {
   color: var(--text-color) !important;
 }
 
 .card-header.text-white {
-  color: var(--bg-color) !important;
+  color: #ffffff !important;
 }
 
-.card-header.bg-primary.text-white {
-  color: var(--bg-color) !important;
-}
-
+.card-header.bg-primary.text-white,
 .card-header.bg-success.text-white {
-  color: #fff !important;
+  color: #ffffff !important;
 }
 .config-section {
   margin-bottom: 2rem;
@@ -977,14 +996,17 @@ input[type="checkbox"] {
 /* Sobrescrever Bootstrap para usar tema do projeto */
 
 /* Tabs Navigation */
+/* ============================================
+   TABS NAVIGATION - Otimizado (FASE 7)
+   ============================================ */
+
 .nav-tabs {
-  border-bottom: 1px solid var(--muted-text);
-  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 2rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   padding-bottom: 0.5rem;
-  align-items: flex-end;
   position: relative;
 }
 
@@ -995,60 +1017,56 @@ input[type="checkbox"] {
 .nav-tabs .nav-link {
   background: var(--card-bg);
   color: var(--text-color);
-  border: 1px solid var(--muted-text);
-  border-bottom: 1px solid var(--muted-text);
-  border-radius: 6px 6px 0 0;
-  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--border-color);
+  border-bottom: 2px solid var(--border-color);
+  border-radius: 8px 8px 0 0;
+  padding: 0.875rem 1.5rem;
   margin-right: 0.25rem;
   margin-bottom: 0;
-  transition: all 0.3s;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  font-weight: 500;
   position: relative;
   white-space: nowrap;
-  display: inline-block;
-  vertical-align: bottom;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-/* Garantir que tabs que não estão na última linha tenham borda inferior */
-.nav-tabs .nav-link:not(.active) {
-  margin-bottom: 0;
-}
-
-.nav-tabs .nav-link:hover {
-  background: var(--card-bg) !important;
+.nav-tabs .nav-link:hover:not(.active) {
+  background: var(--card-header-bg) !important;
   color: var(--accent-color) !important;
   border-color: var(--accent-color) !important;
-  border-bottom-color: var(--muted-text) !important;
-  z-index: 1;
+  border-bottom-color: var(--border-color) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .nav-tabs .nav-link.active {
   background: var(--bg-color) !important;
   color: var(--accent-color) !important;
   border-color: var(--accent-color) !important;
-  border-bottom-color: var(--bg-color) !important;
+  border-bottom: 2px solid var(--bg-color) !important;
   font-weight: 600;
   z-index: 2;
-  margin-bottom: -1px;
+  margin-bottom: -2px;
   position: relative;
+  box-shadow: 0 -2px 0 0 var(--accent-color);
 }
 
-/* Garantir que a linha de delimitação fique sempre visível abaixo de todas as tabs */
+/* Linha de separação */
 .nav-tabs::after {
   content: '';
   position: absolute;
-  bottom: -1px;
+  bottom: 0;
   left: 0;
   right: 0;
-  height: 1px;
-  background-color: var(--muted-text);
+  height: 2px;
+  background-color: var(--border-color);
   z-index: 0;
   pointer-events: none;
 }
-
-/* Quando tabs quebram em múltiplas linhas, garantir que os botões da segunda linha não sobreponham */
-/* O padding-bottom do .nav-tabs garante espaço para a linha de delimitação */
 
 /* Tab Content */
 .tab-content {
@@ -1181,28 +1199,58 @@ input[type="checkbox"] {
 }
 
 .badge.bg-primary {
-  background: var(--accent-color);
-  color: var(--bg-color);
+  background: var(--accent-color) !important;
+  color: var(--bg-color) !important;
 }
 
 .badge.bg-success {
-  background: #4caf50;
-  color: #fff;
+  background: var(--success-color) !important;
+  color: #fff !important;
 }
 
 .badge.bg-info {
-  background: #2196F3;
-  color: #fff;
+  background: var(--info-color) !important;
+  color: #fff !important;
 }
 
 .badge.bg-warning {
-  background: #ff9800;
-  color: #000;
+  background: var(--warning-color) !important;
+  color: #000 !important;
+}
+
+.badge.bg-danger {
+  background: var(--danger-color) !important;
+  color: #fff !important;
 }
 
 .badge.bg-secondary {
-  background: var(--muted-text);
-  color: var(--bg-color);
+  background: var(--muted-text) !important;
+  color: var(--bg-color) !important;
+}
+
+/* Variantes de badges com fundo semi-transparente para melhor integração visual */
+[data-theme="dark"] .badge.bg-success {
+  background: rgba(var(--success-color-rgb), 0.2) !important;
+  color: var(--success-color) !important;
+  border: 1px solid var(--success-color);
+}
+
+[data-theme="dark"] .badge.bg-info {
+  background: rgba(var(--info-color-rgb), 0.2) !important;
+  color: var(--info-color) !important;
+  border: 1px solid var(--info-color);
+}
+
+[data-theme="dark"] .badge.bg-warning {
+  background: rgba(var(--warning-color-rgb), 0.2) !important;
+  color: var(--warning-color) !important;
+  border: 1px solid var(--warning-color);
+}
+
+[data-theme="dark"] .badge.bg-danger {
+  background: rgba(var(--danger-color-rgb), 0.2) !important;
+  color: var(--danger-color) !important;
+  border: 1px solid var(--danger-color);
 }
 
 /* Buttons - Adaptar classes Bootstrap */
@@ -1515,18 +1563,31 @@ pre {
 
 /* Responsive adjustments for Tools */
 @media (max-width: 768px) {
+  /* Tabs em mobile - Layout vertical (FASE 7) */
   .nav-tabs {
     flex-direction: column;
+    border-bottom: none;
+    gap: 0.75rem;
   }
   
   .nav-tabs .nav-link {
-    border-radius: 6px;
-    margin-bottom: 0.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 0;
     margin-right: 0;
+    width: 100%;
+    text-align: center;
+    justify-content: center;
   }
   
   .nav-tabs .nav-link.active {
-    border-bottom-color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    margin-bottom: 0;
+    box-shadow: none;
+  }
+  
+  .nav-tabs::after {
+    display: none;
   }
   
   .container {
@@ -1654,8 +1715,8 @@ body {
 }
 
 .card-header {
-  background-color: var(--bg-color) !important;
-  border-bottom-color: var(--muted-text) !important;
+  background-color: var(--card-header-bg) !important;
+  border-bottom-color: var(--border-color) !important;
   color: var(--text-color) !important;
 }
 
@@ -1666,15 +1727,15 @@ body {
 }
 
 .card-header.bg-secondary {
-  background-color: var(--muted-text) !important;
-  color: var(--bg-color) !important;
-  border-bottom-color: var(--muted-text) !important;
+  background-color: var(--card-header-secondary-bg) !important;
+  color: var(--text-color) !important;
+  border-bottom-color: var(--border-color) !important;
 }
 
 .card-header.bg-success {
-  background-color: #4caf50 !important;
+  background-color: var(--success-color) !important;
   color: #fff !important;
-  border-bottom-color: #4caf50 !important;
+  border-bottom-color: var(--success-color) !important;
 }
 
 .card-body {
@@ -1718,18 +1779,23 @@ body {
 }
 
 .badge.bg-success {
-  background-color: #4caf50 !important;
+  background-color: var(--success-color) !important;
   color: #fff !important;
 }
 
 .badge.bg-info {
-  background-color: #17a2b8 !important;
+  background-color: var(--info-color) !important;
   color: #fff !important;
 }
 
 .badge.bg-warning {
-  background-color: #ffc107 !important;
+  background-color: var(--warning-color) !important;
   color: #000 !important;
+}
+
+.badge.bg-danger {
+  background-color: var(--danger-color) !important;
+  color: #fff !important;
 }
 
 .badge.bg-secondary {
@@ -1899,4 +1965,173 @@ footer a:hover {
 /* Garantir que subtítulo use o tema */
 .subtitle {
   color: var(--muted-text) !important;
+}
+
+/* ============================================
+   ISOLAMENTO BOOTSTRAP - PÁGINA TOOLS
+   Garantir que Bootstrap não sobrescreva o tema do projeto
+   ============================================ */
+
+/* Forçar tabs a usar tema otimizado do projeto (FASE 7) */
+[data-testid="tools-main-container"] .nav-tabs .nav-link {
+  background: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+  border-bottom: 2px solid var(--border-color) !important;
+  border-radius: 8px 8px 0 0 !important;
+  padding: 0.875rem 1.5rem !important;
+  font-size: 0.95rem !important;
+  font-weight: 500 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+[data-testid="tools-main-container"] .nav-tabs .nav-link:hover:not(.active) {
+  background: var(--card-header-bg) !important;
+  color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  border-bottom-color: var(--border-color) !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-testid="tools-main-container"] .nav-tabs .nav-link.active {
+  background: var(--bg-color) !important;
+  color: var(--accent-color) !important;
+  border-color: var(--accent-color) !important;
+  border-bottom: 2px solid var(--bg-color) !important;
+  font-weight: 600 !important;
+  margin-bottom: -2px !important;
+  box-shadow: 0 -2px 0 0 var(--accent-color) !important;
+}
+
+/* Forçar form controls a usar tema */
+[data-testid="tools-main-container"] .form-control,
+[data-testid="tools-main-container"] .form-select {
+  background-color: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-testid="tools-main-container"] .form-control:focus,
+[data-testid="tools-main-container"] .form-select:focus {
+  background-color: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 0.25rem rgba(var(--accent-color-rgb), 0.25) !important;
+}
+
+/* Forçar cards a usar tema */
+[data-testid="tools-main-container"] .card {
+  background-color: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+
+[data-testid="tools-main-container"] .card-body {
+  background-color: transparent !important;
+  color: var(--text-color) !important;
+}
+
+/* Forçar alerts a usar tema com cores semânticas */
+[data-testid="tools-main-container"] .alert-info {
+  background-color: rgba(var(--info-color-rgb), 0.15) !important;
+  border-color: rgba(var(--info-color-rgb), 0.3) !important;
+  color: var(--info-color) !important;
+}
+
+[data-testid="tools-main-container"] .alert-danger {
+  background-color: rgba(var(--danger-color-rgb), 0.15) !important;
+  border-color: rgba(var(--danger-color-rgb), 0.3) !important;
+  color: var(--danger-color) !important;
+}
+
+[data-testid="tools-main-container"] .alert-warning {
+  background-color: rgba(var(--warning-color-rgb), 0.15) !important;
+  border-color: rgba(var(--warning-color-rgb), 0.3) !important;
+  color: var(--warning-color) !important;
+}
+
+[data-testid="tools-main-container"] .alert-success {
+  background-color: rgba(var(--success-color-rgb), 0.15) !important;
+  border-color: rgba(var(--success-color-rgb), 0.3) !important;
+  color: var(--success-color) !important;
+}
+
+/* ============================================
+   CONTRASTE E LEGIBILIDADE - TOOLS
+   Garantir que todos os textos sejam legíveis
+   ============================================ */
+
+/* Labels sempre visíveis */
+[data-testid="tools-main-container"] .form-label,
+[data-testid="tools-main-container"] label {
+  color: var(--text-color) !important;
+  font-weight: 500;
+}
+
+/* Small text com contraste adequado */
+[data-testid="tools-main-container"] .text-muted,
+[data-testid="tools-main-container"] .form-text,
+[data-testid="tools-main-container"] small {
+  color: var(--muted-text) !important;
+  opacity: 0.9;
+}
+
+/* Headings sempre destacados */
+[data-testid="tools-main-container"] h1,
+[data-testid="tools-main-container"] h2,
+[data-testid="tools-main-container"] h3,
+[data-testid="tools-main-container"] h4,
+[data-testid="tools-main-container"] h5,
+[data-testid="tools-main-container"] h6 {
+  color: var(--text-color) !important;
+  font-weight: 600;
+}
+
+/* Inputs readonly com visual adequado */
+[data-testid="tools-main-container"] .form-control:read-only {
+  background-color: var(--bg-color) !important;
+  opacity: 0.7;
+  cursor: not-allowed;
+  border-style: dashed !important;
+}
+
+/* Links com cores adequadas */
+[data-testid="tools-main-container"] a {
+  color: var(--accent-color) !important;
+  transition: color 0.3s;
+}
+
+[data-testid="tools-main-container"] a:hover {
+  color: var(--muted-text) !important;
+  text-decoration: underline;
+}
+
+/* Placeholders com contraste adequado */
+[data-testid="tools-main-container"] ::placeholder {
+  color: var(--muted-text) !important;
+  opacity: 0.6;
+}
+
+/* Code blocks */
+[data-testid="tools-main-container"] pre,
+[data-testid="tools-main-container"] code {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  border-color: var(--border-color) !important;
+}
+
+[data-testid="tools-main-container"] .font-monospace {
+  font-family: 'Courier New', 'Consolas', monospace;
+}
+
+/* Parágrafos e spans */
+[data-testid="tools-main-container"] p,
+[data-testid="tools-main-container"] span {
+  color: var(--text-color);
+}
+
+/* Garantir contraste em listas */
+[data-testid="tools-main-container"] li {
+  color: var(--text-color);
 } 

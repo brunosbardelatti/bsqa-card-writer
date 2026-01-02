@@ -165,6 +165,9 @@ export function applyTheme(theme) {
     root.style.setProperty('--syntax-property', '#005cc5');
     root.style.setProperty('--syntax-value', '#032f62');
     root.style.setProperty('--syntax-selector', '#d73a49');
+    // Card headers para tema claro
+    root.style.setProperty('--card-header-bg', '#e3f2fd');
+    root.style.setProperty('--card-header-secondary-bg', '#f5f5f5');
   } else if (theme === 'dark') {
     root.style.setProperty('--bg-color', '#0f0f0f');
     root.style.setProperty('--text-color', '#ffffff');
@@ -192,6 +195,9 @@ export function applyTheme(theme) {
     root.style.setProperty('--syntax-property', '#ff628c');
     root.style.setProperty('--syntax-value', '#a8ff60');
     root.style.setProperty('--syntax-selector', '#ff9d00');
+    // Card headers para tema escuro
+    root.style.setProperty('--card-header-bg', '#252525');
+    root.style.setProperty('--card-header-secondary-bg', '#2a2a2a');
   } else if (theme === 'auto') {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     applyTheme(prefersDark ? 'dark' : 'light');
