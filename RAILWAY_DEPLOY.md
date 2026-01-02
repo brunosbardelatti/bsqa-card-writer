@@ -124,12 +124,28 @@ Após o deploy bem-sucedido, você terá acesso a:
 2. Verifique os logs do Railway para erros de caminho
 3. Certifique-se de que o backend está servindo os arquivos estáticos
 
+### **Erro 502 - Application failed to respond**
+
+**Solução**:
+1. **Verifique os logs de runtime** no Railway (não apenas os logs de build)
+2. **Verifique o comando de start**: Deve ser `python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+3. **Teste o endpoint `/health`**: Deve retornar `{"status": "ok"}` se a API estiver rodando
+4. **Verifique se o frontend existe**: Os logs mostrarão `[DEBUG] Frontend exists: True/False`
+5. **Verifique variáveis de ambiente**: Certifique-se de que `$PORT` está sendo usado (não um número fixo)
+6. **Verifique imports**: Pode haver erro de importação de módulos Python
+
+**Comandos úteis para debug**:
+- Acesse `/health` para verificar se a API está respondendo
+- Acesse `/docs` para ver a documentação Swagger (se a API estiver rodando)
+- Verifique os logs de runtime no Railway Dashboard
+
 ### **API não responde**
 
 **Solução**:
 1. Verifique se as variáveis de ambiente estão configuradas
-2. Verifique os logs do Railway
-3. Teste o endpoint `/docs` para verificar se a API está rodando
+2. Verifique os logs do Railway (especialmente os logs de runtime, não apenas build)
+3. Teste o endpoint `/health` primeiro, depois `/docs`
+4. Verifique se há erros de importação nos logs
 
 ---
 
