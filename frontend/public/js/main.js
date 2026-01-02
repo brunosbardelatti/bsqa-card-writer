@@ -96,6 +96,12 @@ export function addBreadcrumbs() {
   
   // Adicionar página atual baseado no nome do arquivo
   switch (currentPage) {
+    case 'tools.html':
+      breadcrumbItems = [
+        { text: '🏠 Home', url: 'index.html' },
+        { text: '🧰 Tools', url: 'tools.html' }
+      ];
+      break;
     case 'config.html':
       breadcrumbItems = [
         { text: 'Home', url: 'index.html' },

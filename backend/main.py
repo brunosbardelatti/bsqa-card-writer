@@ -95,6 +95,13 @@ try:
                 return FileResponse(config_file)
             return JSONResponse({"error": "Frontend not found"}, status_code=404)
         
+        @app.get("/tools.html")
+        async def read_tools():
+            tools_file = os.path.join(frontend_path, "tools.html")
+            if os.path.exists(tools_file):
+                return FileResponse(tools_file)
+            return JSONResponse({"error": "Frontend not found"}, status_code=404)
+        
         print(f"[DEBUG] Frontend routes configured successfully")
     else:
         print(f"[WARNING] Frontend path does not exist: {frontend_path}")

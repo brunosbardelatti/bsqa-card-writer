@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>🧰 Tools - BSQA Card Writer</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+</head>
+<body>
+  <div id="header" data-testid="tools-header-container"></div>
+  <div class="container" data-testid="tools-main-container">
+    <!-- Breadcrumbs -->
+    <div class="breadcrumbs" data-testid="tools-breadcrumbs-container">
+      <!-- Breadcrumbs serão preenchidos dinamicamente -->
+    </div>
+    
+    <h1 data-testid="tools-title">🧰 QA-Toolbox</h1>
+    <p class="subtitle" data-testid="tools-subtitle">Ferramentas essenciais para QA em um só lugar</p>
+
+    <!-- Navegação por Abas -->  
+    <ul class="nav nav-tabs mb-4" id="abasNavegacao" role="tablist">  
+      <li class="nav-item" role="presentation">  
+        <button class="nav-link active" id="aba-geradores-tab" data-bs-toggle="tab" data-bs-target="#aba-geradores" type="button" role="tab" aria-controls="aba-geradores" aria-selected="true">Geradores de Dados</button>  
+      </li>  
+      <li class="nav-item" role="presentation">  
+        <button class="nav-link" id="aba-pessoa-fisica-tab" data-bs-toggle="tab" data-bs-target="#aba-pessoa-fisica" type="button" role="tab" aria-controls="aba-pessoa-fisica" aria-selected="false">Gerador Pessoa Física</button>  
+      </li>  
+      <li class="nav-item" role="presentation">  
+        <button class="nav-link" id="aba-pessoa-juridica-tab" data-bs-toggle="tab" data-bs-target="#aba-pessoa-juridica" type="button" role="tab" aria-controls="aba-pessoa-juridica" aria-selected="false">Gerador Pessoa Jurídica</button>  
+      </li>  
+      <li class="nav-item" role="presentation">  
+        <button class="nav-link" id="aba-texto-tab" data-bs-toggle="tab" data-bs-target="#aba-texto" type="button" role="tab" aria-controls="aba-texto" aria-selected="false">Texto</button>  
+      </li>  
+      <li class="nav-item" role="presentation">  
+        <button class="nav-link" id="aba-encoders-tab" data-bs-toggle="tab" data-bs-target="#aba-encoders" type="button" role="tab" aria-controls="aba-encoders" aria-selected="false">Encoders/Decoders</button>  
+      </li>  
+      <li class="nav-item" role="presentation">  
+        <button class="nav-link" id="aba-formatadores-tab" data-bs-toggle="tab" data-bs-target="#aba-formatadores" type="button" role="tab" aria-controls="aba-formatadores" aria-selected="false">Formatadores</button>  
+      </li>  
+      <li class="nav-item" role="presentation">  
+        <button class="nav-link" id="aba-comparador-tab" data-bs-toggle="tab" data-bs-target="#aba-comparador" type="button" role="tab" aria-controls="aba-comparador" aria-selected="false">Comparador</button>  
+      </li>  
+      <li class="nav-item" role="presentation">  
+        <button class="nav-link" id="aba-jwt-hash-tab" data-bs-toggle="tab" data-bs-target="#aba-jwt-hash" type="button" role="tab" aria-controls="aba-jwt-hash" aria-selected="false">JWT & Hash</button>  
+      </li>  
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="aba-regex-tab" data-bs-toggle="tab" data-bs-target="#aba-regex" type="button" role="tab" aria-controls="aba-regex" aria-selected="false">Regex</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="aba-xml-fiscal-tab" data-bs-toggle="tab" data-bs-target="#aba-xml-fiscal" type="button" role="tab" aria-controls="aba-xml-fiscal" aria-selected="false">Validador XML Fiscal</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="aba-curl-tab" data-bs-toggle="tab" data-bs-target="#aba-curl" type="button" role="tab" aria-controls="aba-curl" aria-selected="false">cURL Tools</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="aba-timer-tab" data-bs-toggle="tab" data-bs-target="#aba-timer" type="button" role="tab" aria-controls="aba-timer" aria-selected="false">⏱️ Contador de Tempo</button>
+      </li>
+    </ul>
+
+    <!-- Conteúdo das Abas -->
+    <div class="tab-content" id="conteudoAbas">
+            
+            <!-- Aba: Texto -->
+            <div class="tab-pane fade" id="aba-texto" role="tabpanel" aria-labelledby="aba-texto-tab">
+                <div class="row">
+                    <!-- Seção Contadores -->
+                    <div class="col-md-6 mb-4">
+                        <h3>Contadores</h3>
+                        <div class="mb-3">
+                            <label for="textInputCounters" class="form-label">Digite ou cole seu texto:</label>
+                            <textarea class="form-control" id="textInputCounters" rows="8" placeholder="Digite ou cole seu texto aqui..."></textarea>
+                        </div>
+                        <div class="d-flex flex-wrap gap-3">
+                            <span id="charCount" class="badge bg-primary">Caracteres: 0</span>
+                            <span id="wordCount" class="badge bg-success">Palavras: 0</span>
+                            <span id="lineCount" class="badge bg-info">Linhas: 0</span>
+                            <span id="byteCount" class="badge bg-warning text-dark">Bytes: 0</span>
+                        </div>
+                    </div>
+
+                    <!-- Seção Conversores de Case -->
+                    <div class="col-md-6 mb-4">
+                        <h3>Conversores de Case</h3>
+                        <div class="mb-3">
+                            <label for="textInputCase" class="form-label">Digite ou cole seu texto:</label>
+                            <textarea class="form-control" id="textInputCase" rows="8" placeholder="Digite ou cole seu texto aqui..."></textarea>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-secondary m-1" id="btnUppercase">MAIÚSCULAS</button>
+                            <button type="button" class="btn btn-secondary m-1" id="btnLowercase">minúsculas</button>
+                            <button type="button" class="btn btn-secondary m-1" id="btnTitlecase">Primeira Letra Maiúscula</button>
+                            <button type="button" class="btn btn-utility m-1" id="btnCopyText">📋 Copiar</button>
+                            <button type="button" class="btn btn-utility m-1" id="btnClearText">🗑️ Limpar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba: Encoders/Decoders -->
+            <div class="tab-pane fade" id="aba-encoders" role="tabpanel" aria-labelledby="aba-encoders-tab">
+                <div class="row">
+                    <!-- Seção Base64 -->
+                    <div class="col-md-6 mb-4">
+                        <h3>Base64</h3>
+                        <div class="mb-3">
+                            <label for="base64Input" class="form-label">Texto Normal:</label>
+                            <textarea class="form-control" id="base64Input" rows="8" placeholder="Digite o texto para codificar..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="base64Output" class="form-label">Texto Codificado/Decodificado:</label>
+                            <textarea class="form-control" id="base64Output" rows="8" placeholder="Resultado aparecerá aqui..."></textarea>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-secondary" id="btnBase64Encode">🔒 Encode</button>
+                            <button type="button" class="btn btn-secondary" id="btnBase64Decode">🔓 Decode</button>
+                            <button type="button" class="btn btn-utility" id="btnBase64Swap">🔄 Trocar</button>
+                            <button type="button" class="btn btn-utility" id="btnBase64CopyInput">📋 Copiar Input</button>
+                            <button type="button" class="btn btn-utility" id="btnBase64CopyOutput">📋 Copiar Output</button>
+                            <button type="button" class="btn btn-utility" id="btnBase64Clear">🗑️ Limpar</button>
+                        </div>
+                    </div>
+
+                    <!-- Seção URL -->
+                    <div class="col-md-6 mb-4">
+                        <h3>URL</h3>
+                        <div class="mb-3">
+                            <label for="urlInput" class="form-label">Texto Normal:</label>
+                            <textarea class="form-control" id="urlInput" rows="8" placeholder="Digite o texto para codificar..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="urlOutput" class="form-label">Texto Codificado/Decodificado:</label>
+                            <textarea class="form-control" id="urlOutput" rows="8" placeholder="Resultado aparecerá aqui..."></textarea>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="button" class="btn btn-secondary" id="btnUrlEncode">🔒 Encode</button>
+                            <button type="button" class="btn btn-secondary" id="btnUrlDecode">🔓 Decode</button>
+                            <button type="button" class="btn btn-utility" id="btnUrlCopyInput">📋 Copiar Input</button>
+                            <button type="button" class="btn btn-utility" id="btnUrlCopyOutput">📋 Copiar Output</button>
+                            <button type="button" class="btn btn-utility" id="btnUrlClear">🗑️ Limpar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba: Formatadores -->
+            <div class="tab-pane fade" id="aba-formatadores" role="tabpanel" aria-labelledby="aba-formatadores-tab">
+                <h3>Formatador JSON</h3>
+                <div id="jsonAlertContainer"></div>
+                <div class="mb-3">
+                    <label for="jsonInput" class="form-label">Cole ou digite seu JSON:</label>
+                    <textarea class="form-control" id="jsonInput" rows="20" placeholder='{"exemplo": "json", "array": [1, 2, 3]}'></textarea>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-primary" id="btnJsonPrettify">✨ Formatar</button>
+                    <button type="button" class="btn btn-secondary" id="btnJsonMinify">📦 Compactar</button>
+                    <button type="button" class="btn btn-utility" id="btnJsonCopy">📋 Copiar</button>
+                    <button type="button" class="btn btn-utility" id="btnJsonClear">🗑️ Limpar</button>
+                </div>
+            </div>
+
+            <!-- Aba: Geradores de Dados -->
+            <div class="tab-pane fade show active" id="aba-geradores" role="tabpanel" aria-labelledby="aba-geradores-tab">
+                <h3 class="mb-4">Geradores de Dados</h3>
+                
+                <div class="row g-4">
+                    <!-- Categoria: Documentos -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-secondary generator-card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">📄 Documentos</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Gerador CPF -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">CPF</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="cpfOutput" readonly placeholder="CPF gerado aparecerá aqui">
+                                        <button class="btn btn-utility" type="button" id="btnCopyCpf" title="Copiar CPF">📋</button>
+                                    </div>
+                                    <button type="button" class="btn btn-primary w-100" id="btnGenerateCpf">✨ Gerar CPF</button>
+                                </div>
+                                
+                                <!-- Gerador CNPJ -->
+                                <div>
+                                    <label class="form-label fw-bold">CNPJ</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="cnpjOutput" readonly placeholder="CNPJ gerado aparecerá aqui">
+                                        <button class="btn btn-utility" type="button" id="btnCopyCnpj" title="Copiar CNPJ">📋</button>
+                                    </div>
+                                    <button type="button" class="btn btn-primary w-100" id="btnGenerateCnpj">✨ Gerar CNPJ</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categoria: Contatos -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-secondary generator-card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">📧 Contatos</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Gerador Email -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Email</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="emailOutput" readonly placeholder="Email gerado aparecerá aqui">
+                                        <button class="btn btn-utility" type="button" id="btnCopyEmail" title="Copiar Email">📋</button>
+                                    </div>
+                                    <button type="button" class="btn btn-primary w-100" id="btnGenerateEmail">✨ Gerar Email</button>
+                                </div>
+                                
+                                <!-- Gerador Telefone -->
+                                <div>
+                                    <label class="form-label fw-bold">Telefone</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="telefoneOutput" readonly placeholder="Telefone gerado aparecerá aqui">
+                                        <button class="btn btn-utility" type="button" id="btnCopyTelefone" title="Copiar Telefone">📋</button>
+                                    </div>
+                                    <button type="button" class="btn btn-primary w-100" id="btnGenerateTelefone">✨ Gerar Telefone</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categoria: Identificadores -->
+                    <div class="col-lg-4 col-md-6">
+                        <div class="card h-100 border-secondary generator-card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">🔢 Identificadores</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Gerador UUID -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">UUID/GUID</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="uuidOutput" readonly placeholder="UUID gerado aparecerá aqui">
+                                        <button class="btn btn-utility" type="button" id="btnCopyUuid" title="Copiar UUID">📋</button>
+                                    </div>
+                                    <button type="button" class="btn btn-primary w-100" id="btnGenerateUuid">✨ Gerar UUID</button>
+                                </div>
+                                
+                                <!-- Gerador CEP -->
+                                <div>
+                                    <label class="form-label fw-bold">CEP</label>
+                                    <div class="input-group mb-2">
+                                        <input type="text" class="form-control" id="cepOutput" readonly placeholder="CEP gerado aparecerá aqui">
+                                        <button class="btn btn-utility" type="button" id="btnCopyCep" title="Copiar CEP">📋</button>
+                                    </div>
+                                    <button type="button" class="btn btn-primary w-100" id="btnGenerateCep">✨ Gerar CEP</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categoria: Data/Hora -->
+                    <div class="col-lg-6 col-md-6">
+                        <div class="card h-100 border-secondary generator-card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">📅 Data/Hora</h5>
+                            </div>
+                            <div class="card-body">
+                                <label class="form-label fw-bold">Data/Hora</label>
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control" id="dataOutput" readonly placeholder="Data/Hora gerada aparecerá aqui">
+                                    <button class="btn btn-utility" type="button" id="btnCopyData" title="Copiar Data/Hora">📋</button>
+                                </div>
+                                <div class="d-grid gap-2 d-md-flex">
+                                    <button type="button" class="btn btn-primary flex-fill" id="btnGenerateDataBR">✨ BR</button>
+                                    <button type="button" class="btn btn-primary flex-fill" id="btnGenerateDataISO">✨ ISO</button>
+                                    <button type="button" class="btn btn-primary flex-fill" id="btnGenerateTimestamp">✨ Timestamp</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Categoria: Pessoas -->
+                    <div class="col-lg-6 col-md-6">
+                        <div class="card h-100 border-secondary generator-card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">👤 Pessoas</h5>
+                            </div>
+                            <div class="card-body">
+                                <label class="form-label fw-bold">Nome Completo</label>
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control" id="nomeOutput" readonly placeholder="Nome completo gerado aparecerá aqui">
+                                    <button class="btn btn-utility" type="button" id="btnCopyNome" title="Copiar Nome">📋</button>
+                                </div>
+                                <button type="button" class="btn btn-primary w-100" id="btnGenerateNome">✨ Gerar Nome Completo</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba: Pessoa Física Completa -->
+            <div class="tab-pane fade" id="aba-pessoa-fisica" role="tabpanel" aria-labelledby="aba-pessoa-fisica-tab">
+                <h3 class="mb-4">Pessoa Física Completa</h3>
+                
+                <div class="row g-4">
+                    <!-- Card: Dados Pessoais -->
+                    <div class="col-lg-6">
+                        <div class="card h-100 border-secondary generator-card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">👤 Dados Pessoais</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Nome Completo</label>
+                                        <input type="text" class="form-control" id="pfNome" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">CPF</label>
+                                        <input type="text" class="form-control" id="pfCpf" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">RG</label>
+                                        <input type="text" class="form-control" id="pfRg" readonly>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Data de Nascimento</label>
+                                        <input type="text" class="form-control" id="pfDataNascimento" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card: Contatos -->
+                    <div class="col-lg-6">
+                        <div class="card h-100 border-secondary generator-card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">📧 Contatos</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Email</label>
+                                        <input type="text" class="form-control" id="pfEmail" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Telefone</label>
+                                        <input type="text" class="form-control" id="pfTelefone" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Celular</label>
+                                        <input type="text" class="form-control" id="pfCelular" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card: Endereço Completo -->
+                    <div class="col-12">
+                        <div class="card border-secondary generator-card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">🏠 Endereço Completo</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-bold">CEP</label>
+                                        <input type="text" class="form-control" id="pfCep" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Endereço</label>
+                                        <input type="text" class="form-control" id="pfEndereco" readonly>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-bold">Número</label>
+                                        <input type="text" class="form-control" id="pfNumero" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Complemento</label>
+                                        <input type="text" class="form-control" id="pfComplemento" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Bairro</label>
+                                        <input type="text" class="form-control" id="pfBairro" readonly>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label fw-bold">Cidade</label>
+                                        <input type="text" class="form-control" id="pfCidade" readonly>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">UF</label>
+                                        <input type="text" class="form-control" id="pfUf" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card: Filiação -->
+                    <div class="col-12">
+                        <div class="card border-secondary generator-card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">👨‍👩‍👧 Filiação</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Nome da Mãe</label>
+                                        <input type="text" class="form-control" id="pfNomeMae" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Nome do Pai</label>
+                                        <input type="text" class="form-control" id="pfNomePai" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="mt-4 d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-primary" id="btnGerarPF">✨ Gerar Pessoa Física</button>
+                    <button type="button" class="btn btn-utility" id="btnCopiarPF">📋 Copiar Dados</button>
+                    <button type="button" class="btn btn-secondary" id="btnCopiarPFJson">{ } Copiar JSON</button>
+                </div>
+            </div>
+
+            <!-- Aba: Pessoa Jurídica Completa -->
+            <div class="tab-pane fade" id="aba-pessoa-juridica" role="tabpanel" aria-labelledby="aba-pessoa-juridica-tab">
+                <h3 class="mb-4">Pessoa Jurídica Completa</h3>
+                
+                <div class="row g-4">
+                    <!-- Card: Dados da Empresa -->
+                    <div class="col-12">
+                        <div class="card border-secondary generator-card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">🏢 Dados da Empresa</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-8">
+                                        <label class="form-label fw-bold">Razão Social</label>
+                                        <input type="text" class="form-control" id="pjRazaoSocial" readonly>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Nome Fantasia</label>
+                                        <input type="text" class="form-control" id="pjNomeFantasia" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">CNPJ</label>
+                                        <input type="text" class="form-control" id="pjCnpj" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Inscrição Estadual</label>
+                                        <input type="text" class="form-control" id="pjInscricaoEstadual" readonly>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Data de Abertura</label>
+                                        <input type="text" class="form-control" id="pjDataAbertura" readonly>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">Porte</label>
+                                        <input type="text" class="form-control" id="pjPorte" readonly>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">CNAE Principal</label>
+                                        <input type="text" class="form-control" id="pjCnae" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card: Contatos -->
+                    <div class="col-lg-6">
+                        <div class="card h-100 border-secondary generator-card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">📧 Contatos</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Email Corporativo</label>
+                                        <input type="text" class="form-control" id="pjEmail" readonly>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">Telefone Comercial</label>
+                                        <input type="text" class="form-control" id="pjTelefone" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card: Endereço Completo -->
+                    <div class="col-lg-6">
+                        <div class="card h-100 border-secondary generator-card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">🏠 Endereço Completo</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">CEP</label>
+                                        <input type="text" class="form-control" id="pjCep" readonly>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label class="form-label fw-bold">Endereço</label>
+                                        <input type="text" class="form-control" id="pjEndereco" readonly>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-bold">Número</label>
+                                        <input type="text" class="form-control" id="pjNumero" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Complemento</label>
+                                        <input type="text" class="form-control" id="pjComplemento" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Bairro</label>
+                                        <input type="text" class="form-control" id="pjBairro" readonly>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <label class="form-label fw-bold">Cidade</label>
+                                        <input type="text" class="form-control" id="pjCidade" readonly>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold">UF</label>
+                                        <input type="text" class="form-control" id="pjUf" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card: Responsável Legal -->
+                    <div class="col-12">
+                        <div class="card border-secondary generator-card">
+                            <div class="card-header bg-secondary text-white">
+                                <h5 class="mb-0">👤 Responsável Legal</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Responsável Legal</label>
+                                        <input type="text" class="form-control" id="pjResponsavel" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">CPF do Responsável</label>
+                                        <input type="text" class="form-control" id="pjCpfResponsavel" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botões de Ação -->
+                <div class="mt-4 d-flex gap-2 justify-content-end">
+                    <button type="button" class="btn btn-primary" id="btnGerarPJ">✨ Gerar Pessoa Jurídica</button>
+                    <button type="button" class="btn btn-utility" id="btnCopiarPJ">📋 Copiar Dados</button>
+                    <button type="button" class="btn btn-secondary" id="btnCopiarPJJson">{ } Copiar JSON</button>
+                </div>
+            </div>  
+
+            <!-- Aba: Comparador -->
+            <div class="tab-pane fade" id="aba-comparador" role="tabpanel" aria-labelledby="aba-comparador-tab">
+                <h3>Comparador de Textos/JSON</h3>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="comparadorTexto1" class="form-label">Texto 1:</label>
+                        <textarea class="form-control" id="comparadorTexto1" rows="15" placeholder="Cole o primeiro texto ou JSON aqui..."></textarea>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="comparadorTexto2" class="form-label">Texto 2:</label>
+                        <textarea class="form-control" id="comparadorTexto2" rows="15" placeholder="Cole o segundo texto ou JSON aqui..."></textarea>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <button type="button" class="btn btn-primary" id="btnComparar">🔍 Comparar</button>
+                    <button type="button" class="btn btn-utility" id="btnLimparComparador">🗑️ Limpar</button>
+                </div>
+                <div id="comparadorResultado" class="mt-3"></div>
+            </div>
+
+            <!-- Aba: JWT & Hash -->
+            <div class="tab-pane fade" id="aba-jwt-hash" role="tabpanel" aria-labelledby="aba-jwt-hash-tab">
+                <div class="row">
+                    <!-- Seção JWT Decoder -->
+                    <div class="col-md-6 mb-4">
+                        <h3>Decodificador JWT</h3>
+                        <div class="mb-3">
+                            <label for="jwtInput" class="form-label">Cole o token JWT:</label>
+                            <textarea class="form-control" id="jwtInput" rows="4" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+                        </div>
+                        <button type="button" class="btn btn-primary mb-3" id="btnDecodificarJwt">🔓 Decodificar JWT</button>
+                        <div id="jwtResultado"></div>
+                    </div>
+
+                    <!-- Seção Hash Generator -->
+                    <div class="col-md-6 mb-4">
+                        <h3>Gerador de Hash</h3>
+                        <div class="mb-3">
+                            <label for="hashInput" class="form-label">Digite o texto para gerar hash:</label>
+                            <textarea class="form-control" id="hashInput" rows="4" placeholder="Digite o texto aqui..."></textarea>
+                        </div>
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <button type="button" class="btn btn-secondary" id="btnHashMD5">MD5</button>
+                            <button type="button" class="btn btn-secondary" id="btnHashSHA256">SHA-256</button>
+                            <button type="button" class="btn btn-secondary" id="btnHashSHA512">SHA-512</button>
+                        </div>
+                        <div class="mb-3">
+                            <label for="hashOutput" class="form-label">Hash gerado:</label>
+                            <textarea class="form-control" id="hashOutput" rows="3" readonly placeholder="Hash aparecerá aqui..."></textarea>
+                        </div>
+                        <button type="button" class="btn btn-utility" id="btnCopyHash">📋 Copiar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba: Regex Tester -->
+            <div class="tab-pane fade" id="aba-regex" role="tabpanel" aria-labelledby="aba-regex-tab">
+                <h3>Testador de Expressões Regulares</h3>
+                <div class="mb-3">
+                    <label for="regexPattern" class="form-label">Expressão Regular:</label>
+                    <input type="text" class="form-control" id="regexPattern" placeholder="Ex: ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$">
+                    <small class="form-text text-muted">Use flags: g (global), i (case-insensitive), m (multiline)</small>
+                </div>
+                <div class="mb-3">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="regexFlagG" value="g">
+                        <label class="form-check-label" for="regexFlagG">Global (g)</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="regexFlagI" value="i">
+                        <label class="form-check-label" for="regexFlagI">Case-insensitive (i)</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" id="regexFlagM" value="m">
+                        <label class="form-check-label" for="regexFlagM">Multiline (m)</label>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="regexTestText" class="form-label">Texto para testar:</label>
+                    <textarea class="form-control" id="regexTestText" rows="8" placeholder="Digite ou cole o texto para testar a expressão regular..."></textarea>
+                </div>
+                <button type="button" class="btn btn-primary mb-3" id="btnTestarRegex">🔍 Testar Regex</button>
+                <div id="regexResultado"></div>
+            </div>
+
+            <!-- Aba: Validador XML Fiscal -->
+            <div class="tab-pane fade" id="aba-xml-fiscal" role="tabpanel" aria-labelledby="aba-xml-fiscal-tab">
+                <h3 class="mb-4">Validador de XML Fiscal</h3>
+                
+                <!-- Card: Entrada XML -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0">📄 XML Fiscal</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="xmlFiscalInput" class="form-label fw-bold">Cole o XML do documento fiscal:</label>
+                            <textarea 
+                                class="form-control" 
+                                id="xmlFiscalInput" 
+                                rows="12" 
+                                placeholder='<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc>
+    <NFe>
+        <!-- Conteúdo do XML -->
+    </NFe>
+</nfeProc>'></textarea>
+                            <small class="form-text text-muted">
+                                Suporta: NFe, NFCe, CT-e, MDF-e, NFS-e, CF-e SAT
+                            </small>
+                        </div>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <button type="button" class="btn btn-primary" id="btnValidarXML">
+                                ✅ Validar XML
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="btnFormatarXML">
+                                ✨ Format XML
+                            </button>
+                            <button type="button" class="btn btn-secondary" id="btnCompactarXML">
+                                📦 Compactar XML
+                            </button>
+                            <button type="button" class="btn btn-utility" id="btnCopiarXML">
+                                📋 Copiar XML
+                            </button>
+                            <button type="button" class="btn btn-utility" id="btnLimparXML">
+                                🗑️ Limpar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card: Resultado da Validação -->
+                <div id="xmlFiscalResultado" class="d-none">
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">📊 Resultado da Validação</h5>
+                            <span class="badge" id="xmlStatusBadge"></span>
+                        </div>
+                        <div class="card-body">
+                            <!-- Tipo de Documento -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Tipo de Documento:</label>
+                                <input type="text" class="form-control" id="xmlTipoDocumento" readonly>
+                            </div>
+
+                            <!-- Erros -->
+                            <div id="xmlErrosContainer" class="d-none mb-3">
+                                <label class="form-label fw-bold text-danger">❌ Erros Encontrados:</label>
+                                <div class="alert alert-danger" id="xmlErrosLista" role="alert"></div>
+                            </div>
+
+                            <!-- Avisos -->
+                            <div id="xmlAvisosContainer" class="d-none mb-3">
+                                <label class="form-label fw-bold text-warning">⚠️ Avisos:</label>
+                                <div class="alert alert-warning" id="xmlAvisosLista" role="alert"></div>
+                            </div>
+
+                            <!-- Dados Extraídos -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">📦 Dados Extraídos:</label>
+                                <textarea 
+                                    class="form-control" 
+                                    id="xmlDadosExtraidos" 
+                                    rows="15" 
+                                    readonly></textarea>
+                            </div>
+
+                            <!-- Botão Copiar JSON -->
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-secondary" id="btnCopiarXMLJson">
+                                    { } Copiar JSON
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aba: cURL Tools -->  
+            <div class="tab-pane fade" id="aba-curl" role="tabpanel" aria-labelledby="aba-curl-tab">  
+                <h3>Ferramentas cURL</h3>
+                
+                <!-- Executor de cURL -->  
+                <div class="mb-4">  
+                    <div class="card">  
+                        <div class="card-header bg-primary text-white">  
+                            <h5 class="mb-0"><i class="bi bi-terminal"></i> Executor de cURL</h5>  
+                        </div>  
+                        <div class="card-body">  
+                            <!-- Input cURL -->  
+                            <div class="mb-3">  
+                                <label class="form-label fw-bold">Cole o comando cURL aqui:</label>  
+                                <textarea class="form-control font-monospace" id="curlInput" rows="8"   
+                                        placeholder="curl -X POST https://api.exemplo.com/endpoint \  
+            -H 'Content-Type: application/json' \  
+            -H 'Authorization: Bearer TOKEN' \  
+            -d '{&quot;chave&quot;: &quot;valor&quot;}'"></textarea>  
+                                <small class="text-muted">Cole o comando cURL completo. Suporta GET, POST, PUT, DELETE, PATCH.</small>  
+                            </div>
+                            
+                            <!-- Opções de CORS -->  
+                            <div class="mb-3">  
+                                <div class="form-check form-switch">  
+                                    <input class="form-check-input" type="checkbox" id="usarProxyCors" checked>  
+                                    <label class="form-check-label" for="usarProxyCors">  
+                                        <strong>Usar Proxy CORS</strong> (recomendado para evitar erros de CORS)  
+                                    </label>  
+                                </div>  
+                                <small class="text-muted d-block mt-1">  
+                                    Se ativado, a requisição será feita através de um proxy CORS público para contornar restrições de origem cruzada.  
+                                </small>  
+                            </div>
+            
+                            <!-- Botões de Ação -->  
+                            <div class="d-flex flex-wrap gap-2 mb-3">  
+                                <button type="button" class="btn btn-secondary" id="btnValidarCurl">  
+                                    ✅ Validar Estrutura  
+                                </button>  
+                                <button type="button" class="btn btn-primary" id="btnExecutarCurl">  
+                                    ▶️ Executar Request  
+                                </button>  
+                                <button type="button" class="btn btn-secondary" id="btnConverterCurl">  
+                                    🔄 Converter Código  
+                                </button>  
+                                <button type="button" class="btn btn-utility" id="btnLimparCurl">  
+                                    🗑️ Limpar  
+                                </button>  
+                            </div>
+            
+                            <!-- Área de Informações Extraídas -->  
+                            <div id="curlInfoArea" class="mb-3" style="display: none;">  
+                                <div class="alert alert-info">  
+                                    <h6 class="fw-bold mb-2">Informações Extraídas:</h6>  
+                                    <div class="row">  
+                                        <div class="col-md-6">  
+                                            <p class="mb-1"><strong>Método:</strong> <span id="curlMetodo" class="badge bg-primary"></span></p>  
+                                            <p class="mb-1"><strong>URL:</strong> <span id="curlUrl" class="text-break"></span></p>  
+                                        </div>  
+                                        <div class="col-md-6">  
+                                            <p class="mb-1"><strong>Headers:</strong> <span id="curlHeadersCount" class="badge bg-secondary"></span></p>  
+                                            <p class="mb-1"><strong>Body:</strong> <span id="curlBodyStatus" class="badge bg-secondary"></span></p>  
+                                        </div>  
+                                    </div>  
+                                </div>  
+                            </div>
+            
+                            <!-- Área de Response -->  
+                            <div id="curlResponseArea" class="mb-3" style="display: none;">  
+                                <label class="form-label fw-bold">Response:</label>
+                                
+                                <!-- Status e Info -->  
+                                <div class="mb-2 d-flex align-items-center gap-2">  
+                                    <span class="badge" id="responseStatus"></span>  
+                                    <span class="text-muted" id="responseTime"></span>  
+                                    <button type="button" class="btn btn-sm btn-utility ms-auto" id="btnCopyResponse">  
+                                        📋 Copiar Response  
+                                    </button>  
+                                </div>
+            
+                                <!-- Headers da Response -->  
+                                <div class="mb-2">  
+                                    <button class="btn btn-sm btn-secondary" type="button" data-bs-toggle="collapse"   
+                                            data-bs-target="#responseHeaders" aria-expanded="false">  
+                                        📋 Ver Headers da Response  
+                                    </button>  
+                                    <div class="collapse mt-2" id="responseHeaders">
+                                        <pre class="p-2 rounded" id="responseHeadersContent" style="max-height: 150px; overflow-y: auto;"></pre>
+                                    </div>
+                                </div>
+            
+                                <!-- Body da Response -->  
+                                <textarea class="form-control font-monospace" id="curlResponse" rows="12" readonly></textarea>
+                                
+                                <!-- Botão para Formatar JSON -->  
+                                <button type="button" class="btn btn-sm btn-secondary mt-2" id="btnFormatarResponse">  
+                                    ✨ Formatar JSON  
+                                </button>  
+                            </div>
+            
+                            <!-- Área de Conversão -->  
+                            <div id="curlConversaoArea" class="mb-3" style="display: none;">  
+                                <label class="form-label fw-bold">Código Convertido:</label>  
+                                <ul class="nav nav-tabs mb-2" id="conversionTabs" role="tablist">  
+                                    <li class="nav-item" role="presentation">  
+                                        <button class="nav-link active" id="playwright-tab" data-bs-toggle="tab"   
+                                                data-bs-target="#playwrightCode" type="button">Playwright</button>  
+                                    </li>  
+                                    <li class="nav-item" role="presentation">  
+                                        <button class="nav-link" id="robot-tab" data-bs-toggle="tab"   
+                                                data-bs-target="#robotCode" type="button">Robot Framework</button>  
+                                    </li>  
+                                    <li class="nav-item" role="presentation">  
+                                        <button class="nav-link" id="nodejs-tab" data-bs-toggle="tab"   
+                                                data-bs-target="#nodejsCode" type="button">Node.js</button>  
+                                    </li>  
+                                    <li class="nav-item" role="presentation">  
+                                        <button class="nav-link" id="fetch-tab" data-bs-toggle="tab"   
+                                                data-bs-target="#fetchCode" type="button">Fetch API</button>  
+                                    </li>  
+                                    <li class="nav-item" role="presentation">  
+                                        <button class="nav-link" id="axios-tab" data-bs-toggle="tab"   
+                                                data-bs-target="#axiosCode" type="button">Axios</button>  
+                                    </li>  
+                                    <li class="nav-item" role="presentation">  
+                                        <button class="nav-link" id="xhr-tab" data-bs-toggle="tab"   
+                                                data-bs-target="#xhrCode" type="button">XMLHttpRequest</button>  
+                                    </li>  
+                                </ul>  
+                                <div class="tab-content">  
+                                    <div class="tab-pane fade show active" id="playwrightCode">  
+                                        <textarea class="form-control font-monospace" id="playwrightOutput" rows="10" readonly></textarea>  
+                                        <button type="button" class="btn btn-sm btn-utility mt-2" id="btnCopyPlaywright">  
+                                            📋 Copiar  
+                                        </button>  
+                                    </div>  
+                                    <div class="tab-pane fade" id="robotCode">  
+                                        <textarea class="form-control font-monospace" id="robotOutput" rows="10" readonly></textarea>  
+                                        <button type="button" class="btn btn-sm btn-utility mt-2" id="btnCopyRobot">  
+                                            📋 Copiar  
+                                        </button>  
+                                    </div>  
+                                    <div class="tab-pane fade" id="nodejsCode">  
+                                        <textarea class="form-control font-monospace" id="nodejsOutput" rows="10" readonly></textarea>  
+                                        <button type="button" class="btn btn-sm btn-utility mt-2" id="btnCopyNodejs">  
+                                            📋 Copiar  
+                                        </button>  
+                                    </div>  
+                                    <div class="tab-pane fade" id="fetchCode">  
+                                        <textarea class="form-control font-monospace" id="fetchOutput" rows="10" readonly></textarea>  
+                                        <button type="button" class="btn btn-sm btn-utility mt-2" id="btnCopyFetch">  
+                                            📋 Copiar  
+                                        </button>  
+                                    </div>  
+                                    <div class="tab-pane fade" id="axiosCode">  
+                                        <textarea class="form-control font-monospace" id="axiosOutput" rows="10" readonly></textarea>  
+                                        <button type="button" class="btn btn-sm btn-utility mt-2" id="btnCopyAxios">  
+                                            📋 Copiar  
+                                        </button>  
+                                    </div>  
+                                    <div class="tab-pane fade" id="xhrCode">  
+                                        <textarea class="form-control font-monospace" id="xhrOutput" rows="10" readonly></textarea>  
+                                        <button type="button" class="btn btn-sm btn-utility mt-2" id="btnCopyXhr">  
+                                            📋 Copiar  
+                                        </button>  
+                                    </div>  
+                                </div>  
+                            </div>
+            
+                            <!-- Área de Erro -->  
+                            <div id="curlErrorArea" class="alert alert-danger" style="display: none;">  
+                                <h6 class="fw-bold"><i class="bi bi-exclamation-triangle"></i> Erro:</h6>  
+                                <p id="curlErrorMessage" class="mb-0"></p>  
+                            </div>  
+                        </div>  
+                    </div>  
+                </div>
+            
+                <!-- Gerador de cURL -->  
+                <div class="mb-4">  
+                    <div class="card">  
+                        <div class="card-header bg-success text-white">  
+                            <h5 class="mb-0"><i class="bi bi-gear"></i> Gerador de cURL</h5>  
+                        </div>  
+                        <div class="card-body">  
+                            <div class="row g-3">  
+                                <!-- Método -->  
+                                <div class="col-md-3">  
+                                    <label class="form-label fw-bold">Método</label>  
+                                    <select class="form-select" id="genMetodo">  
+                                        <option value="GET">GET</option>  
+                                        <option value="POST">POST</option>  
+                                        <option value="PUT">PUT</option>  
+                                        <option value="DELETE">DELETE</option>  
+                                        <option value="PATCH">PATCH</option>  
+                                    </select>  
+                                </div>
+                                
+                                <!-- URL -->  
+                                <div class="col-md-9">  
+                                    <label class="form-label fw-bold">URL</label>  
+                                    <input type="text" class="form-control" id="genUrl"   
+                                        placeholder="https://api.exemplo.com/endpoint">  
+                                </div>
+            
+                                <!-- Headers -->  
+                                <div class="col-12">  
+                                    <label class="form-label fw-bold">Headers (um por linha no formato: Chave: Valor)</label>  
+                                    <textarea class="form-control font-monospace" id="genHeaders" rows="4"   
+                                            placeholder="Content-Type: application/json&#10;Authorization: Bearer TOKEN"></textarea>  
+                                </div>
+            
+                                <!-- Body -->  
+                                <div class="col-12">  
+                                    <label class="form-label fw-bold">Body (JSON, XML, etc.)</label>  
+                                    <textarea class="form-control font-monospace" id="genBody" rows="6"   
+                                            placeholder='{"chave": "valor"}'></textarea>  
+                                </div>
+            
+                                <!-- Botão Gerar -->  
+                                <div class="col-12">  
+                                    <button type="button" class="btn btn-secondary" id="btnGerarCurl">  
+                                        ✨ Gerar cURL  
+                                    </button>  
+                                </div>
+            
+                                <!-- Output -->  
+                                <div class="col-12" id="genCurlOutputArea" style="display: none;">  
+                                    <label class="form-label fw-bold">cURL Gerado:</label>  
+                                    <textarea class="form-control font-monospace" id="genCurlOutput" rows="8" readonly></textarea>  
+                                    <div class="d-flex gap-2 mt-2">
+                                        <button type="button" class="btn btn-sm btn-utility" id="btnCopyGenCurl">  
+                                            📋 Copiar cURL  
+                                        </button>  
+                                        <button type="button" class="btn btn-sm btn-utility" id="btnLimparGenCurl">  
+                                            🗑️ Limpar  
+                                        </button>  
+                                    </div>
+                                </div>  
+                            </div>  
+                        </div>  
+                    </div>  
+                </div>  
+            </div>
+
+            <!-- Aba: Contador de Tempo -->
+            <div class="tab-pane fade" id="aba-timer" role="tabpanel" aria-labelledby="aba-timer-tab">
+                <h3 class="mb-4">⏱️ Contador de Tempo para Demandas</h3>
+                
+                <!-- Card: Nova Tarefa -->
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">➕ Nova Tarefa</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label for="novaTarefaNome" class="form-label fw-bold">Nome/Número da Demanda:</label>
+                                <input type="text" class="form-control" id="novaTarefaNome" 
+                                       placeholder="Ex: DEM-123, Bug #456, Feature X">
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <button type="button" class="btn btn-primary w-100" id="btnCriarTarefa">
+                                    ➕ Criar Tarefa
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Botão Limpar Tarefas Finalizadas -->
+                <div class="mb-3 d-flex justify-content-end">
+                    <button type="button" class="btn btn-utility" id="btnLimparTarefasFinalizadas">
+                        🗑️ Limpar Tarefas Finalizadas
+                    </button>
+                </div>
+
+                <!-- Lista de Tarefas Ativas -->
+                <div id="tarefasContainer">
+                    <!-- Tarefas serão adicionadas dinamicamente aqui -->
+                </div>
+
+                <!-- Mensagem quando não há tarefas -->
+                <div id="semTarefasMensagem" class="alert alert-info text-center">
+                    <p class="mb-0">📝 Nenhuma tarefa criada ainda. Crie uma nova tarefa acima para começar a rastrear o tempo.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+  </div>
+  
+  <div id="footer" data-testid="tools-footer-container"></div>
+
+  <!-- Bootstrap 5 JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+  
+  <!-- Crypto-JS para MD5 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+  
+  <!-- JavaScript do Projeto - Carregar componentes comuns (header/footer) -->
+  <script type="module" src="js/tools-init.js"></script>
+  
+  <!-- JavaScript Customizado Tools -->
+  <script src="js/tools.js"></script>
+</body>
+</html>
