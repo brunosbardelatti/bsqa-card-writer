@@ -189,7 +189,7 @@ form {
   background: var(--card-bg);
   padding: 2rem;
   border-radius: 10px;
-  max-width: 600px;
+  max-width: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -306,7 +306,7 @@ button:hover {
 #output {
   margin-top: 1rem;
   width: 100%;
-  max-width: 600px;
+  max-width: 100%;
   align-self: center;
 }
 .result-container {
@@ -856,13 +856,16 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
   background: var(--card-bg);
   padding: 2rem;
   border-radius: 10px;
-  max-width: 800px;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
 }
 
-/* Container para Tools - mais largo */
-[data-testid="tools-main-container"] {
+/* Containers específicos das páginas - todos com mesma largura máxima */
+[data-testid="tools-main-container"],
+[data-testid="chat-main-container"],
+[data-testid="index-main-container"],
+[data-testid="config-main-container"] {
   max-width: 1200px;
 }
 
@@ -1527,6 +1530,15 @@ pre {
   }
   
   .container {
+    max-width: 100%;
+    padding: 1rem;
+  }
+  
+  /* Containers específicos também se ajustam em mobile */
+  [data-testid="tools-main-container"],
+  [data-testid="chat-main-container"],
+  [data-testid="index-main-container"],
+  [data-testid="config-main-container"] {
     max-width: 100%;
     padding: 1rem;
   }
