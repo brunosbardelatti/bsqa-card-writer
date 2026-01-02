@@ -47,7 +47,7 @@ window.isDevelopment = isDevelopment;
  * - 1.0.0: Versão inicial com cache LocalStorage
  * - 1.1.0: Estilos movidos de inline para CSS (REFACT_HEADER_FOOTER.md)
  */
-const COMPONENTS_VERSION = '1.1.0';
+const COMPONENTS_VERSION = '1.2.0'; // Atualizado após REFACT_INCONSISTENCIAS.md
 const CACHE_KEY_PREFIX = 'bsqa-component-';
 
 /**

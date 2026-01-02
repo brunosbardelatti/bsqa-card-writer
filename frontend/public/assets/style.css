@@ -22,6 +22,23 @@
   /* Cores de card headers */
   --card-header-bg: #252525;
   --card-header-secondary-bg: #2a2a2a;
+  
+  /* Escala de Border-Radius (REFACT_INCONSISTENCIAS.md - FASE 3) */
+  --radius-sm: 4px;    /* Badges, chips, small elements */
+  --radius-md: 6px;    /* Botões, inputs, padrão */
+  --radius-lg: 8px;    /* Cards, modals, tabs */
+  --radius-xl: 10px;   /* Hero sections, grandes containers */
+  --radius-round: 50%; /* Círculos, avatars */
+  
+  /* Escala Tipográfica (REFACT_INCONSISTENCIAS.md - FASE 4) */
+  --text-xs: 0.75rem;   /* 12px - Uso mínimo */
+  --text-sm: 0.875rem;  /* 14px - Small text, btn-sm */
+  --text-base: 1rem;    /* 16px - Base/corpo */
+  --text-lg: 1.125rem;  /* 18px - Destaque leve, subtítulos */
+  --text-xl: 1.25rem;   /* 20px - Títulos pequenos */
+  --text-2xl: 1.5rem;   /* 24px - Títulos médios */
+  --text-3xl: 1.875rem; /* 30px - Títulos grandes */
+  --text-4xl: 2.25rem;  /* 36px - Hero, h1 */
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
@@ -53,7 +70,7 @@ h1 {
 }
 
 .hero-subtitle {
-  font-size: 1.2rem;
+  font-size: var(--text-lg);
   color: var(--muted-text);
   margin-bottom: 2rem;
 }
@@ -69,7 +86,7 @@ h1 {
 .feature-card {
   background: var(--bg-color);
   padding: 1.5rem;
-  border-radius: 10px;
+  border-radius: var(--radius-xl);
   text-align: center;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   border: 1px solid var(--border-color);
@@ -113,7 +130,7 @@ h1 {
 }
 
 .feature-icon {
-  font-size: 2.5rem;
+  font-size: var(--text-4xl);
   display: block;
   margin-bottom: 1rem;
   flex-shrink: 0;
@@ -136,7 +153,7 @@ h1 {
 .type-card {
   background: var(--card-bg);
   padding: 1.5rem;
-  border-radius: 10px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border-color);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   height: 100%;
@@ -171,13 +188,13 @@ h1 {
 .type-card h4 {
   color: var(--accent-color);
   margin-bottom: 0.5rem;
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
   flex-shrink: 0;
 }
 
 .type-card p {
   color: var(--muted-text);
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
   line-height: 1.4;
   flex-grow: 1;
   margin-bottom: 0;
@@ -202,7 +219,7 @@ p.subtitle {
 form {
   background: var(--card-bg);
   padding: 2rem;
-  border-radius: 10px;
+  border-radius: var(--radius-xl);
   max-width: 100%;
   width: 100%;
   display: flex;
@@ -211,7 +228,7 @@ form {
 }
 .drop-zone {
   border: 2px dashed var(--muted-text);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   padding: 2rem;
   text-align: center;
   transition: background .3s, border-color .3s;
@@ -231,7 +248,7 @@ textarea, select, input[type="text"], input[type="email"], input[type="password"
   background: var(--card-bg);
   color: var(--text-color);
   border: 1px solid var(--muted-text);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 0.75rem;
   font-size: 1rem;
   width: 100%;
@@ -245,7 +262,7 @@ select {
   background: var(--card-bg);
   color: var(--text-color);
   border: 1px solid var(--muted-text);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 0.5rem;
   font-size: 1rem;
 }
@@ -260,7 +277,7 @@ select {
 .select-group label {
   font-weight: 600;
   color: var(--text-color);
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
   margin-bottom: 0.25rem;
 }
 
@@ -307,7 +324,7 @@ button {
   color: var(--bg-color);
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   font-size: 1rem;
   cursor: pointer;
   align-self: flex-end;
@@ -327,7 +344,7 @@ button:hover {
   position: relative;
   background: var(--result-bg);
   padding: 1rem;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   white-space: pre-wrap;
   min-height: calc(1.5em * 5);
   max-height: calc(1.5em * 15 + 2rem);
@@ -381,7 +398,7 @@ button:hover {
   color: #e74c3c;
   padding: 0.5rem;
   background: #2a0000;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 .drop-feedback {
   position: absolute;
@@ -455,10 +472,10 @@ button:disabled {
   background: var(--card-bg);
   color: var(--text-color);
   border: 1px solid var(--muted-text);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   padding: 0.75rem 1.25rem;
   cursor: pointer;
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
   font-weight: 500;
   transition: all 0.3s;
   text-decoration: none;
@@ -493,7 +510,7 @@ button:disabled {
   
   .nav-btn {
     padding: 0.5rem 0.75rem;
-    font-size: 0.8rem;
+    font-size: var(--text-sm);
     min-width: 80px;
   }
 }
@@ -506,7 +523,7 @@ button:disabled {
   padding: 0.75rem 0;
   border-bottom: 1px solid var(--muted-text);
   color: var(--muted-text);
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -532,14 +549,14 @@ button:disabled {
 .breadcrumbs::before {
   content: "📍";
   margin-right: 0.25rem;
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
 }
 
 
 /* Blocos de código melhorados */
 .code-block {
   margin: 1.5rem 0;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--muted-text);
   background: var(--bg-color);
@@ -555,7 +572,7 @@ button:disabled {
 }
 
 .code-language {
-  font-size: 0.8rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-color);
   text-transform: uppercase;
@@ -570,7 +587,7 @@ button:disabled {
   background: rgba(255, 255, 255, 0.15);
   border: none;
   color: var(--text-color);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all .3s;
   display: flex;
@@ -673,7 +690,7 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
   background: var(--bg-color);
   overflow-x: auto;
   font-family: 'Courier New', 'Monaco', 'Consolas', monospace;
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
 
@@ -745,7 +762,7 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
   color: var(--bg-color);
   border: none;
   padding: 0.75rem 1.5rem;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   cursor: pointer;
   font-size: 1rem;
   margin-top: 1rem;
@@ -775,7 +792,7 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
   background-color: var(--modal-content-bg);
   margin: 2% auto;
   padding: 2rem;
-  border-radius: 10px;
+  border-radius: var(--radius-xl);
   width: 90%;
   max-width: 800px;
   max-height: 90vh;
@@ -791,7 +808,7 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
   background: rgba(255, 255, 255, 0.1);
   border: none;
   color: var(--text-color);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all .3s;
   display: flex;
@@ -835,7 +852,7 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
 .modal-content pre {
   background: var(--code-bg);
   padding: 1rem;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   overflow-x: auto;
   margin: 1rem 0;
   color: var(--code-text);
@@ -869,7 +886,7 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
 .container {
   background: var(--card-bg);
   padding: 2rem;
-  border-radius: 10px;
+  border-radius: var(--radius-xl);
   max-width: 1200px;
   width: 100%;
   margin: 0 auto;
@@ -884,6 +901,16 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
 }
 
 /* Card Headers com cores específicas - adaptar para tema */
+/* Cards - Estilos consolidados (REFACT_INCONSISTENCIAS.md - FASE 2) */
+.card {
+  background: var(--card-bg) !important;
+  border: 1px solid var(--muted-text) !important;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1rem;
+  overflow: hidden;
+  color: var(--text-color) !important;
+}
+
 .card-header {
   background: var(--card-header-bg) !important;
   border-bottom: 1px solid var(--border-color) !important;
@@ -908,6 +935,17 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
   background: var(--success-color) !important;
   color: #fff !important;
   border-bottom: 1px solid var(--success-color) !important;
+}
+
+.card-body {
+  padding: 1.5rem;
+  background-color: transparent !important;
+  color: var(--text-color) !important;
+}
+
+.card h5 {
+  color: var(--text-color);
+  margin: 0;
 }
 
 /* Texto sempre contrastante */
@@ -978,7 +1016,7 @@ input[type="checkbox"] {
 .status-message {
   margin-top: 1rem;
   padding: 0.75rem;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   display: none;
 }
 .status-success {
@@ -1025,7 +1063,7 @@ input[type="checkbox"] {
   margin-bottom: 0;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: var(--text-base);
   font-weight: 500;
   position: relative;
   white-space: nowrap;
@@ -1157,31 +1195,7 @@ input[type="checkbox"] {
 }
 
 /* Cards */
-.card {
-  background: var(--card-bg);
-  border: 1px solid var(--muted-text);
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  overflow: hidden;
-}
-
-.card-header {
-  background: var(--bg-color);
-  border-bottom: 1px solid var(--muted-text);
-  padding: 1rem 1.5rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.card-body {
-  padding: 1.5rem;
-  color: var(--text-color);
-}
-
-.card h5 {
-  color: var(--text-color);
-  margin: 0;
-}
+/* Cards - Estilos consolidados em linhas ~887-925 (REFACT_INCONSISTENCIAS.md - FASE 2) */
 
 /* Badges */
 .badge {
@@ -1193,7 +1207,7 @@ input[type="checkbox"] {
   text-align: center;
   white-space: nowrap;
   vertical-align: baseline;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: var(--muted-text);
   color: var(--bg-color);
 }
@@ -1265,52 +1279,63 @@ input[type="checkbox"] {
   vertical-align: middle;
   cursor: pointer;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   transition: all 0.3s;
 }
 
+/* Botões - Estilos consolidados (REFACT_INCONSISTENCIAS.md - FASE 1) */
 .btn-primary {
-  background: var(--accent-color);
-  color: var(--bg-color);
-  border-color: var(--accent-color);
+  background: var(--accent-color) !important;
+  color: var(--bg-color) !important;
+  border-color: var(--accent-color) !important;
+  transition: all 0.3s;
 }
 
-.btn-primary:hover {
-  background: var(--muted-text);
-  color: var(--bg-color);
-  border-color: var(--muted-text);
+.btn-primary:hover,
+.btn-primary:focus {
+  background: var(--muted-text) !important;
+  color: var(--bg-color) !important;
+  border-color: var(--muted-text) !important;
   transform: translateY(-1px);
 }
 
-.btn-secondary {
-  background: var(--card-bg);
-  color: var(--text-color);
-  border-color: var(--muted-text);
+.btn-primary:active {
+  transform: translateY(0);
 }
 
-.btn-secondary:hover {
-  background: var(--bg-color);
-  color: var(--text-color);
-  border-color: var(--accent-color);
+.btn-secondary {
+  background: var(--card-bg) !important;
+  color: var(--text-color) !important;
+  border-color: var(--muted-text) !important;
+  transition: all 0.3s;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+  background: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  border-color: var(--accent-color) !important;
 }
 
 .btn-utility {
-  background: rgba(255, 255, 255, 0.1);
-  color: var(--text-color);
-  border-color: var(--muted-text);
-  font-size: 0.9rem;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: var(--text-color) !important;
+  border-color: var(--muted-text) !important;
+  font-size: var(--text-sm);
   padding: 0.5rem 1rem;
+  transition: all 0.3s;
 }
 
-.btn-utility:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: var(--text-color);
-  border-color: var(--accent-color);
+.btn-utility:hover,
+.btn-utility:focus {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: var(--text-color) !important;
+  border-color: var(--accent-color) !important;
 }
 
 .btn-sm {
   padding: 0.375rem 0.75rem;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .btn.w-100 {
@@ -1323,7 +1348,7 @@ input[type="checkbox"] {
   margin-bottom: 0.5rem;
   color: var(--text-color);
   font-weight: 500;
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
 }
 
 .form-control {
@@ -1336,7 +1361,7 @@ input[type="checkbox"] {
   color: var(--text-color);
   background-color: var(--card-bg);
   border: 1px solid var(--muted-text);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   transition: border-color 0.3s, box-shadow 0.3s;
 }
 
@@ -1364,7 +1389,7 @@ input[type="checkbox"] {
   color: var(--text-color);
   background-color: var(--card-bg);
   border: 1px solid var(--muted-text);
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   transition: border-color 0.3s, box-shadow 0.3s;
 }
 
@@ -1427,7 +1452,7 @@ input[type="checkbox"] {
   padding: 0.75rem 1rem;
   margin-bottom: 1rem;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 
 .alert-danger {
@@ -1547,7 +1572,7 @@ input[type="checkbox"] {
 pre {
   background: var(--bg-color);
   padding: 1rem;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   overflow-x: auto;
   color: var(--text-color);
   border: 1px solid var(--muted-text);
@@ -1577,7 +1602,7 @@ pre {
   }
   
   .nav-tabs .nav-link {
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     border: 1px solid var(--border-color);
     margin-bottom: 0;
     margin-right: 0;
@@ -1620,7 +1645,7 @@ pre {
 .tab-pane h3 {
   color: var(--text-color);
   margin-bottom: 1rem;
-  font-size: 1.5rem;
+  font-size: var(--text-2xl);
   border-bottom: 1px solid var(--muted-text);
   padding-bottom: 0.5rem;
 }
@@ -1628,7 +1653,7 @@ pre {
 .tab-pane h5 {
   color: var(--text-color);
   margin-bottom: 0.5rem;
-  font-size: 1.1rem;
+  font-size: var(--text-lg);
 }
 
 /* List unstyled */
@@ -1643,13 +1668,13 @@ pre {
 
 /* Small text */
 .small {
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 /* Form text */
 .form-text {
   margin-top: 0.25rem;
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   color: var(--muted-text);
 }
 
@@ -1713,41 +1738,7 @@ body {
   color: var(--text-color);
 }
 
-/* Garantir que cards usem o tema */
-.card {
-  background-color: var(--card-bg) !important;
-  border-color: var(--muted-text) !important;
-  color: var(--text-color) !important;
-}
-
-.card-header {
-  background-color: var(--card-header-bg) !important;
-  border-bottom-color: var(--border-color) !important;
-  color: var(--text-color) !important;
-}
-
-.card-header.bg-primary {
-  background-color: var(--accent-color) !important;
-  color: var(--bg-color) !important;
-  border-bottom-color: var(--accent-color) !important;
-}
-
-.card-header.bg-secondary {
-  background-color: var(--card-header-secondary-bg) !important;
-  color: var(--text-color) !important;
-  border-bottom-color: var(--border-color) !important;
-}
-
-.card-header.bg-success {
-  background-color: var(--success-color) !important;
-  color: #fff !important;
-  border-bottom-color: var(--success-color) !important;
-}
-
-.card-body {
-  background-color: transparent;
-  color: var(--text-color) !important;
-}
+/* Cards - Estilos consolidados em linhas ~887-925 (REFACT_INCONSISTENCIAS.md - FASE 2) */
 
 /* Garantir que form controls usem o tema */
 .form-control,
@@ -1807,54 +1798,6 @@ body {
 .badge.bg-secondary {
   background-color: var(--muted-text) !important;
   color: var(--bg-color) !important;
-}
-
-/* Garantir que botões usem o tema - seguindo padrão do projeto */
-.btn-primary {
-  background-color: var(--accent-color) !important;
-  border-color: var(--accent-color) !important;
-  color: var(--bg-color) !important;
-  transition: all 0.3s !important;
-}
-
-.btn-primary:hover,
-.btn-primary:focus {
-  background-color: var(--muted-text) !important;
-  border-color: var(--muted-text) !important;
-  color: var(--bg-color) !important;
-  transform: translateY(-1px) !important;
-}
-
-.btn-primary:active {
-  transform: translateY(0) !important;
-}
-
-.btn-secondary {
-  background-color: var(--card-bg) !important;
-  border-color: var(--muted-text) !important;
-  color: var(--text-color) !important;
-  transition: all 0.3s !important;
-}
-
-.btn-secondary:hover,
-.btn-secondary:focus {
-  background-color: var(--bg-color) !important;
-  border-color: var(--accent-color) !important;
-  color: var(--text-color) !important;
-}
-
-.btn-utility {
-  background: rgba(255, 255, 255, 0.1) !important;
-  color: var(--text-color) !important;
-  border-color: var(--muted-text) !important;
-  transition: all 0.3s !important;
-}
-
-.btn-utility:hover,
-.btn-utility:focus {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: var(--text-color) !important;
-  border-color: var(--accent-color) !important;
 }
 
 /* Garantir que alerts usem o tema */
@@ -2170,7 +2113,7 @@ footer a:hover {
   );
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s ease-in-out infinite;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   opacity: 0.7;
 }
 
@@ -2253,7 +2196,7 @@ footer {
   padding: 2rem 1rem;
   text-align: center;
   color: var(--text-color);
-  font-size: 0.9rem;
+  font-size: var(--text-sm);
   border-top: 1px solid var(--border-color);
   background: var(--card-bg);
 }
