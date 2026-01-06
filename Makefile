@@ -19,17 +19,29 @@ help: ## Exibe esta ajuda com os comandos disponíveis
 
 # Setup do ambiente virtual e instalação de dependências
 setup: ## Cria o ambiente virtual e instala as dependências
-	python3 -m venv .venv
-	.venv/Scripts/pip.exe install -r config/requirements.txt || .venv/bin/pip install -r config/requirements.txt
+	@if command -v python3 > /dev/null 2>&1; then \
+		python3 -m venv .venv; \
+	else \
+		python -m venv .venv; \
+	fi
+	@if [ -f .venv/bin/pip ]; then \
+		.venv/bin/pip install -r requirements.txt; \
+	elif [ -f .venv/Scripts/pip.exe ]; then \
+		.venv/Scripts/pip.exe install -r requirements.txt; \
+	else \
+		pip install -r requirements.txt; \
+	fi
+	@echo "✅ Setup concluído!"
 
 # Rodar o backend (FastAPI)
 back: ## Inicia o servidor backend
-	.venv/Scripts/python.exe -m uvicorn backend.main:app --reload || .venv/bin/python -m uvicorn backend.main:app --reload
-	@echo "\n---"
-	@echo "Backend rodando!"
-	@echo "Acesse a documentação da API: http://localhost:8000/docs"
-	@echo "A API está ativa e respondendo em: http://localhost:8000/analyze"
-	@echo "---\n"
+	@if [ -f .venv/bin/python ]; then \
+		.venv/bin/python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000; \
+	elif [ -f .venv/Scripts/python.exe ]; then \
+		.venv/Scripts/python.exe -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000; \
+	else \
+		python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000; \
+	fi
 
 # Rodar o frontend (servidor Python)
 front: ## Inicia o servidor frontend
@@ -96,7 +108,13 @@ db-init: ## Inicializa o banco de dados (cria tabelas e admin)
 	@echo "🔧 Inicializando banco de dados..."
 	@echo "📋 Certifique-se de que o arquivo config/.env está configurado!"
 	@echo ""
-	.venv/Scripts/python.exe backend/database/init_db.py || .venv/bin/python backend/database/init_db.py
+	@if [ -f .venv/bin/python ]; then \
+		.venv/bin/python backend/database/init_db.py; \
+	elif [ -f .venv/Scripts/python.exe ]; then \
+		.venv/Scripts/python.exe backend/database/init_db.py; \
+	else \
+		python backend/database/init_db.py; \
+	fi
 	@echo ""
 	@echo "✅ Banco de dados inicializado!"
 
