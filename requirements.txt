@@ -7,3 +7,16 @@ requests
 python-multipart
 chardet
 
+# Autenticação e Segurança
+passlib[bcrypt]
+python-jose[cryptography]
+
+# Banco de Dados
+sqlalchemy
+alembic
+psycopg2-binary
+
+# Validação
+email-validator
+pydantic[email]
+
