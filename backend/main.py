@@ -4,6 +4,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from backend.api.routes_analyze import router as analyze_router
 from backend.api.routes_config import router as config_router
+from backend.api.routes_auth import router as auth_router
+from backend.api.routes_users import router as users_router
 from dotenv import load_dotenv
 import os
 import sys
@@ -21,12 +23,43 @@ else:
     # Em produção, carrega variáveis de ambiente do sistema
     load_dotenv()
 
-app = FastAPI(title="BSQA Card Writer API", version="1.1.0")
+app = FastAPI(
+    title="BSQA Card Writer API",
+    version="2.0.0",
+    description="""
+    ## 🤖📋 API do BSQA Card Writer
+    
+    Sistema de análise de requisitos com IA e gestão de usuários.
+    
+    ### Funcionalidades:
+    - 🔐 Autenticação JWT
+    - 👥 Gestão de usuários (CRUD completo)
+    - 🤖 Análise de requisitos com IA (OpenAI, StackSpot)
+    - ⚙️ Configurações personalizáveis
+    
+    ### Autenticação:
+    A maioria dos endpoints requer autenticação via token JWT.
+    
+    1. Faça login em `/auth/login`
+    2. Use o token retornado no header: `Authorization: Bearer {token}`
+    """,
+    contact={
+        "name": "BSQA Team",
+        "url": "https://github.com/brunosbardelatti/BSQA-card-Writer",
+    },
+    license_info={
+        "name": "MIT License",
+    }
+)
 
 # Health check endpoint
-@app.get("/health")
+@app.get("/health", tags=["Sistema"])
 async def health_check():
-    return JSONResponse({"status": "ok", "message": "API is running"})
+    return JSONResponse({
+        "status": "ok",
+        "message": "API is running",
+        "version": "2.0.0"
+    })
 
 # Configurar CORS
 app.add_middleware(
@@ -37,9 +70,46 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ============================================
+# EVENTO DE STARTUP - INICIALIZAR BANCO
+# ============================================
+@app.on_event("startup")
+async def startup_event():
+    """
+    Inicializa o banco de dados na primeira execução
+    Cria tabelas e usuário admin padrão
+    """
+    print("\n" + "=" * 60)
+    print("🚀 INICIANDO APLICAÇÃO")
+    print("=" * 60)
+    
+    try:
+        from backend.database.init_db import init_database
+        init_database()
+    except Exception as e:
+        print(f"⚠️  Aviso: Erro na inicialização do banco: {e}")
+        print("   A API continuará funcionando, mas o banco pode não estar inicializado.")
+        import traceback
+        traceback.print_exc()
+    
+    print("=" * 60)
+    print("✅ APLICAÇÃO INICIADA")
+    print("=" * 60)
+    print()
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """
+    Executado ao desligar a aplicação
+    """
+    print("\n🛑 Encerrando aplicação...")
+    print("✅ Aplicação encerrada com sucesso\n")
+
 # Incluir rotas da API
-app.include_router(analyze_router)
-app.include_router(config_router)
+app.include_router(auth_router)      # Rotas de autenticação (/auth/*)
+app.include_router(users_router)     # Rotas de usuários (/users/*)
+app.include_router(analyze_router)   # Rotas de análise (/analyze)
+app.include_router(config_router)    # Rotas de configuração (/config)
 
 # Servir arquivos estáticos do frontend
 # Usa caminho absoluto para funcionar em produção
@@ -100,6 +170,20 @@ try:
             tools_file = os.path.join(frontend_path, "tools.html")
             if os.path.exists(tools_file):
                 return FileResponse(tools_file)
+            return JSONResponse({"error": "Frontend not found"}, status_code=404)
+        
+        @app.get("/login.html")
+        async def read_login():
+            login_file = os.path.join(frontend_path, "login.html")
+            if os.path.exists(login_file):
+                return FileResponse(login_file)
+            return JSONResponse({"error": "Frontend not found"}, status_code=404)
+
+        @app.get("/users.html")
+        async def read_users():
+            users_file = os.path.join(frontend_path, "users.html")
+            if os.path.exists(users_file):
+                return FileResponse(users_file)
             return JSONResponse({"error": "Frontend not found"}, status_code=404)
         
         print(f"[DEBUG] Frontend routes configured successfully")

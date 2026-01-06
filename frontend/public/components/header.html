@@ -3,8 +3,126 @@
     <button class="nav-btn" onclick="window.location.href='index.html'" title="Página Inicial" data-testid="nav-button-home">🏠 Home</button>
     <button class="nav-btn" onclick="window.location.href='chat.html'" title="Chat Principal" data-testid="nav-button-chat">💬 Chat</button>
     <button class="nav-btn" onclick="window.location.href='tools.html'" title="Ferramentas QA" data-testid="nav-button-tools">🧰 Tools</button>
-    <button class="nav-btn" onclick="window.location.href='config.html'" title="Configurações do Usuário" data-testid="nav-button-config">⚙️ Config</button>
+    <button class="nav-btn" id="usersBtn" onclick="window.location.href='users.html'" title="Gestão de Usuários" data-testid="nav-button-users" style="display: none;">👥 Usuários</button>
+    <button class="nav-btn" id="configBtn" onclick="window.location.href='config.html'" title="Configurações do Usuário" data-testid="nav-button-config">⚙️ Config</button>
+    
+    <!-- Informações do Usuário e Logout -->
+    <div class="header-user-section" id="headerUserSection" style="display: none;">
+      <div class="user-info-header">
+        <span id="userIconHeader">👤</span>
+        <span id="userNameHeader">Usuário</span>
+      </div>
+      <button class="nav-btn logout-btn" id="logoutBtn" title="Sair do Sistema">
+        🚪 Sair
+      </button>
+    </div>
   </div>
   <h1 data-testid="header-title">🤖📋 QA Card Writer BSQA</h1>
   <p class="subtitle" data-testid="header-subtitle">Insira seus requisitos de software e receba sugestões de casos de teste com IA!</p>
-</header> 
+</header>
+
+<script type="module">
+  // Carregar informações do usuário no header
+  import { getAuthUser, isAdmin, isAuthenticated, logout } from '../js/auth.js';
+  
+  if (isAuthenticated()) {
+    const user = getAuthUser();
+    const userSection = document.getElementById('headerUserSection');
+    const userIcon = document.getElementById('userIconHeader');
+    const userName = document.getElementById('userNameHeader');
+    const configBtn = document.getElementById('configBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    // Mostrar seção de usuário
+    if (userSection) {
+      userSection.style.display = 'flex';
+    }
+    
+    // Atualizar ícone e nome
+    if (user) {
+      if (userIcon) {
+        userIcon.textContent = user.perfil === 'admin' ? '👑' : '👤';
+      }
+      if (userName) {
+        userName.textContent = user.nome_completo || user.username || 'Usuário';
+        userName.title = `${user.username} (${user.perfil})`;
+      }
+    }
+    
+    // Esconder botões admin-only se não for admin
+    const usersBtn = document.getElementById('usersBtn');
+    if (isAdmin()) {
+      if (configBtn) configBtn.style.display = 'inline-block';
+      if (usersBtn) usersBtn.style.display = 'inline-block';
+    } else {
+      if (configBtn) configBtn.style.display = 'none';
+      if (usersBtn) usersBtn.style.display = 'none';
+    }
+    
+    // Adicionar evento de logout
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (confirm('Deseja realmente sair?')) {
+          await logout();
+        }
+      });
+    }
+  }
+</script>
+
+<style>
+.header-user-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+  padding-left: 1rem;
+  border-left: 2px solid var(--border-color);
+}
+
+.user-info-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--card-bg);
+  border-radius: 8px;
+  font-weight: 500;
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+#userIconHeader {
+  font-size: 1.2rem;
+}
+
+#userNameHeader {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logout-btn {
+  background: linear-gradient(135deg, #ff6b6b, #ee5a6f) !important;
+  color: white !important;
+}
+
+.logout-btn:hover {
+  background: linear-gradient(135deg, #ee5a6f, #ff6b6b) !important;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .header-user-section {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-left: 0.5rem;
+  }
+  
+  #userNameHeader {
+    max-width: 100px;
+  }
+}
+</style> 

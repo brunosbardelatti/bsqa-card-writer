@@ -155,9 +155,19 @@
   <div id="modal" data-testid="config-modal-container"></div>
   <div id="footer" data-testid="config-footer-container"></div>
   <div class="skeleton skeleton-footer"></div>
+  
+  <!-- Proteção de Autenticação (Admin Only) -->
+  <script type="module">
+    import { requireAdmin } from './js/auth.js';
+    
+    // Proteger página - apenas admin pode acessar
+    (async () => {
+      await requireAdmin();
+    })();
+  </script>
+  
   <script src="js/apiConfig.js"></script>
   <script type="module" src="js/main.js"></script>
-  <script src="js/apiConfig.js"></script>
-<script type="module" src="js/config.js"></script>
+  <script type="module" src="js/config.js"></script>
 </body>
 </html> 

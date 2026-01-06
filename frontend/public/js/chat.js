@@ -1,4 +1,5 @@
 import { loadCommonComponents, loadThemeFromConfig, applyTheme, generateAnalysisOptionsHTML, getAnalysisPlaceholder } from './main.js';
+import { authenticatedFetch } from './auth.js';
 
 // Flag para controlar se a página foi recarregada
 window.pageReloaded = true;
@@ -175,7 +176,7 @@ function bindFormEvents() {
       formData.append('return_ks_in_response', config.returnKsInResponse || false);
     }
     try {
-      const res = await fetch(window.ApiConfig.buildUrl('/analyze'), {
+      const res = await authenticatedFetch(window.ApiConfig.buildUrl('/analyze'), {
         method: 'POST',
         body: formData
       });
@@ -237,7 +238,7 @@ async function loadDefaultAI(applyDefaults = true) {
     // Carregar configurações de API do servidor
     let apiConfig = {};
     try {
-      const response = await fetch(window.ApiConfig.buildUrl('/api-config'));
+      const response = await authenticatedFetch(window.ApiConfig.buildUrl('/api-config'));
       if (response.ok) {
         apiConfig = await response.json();
       }
@@ -415,7 +416,7 @@ window.addEventListener('focus', async () => {
 // Carregar tipos de análise disponíveis do backend
 async function loadAnalysisTypes() {
   try {
-    const response = await fetch(window.ApiConfig.buildUrl('/analysis-types'));
+    const response = await authenticatedFetch(window.ApiConfig.buildUrl('/analysis-types'));
     const data = await response.json();
     const analyseTypeSelect = document.getElementById('analyse_type');
     

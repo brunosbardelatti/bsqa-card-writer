@@ -1062,6 +1062,16 @@
   <!-- Crypto-JS para MD5 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
   
+  <!-- Proteção de Autenticação -->
+  <script type="module">
+    import { requireAuth } from './js/auth.js';
+    
+    // Proteger página - redireciona para login se não autenticado
+    (async () => {
+      await requireAuth();
+    })();
+  </script>
+  
   <!-- JavaScript do Projeto - Carregar componentes comuns (header/footer) -->
   <script type="module" src="js/tools-init.js"></script>
   

@@ -1,4 +1,5 @@
 import { loadCommonComponents, loadThemeFromConfig, applyTheme, generateAnalysisOptionsHTML, getAnalysisPlaceholder } from './main.js';
+import { authenticatedFetch } from './auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
@@ -114,7 +115,7 @@ function setupLeaveWarning() {
 async function loadConfig() {
   try {
     const localConfig = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
-    const response = await fetch(window.ApiConfig.buildUrl('/config'));
+    const response = await authenticatedFetch(window.ApiConfig.buildUrl('/config'));
     if (response.ok) {
       const serverConfig = await response.json();
       const mergedConfig = { ...localConfig, ...serverConfig };
@@ -147,7 +148,7 @@ async function loadConfig() {
 
 async function loadApiConfig() {
   try {
-    const response = await fetch(window.ApiConfig.buildUrl('/api-config'));
+    const response = await authenticatedFetch(window.ApiConfig.buildUrl('/api-config'));
     if (response.ok) {
       const apiConfig = await response.json();
       applyApiConfigToFields(apiConfig);
@@ -385,7 +386,7 @@ async function saveConfig() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config)
     });
-    const apiResponse = await fetch(window.ApiConfig.buildUrl('/api-config'), {
+    const apiResponse = await authenticatedFetch(window.ApiConfig.buildUrl('/api-config'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(apiConfig)
@@ -448,7 +449,7 @@ async function testApiConfig() {
       body: JSON.stringify(apiConfig)
     });
     if (response.ok) {
-      const testResponse = await fetch(window.ApiConfig.buildUrl('/test-api-config'), { method: 'POST' });
+      const testResponse = await authenticatedFetch(window.ApiConfig.buildUrl('/test-api-config'), { method: 'POST' });
       if (testResponse.ok) {
         const testData = await testResponse.json();
         if (testData.success) {
@@ -522,7 +523,7 @@ function checkDefaultAIEnabled() {
 // Carregar tipos de análise disponíveis do backend
 async function loadAnalysisTypes() {
   try {
-    const response = await fetch(window.ApiConfig.buildUrl('/analysis-types'));
+    const response = await authenticatedFetch(window.ApiConfig.buildUrl('/analysis-types'));
     const data = await response.json();
     const defaultAnalyseTypeSelect = document.getElementById('defaultAnalyseType');
     

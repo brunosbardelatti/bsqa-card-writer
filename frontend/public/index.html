@@ -109,6 +109,28 @@
 
   <div id="footer" data-testid="index-footer-container"></div>
   <div class="skeleton skeleton-footer"></div>
+  
+  <!-- Proteção de Autenticação -->
+  <script type="module">
+    import { requireAuth, getAuthUser, isAdmin } from './js/auth.js';
+    
+    // Proteger página - redireciona para login se não autenticado
+    (async () => {
+      const isAuthenticated = await requireAuth();
+      if (isAuthenticated) {
+        // Esconder card de configurações se não for admin
+        const user = getAuthUser();
+        if (!isAdmin()) {
+          // Esconder links de configuração para usuários não-admin
+          const configCards = document.querySelectorAll('[href="config.html"], [href^="config.html#"]');
+          configCards.forEach(card => {
+            card.style.display = 'none';
+          });
+        }
+      }
+    })();
+  </script>
+  
   <script type="module" src="js/main.js"></script>
   <script type="module" src="js/index.js"></script>
 </body>

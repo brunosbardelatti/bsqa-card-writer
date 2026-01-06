@@ -1,14 +1,30 @@
-from fastapi import APIRouter, File, UploadFile, Form, HTTPException
+from fastapi import APIRouter, File, UploadFile, Form, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from backend.services.ia_factory import get_ia_service
 from backend.utils.file_utils import extract_text_from_file
 from backend.utils.prompt_loader import load_prompt_template, get_available_analysis_types, get_analysis_placeholders
+from backend.utils.dependencies import get_current_user
+from backend.models.user import User
 
-router = APIRouter()
+router = APIRouter(tags=["Análise com IA"])
 
 @router.get("/analysis-types")
-async def get_analysis_types():
-    """Retorna os tipos de análise disponíveis com seus placeholders"""
+async def get_analysis_types(current_user: User = Depends(get_current_user)):
+    """
+    ## 📋 Obter Tipos de Análise Disponíveis
+    
+    Retorna a lista de tipos de análise disponíveis e seus placeholders.
+    
+    **Requer autenticação**
+    
+    ### Retorna:
+    - **analysis_types**: Lista de tipos de análise disponíveis
+    - **placeholders**: Placeholders específicos para cada tipo
+    
+    ### Erros:
+    - **401**: Token inválido ou expirado
+    - **403**: Usuário inativo
+    """
     return JSONResponse(content={
         "analysis_types": get_available_analysis_types(),
         "placeholders": get_analysis_placeholders()
@@ -22,8 +38,43 @@ async def analyze(
     analyse_type: str = Form(...),
     streaming: bool = Form(False),
     stackspot_knowledge: bool = Form(False),
-    return_ks_in_response: bool = Form(False)
+    return_ks_in_response: bool = Form(False),
+    current_user: User = Depends(get_current_user)
 ):
+    """
+    ## 🤖 Analisar Requisitos com IA
+    
+    Realiza análise de requisitos usando IA (OpenAI ou StackSpot).
+    
+    **Requer autenticação**
+    
+    ### Parâmetros (Form Data):
+    - **requirements**: Requisitos em texto (opcional se enviar file)
+    - **file**: Arquivo PDF, TXT ou JSON (opcional se enviar requirements)
+    - **service**: Serviço de IA ("openai" ou "stackspot") - padrão: "openai"
+    - **analyse_type**: Tipo de análise (obrigatório)
+    - **streaming**: Resposta em streaming (apenas StackSpot)
+    - **stackspot_knowledge**: Usar conhecimento StackSpot
+    - **return_ks_in_response**: Retornar KS na resposta
+    
+    ### Retorna:
+    - **result**: Resultado da análise pela IA
+    
+    ### Erros:
+    - **400**: Parâmetros inválidos ou arquivo não suportado
+    - **401**: Token inválido ou expirado
+    - **403**: Usuário inativo
+    - **500**: Erro ao gerar resposta da IA
+    
+    ### Tipos de Análise Disponíveis:
+    - card_QA_writer
+    - test_case_flow_classifier
+    - swagger_postman
+    - swagger_python
+    - robot_api_generator
+    - swagger_robot_generator
+    - code_review_diff
+    """
     if file and requirements:
         raise HTTPException(status_code=400, detail="Use only one input method: file or text.")
     if file:

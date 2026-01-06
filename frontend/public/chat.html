@@ -68,8 +68,19 @@
   </div>
   <div id="footer" data-testid="chat-footer-container"></div>
   <div class="skeleton skeleton-footer"></div>
+  
+  <!-- Proteção de Autenticação -->
+  <script type="module">
+    import { requireAuth } from './js/auth.js';
+    
+    // Proteger página - redireciona para login se não autenticado
+    (async () => {
+      await requireAuth();
+    })();
+  </script>
+  
   <script type="module" src="js/main.js"></script>
   <script src="js/apiConfig.js"></script>
-<script type="module" src="js/chat.js"></script>
+  <script type="module" src="js/chat.js"></script>
 </body>
 </html>
