@@ -2,12 +2,19 @@
 Script para inicializar o banco de dados
 Cria todas as tabelas e o usuário admin padrão
 """
+import os
+import sys
+import uuid
+
+# Adicionar o diretório raiz ao PYTHONPATH
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+from dotenv import load_dotenv
 from backend.database.connection import engine, Base, SessionLocal, test_connection
 from backend.models.user import User, PerfilEnum
 from backend.models.session import Session
-import os
-import uuid
-from dotenv import load_dotenv
 
 # Carregar variáveis de ambiente
 env_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'config', '.env')
@@ -59,6 +66,9 @@ def init_database():
             # Importar hash_password aqui para evitar erro circular
             from backend.utils.security import hash_password
             
+            # Senha com limite de 72 bytes (limite do bcrypt)
+            admin_password = os.getenv("ADMIN_PASSWORD", "Admin@123456")[:72]
+            
             admin = User(
                 id=str(uuid.uuid4()),
                 nome_completo=os.getenv("ADMIN_NOME", "Administrador"),
@@ -66,7 +76,7 @@ def init_database():
                 email=os.getenv("ADMIN_EMAIL", "admin@bsqa.com"),
                 empresa=os.getenv("ADMIN_EMPRESA", "BSQA"),
                 cpf=os.getenv("ADMIN_CPF", "00000000000"),
-                senha_hash=hash_password(os.getenv("ADMIN_PASSWORD", "Admin@123456")),
+                senha_hash=hash_password(admin_password),
                 perfil=PerfilEnum.ADMIN,
                 ativo=True
             )

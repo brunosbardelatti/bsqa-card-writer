@@ -9,7 +9,10 @@
 
 const AUTH_TOKEN_KEY = 'bsqa_auth_token';
 const AUTH_USER_KEY = 'bsqa_auth_user';
-const API_BASE_URL = window.location.origin;
+// Backend sempre na porta 8000, frontend na 8501
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://localhost:8000' 
+    : window.location.origin;
 
 // ============================================
 // GERENCIAMENTO DE TOKEN

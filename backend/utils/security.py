@@ -46,6 +46,9 @@ def hash_password(password: str) -> str:
         >>> hash_password("Admin@123")
         "$2b$12$..."
     """
+    # Bcrypt tem limite de 72 bytes - truncar se necessário
+    if len(password.encode('utf-8')) > 72:
+        password = password[:72]
     return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:

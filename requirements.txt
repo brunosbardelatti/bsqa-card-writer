@@ -8,6 +8,7 @@ python-multipart
 chardet
 
 # Autenticação e Segurança
+bcrypt==4.1.3
 passlib[bcrypt]
 python-jose[cryptography]
 

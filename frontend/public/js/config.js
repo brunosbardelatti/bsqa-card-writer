@@ -381,7 +381,7 @@ async function saveConfig() {
         STACKSPOT_AGENT_ID: document.getElementById('stackspotAgentId').value
       })
     };
-    const response = await fetch(window.ApiConfig.buildUrl('/config'), {
+    const response = await authenticatedFetch(window.ApiConfig.buildUrl('/config'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config)
@@ -443,7 +443,7 @@ async function testApiConfig() {
         STACKSPOT_AGENT_ID: document.getElementById('stackspotAgentId').value
       })
     };
-    const response = await fetch(window.ApiConfig.buildUrl('/api-config'), {
+    const response = await authenticatedFetch(window.ApiConfig.buildUrl('/api-config'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(apiConfig)

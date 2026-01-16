@@ -36,11 +36,11 @@ setup: ## Cria o ambiente virtual e instala as dependências
 # Rodar o backend (FastAPI)
 back: ## Inicia o servidor backend
 	@if [ -f .venv/bin/python ]; then \
-		.venv/bin/python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000; \
+		PYTHONPATH=. .venv/bin/python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000; \
 	elif [ -f .venv/Scripts/python.exe ]; then \
-		.venv/Scripts/python.exe -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000; \
+		set PYTHONPATH=. && .venv/Scripts/python.exe -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000; \
 	else \
-		python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000; \
+		PYTHONPATH=. python -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000; \
 	fi
 
 # Rodar o frontend (servidor Python)
@@ -109,11 +109,11 @@ db-init: ## Inicializa o banco de dados (cria tabelas e admin)
 	@echo "📋 Certifique-se de que o arquivo config/.env está configurado!"
 	@echo ""
 	@if [ -f .venv/bin/python ]; then \
-		.venv/bin/python backend/database/init_db.py; \
+		PYTHONPATH=. .venv/bin/python backend/database/init_db.py; \
 	elif [ -f .venv/Scripts/python.exe ]; then \
-		.venv/Scripts/python.exe backend/database/init_db.py; \
+		set PYTHONPATH=. && .venv/Scripts/python.exe backend/database/init_db.py; \
 	else \
-		python backend/database/init_db.py; \
+		PYTHONPATH=. python backend/database/init_db.py; \
 	fi
 	@echo ""
 	@echo "✅ Banco de dados inicializado!"
