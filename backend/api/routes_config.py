@@ -23,8 +23,8 @@ async def get_api_config():
 
 @router.post("/api-config")
 async def update_api_config(api_config: dict):
-    # Substituir completamente a configuração em vez de apenas atualizar
-    # Isso garante que chaves não presentes no api_config sejam removidas
+    # Fazer merge com configurações existentes para não sobrescrever outras configurações
+    # As novas configurações são mescladas com as existentes no .env
     if save_env_config(api_config):
         return {"success": True, "message": "Configurações de API salvas com sucesso"}
     else:

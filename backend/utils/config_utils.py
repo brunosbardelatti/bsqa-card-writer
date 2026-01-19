@@ -104,9 +104,18 @@ def load_env_config():
 def save_env_config(env_config):
     try:
         os.makedirs(os.path.dirname(ENV_FILE), exist_ok=True)
+        
+        # Carregar configurações existentes
+        existing_config = load_env_config()
+        
+        # Fazer merge: atualizar com novas configurações, mantendo as existentes
+        merged_config = {**existing_config, **env_config}
+        
+        # Salvar configurações mescladas
         with open(ENV_FILE, 'w', encoding='utf-8') as f:
-            for key, value in env_config.items():
+            for key, value in merged_config.items():
                 f.write(f"{key}={value}\n")
+        
         # Recarregar variáveis de ambiente
         load_dotenv(dotenv_path=ENV_FILE, override=True)
         return True
