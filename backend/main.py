@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from backend.api.routes_analyze import router as analyze_router
 from backend.api.routes_config import router as config_router
+from backend.api.routes_jira import router as jira_router
 from dotenv import load_dotenv
 import os
 import sys
@@ -40,6 +41,7 @@ app.add_middleware(
 # Incluir rotas da API
 app.include_router(analyze_router)
 app.include_router(config_router)
+app.include_router(jira_router)
 
 # Servir arquivos estáticos do frontend
 # Usa caminho absoluto para funcionar em produção
@@ -100,6 +102,13 @@ try:
             tools_file = os.path.join(frontend_path, "tools.html")
             if os.path.exists(tools_file):
                 return FileResponse(tools_file)
+            return JSONResponse({"error": "Frontend not found"}, status_code=404)
+        
+        @app.get("/card.html")
+        async def read_card():
+            card_file = os.path.join(frontend_path, "card.html")
+            if os.path.exists(card_file):
+                return FileResponse(card_file)
             return JSONResponse({"error": "Frontend not found"}, status_code=404)
         
         print(f"[DEBUG] Frontend routes configured successfully")

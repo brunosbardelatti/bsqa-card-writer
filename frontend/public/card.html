@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Card Jira - BSQA Card Writer</title>
+  
+  <!-- Preload de componentes críticos -->
+  <link rel="preload" href="components/header.html" as="fetch" crossorigin>
+  <link rel="preload" href="components/footer.html" as="fetch" crossorigin>
+  
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+</head>
+<body>
+  <div id="header" data-testid="card-header-container"></div>
+  <div class="skeleton skeleton-header"></div>
+  
+  <div class="container" data-testid="card-main-container">
+    <!-- Breadcrumbs -->
+    <div class="breadcrumbs" data-testid="card-breadcrumbs-container">
+      <!-- Breadcrumbs serão preenchidos dinamicamente -->
+    </div>
+    
+    <h1 data-testid="card-title">🎫 Integração Jira</h1>
+    <p class="subtitle" data-testid="card-subtitle">Consulte cards e gere casos de teste automaticamente</p>
+    
+    <form id="cardForm" data-testid="card-form">
+      <!-- Seletor de Funcionalidade -->
+      <div class="form-group" data-testid="card-form-group-function">
+        <label for="card_function" data-testid="card-label-function">
+          ⚙️ Funcionalidade
+        </label>
+        <select id="card_function" name="card_function" required data-testid="card-select-function">
+          <option value="query_card" data-testid="card-option-query">🔍 Consultar Card</option>
+          <option value="query_and_create" data-testid="card-option-query-create">🚀 Criar Subtask baseado no card consultado</option>
+        </select>
+      </div>
+
+      <!-- Input do Número do Card -->
+      <div class="form-group" data-testid="card-form-group-number">
+        <label for="card_number" data-testid="card-label-number">
+          🎫 Número do Card
+        </label>
+        <input 
+          type="text" 
+          id="card_number" 
+          name="card_number" 
+          placeholder="Ex: PKGS-1104, FCP-2301, BET-456"
+          pattern="^[A-Z]+-\d+$"
+          required
+          data-testid="card-input-number"
+        >
+        <small class="hint" data-testid="card-hint-format">Formato: PROJETO-NUMERO (ex: PKGS-1104)</small>
+      </div>
+
+      <!-- Seletor de Campos (Multi-select com Checkboxes) -->
+      <div class="form-group" data-testid="card-form-group-fields">
+        <label data-testid="card-label-fields">
+          📋 Campos a Consultar
+        </label>
+        <div id="fields-checkboxes" class="checkbox-group" data-testid="card-checkbox-group-fields">
+          <label data-testid="card-checkbox-label-summary">
+            <input type="checkbox" name="fields" value="summary" checked disabled data-testid="card-checkbox-summary"> 
+            Título do Card *
+          </label>
+          <label data-testid="card-checkbox-label-description">
+            <input type="checkbox" name="fields" value="description" checked disabled data-testid="card-checkbox-description"> 
+            Descrição *
+          </label>
+          <label data-testid="card-checkbox-label-status">
+            <input type="checkbox" name="fields" value="status" data-testid="card-checkbox-status"> 
+            Status
+          </label>
+          <label data-testid="card-checkbox-label-priority">
+            <input type="checkbox" name="fields" value="priority" data-testid="card-checkbox-priority"> 
+            Prioridade
+          </label>
+          <label data-testid="card-checkbox-label-assignee">
+            <input type="checkbox" name="fields" value="assignee" data-testid="card-checkbox-assignee"> 
+            Responsável
+          </label>
+          <label data-testid="card-checkbox-label-labels">
+            <input type="checkbox" name="fields" value="labels" data-testid="card-checkbox-labels"> 
+            Labels
+          </label>
+        </div>
+      </div>
+
+      <!-- Seletor de IA (visível apenas para query_and_create) -->
+      <div class="form-group" id="ai-selector-group" style="display: none;" data-testid="card-form-group-ai">
+        <label for="ai_service" data-testid="card-label-ai-service">
+          🤖 Serviço de IA
+        </label>
+        <select id="ai_service" name="ai_service" data-testid="card-select-ai-service">
+          <option value="" data-testid="card-option-ai-loading">Carregando...</option>
+        </select>
+      </div>
+
+      <!-- Botão Submit -->
+      <button type="submit" id="submitBtn" class="submit-btn" data-testid="card-button-submit">
+        🔍 Consultar Card
+      </button>
+    </form>
+    
+    <!-- Botão Nova Consulta (fora do form, aparece só após resultado) -->
+    <button type="button" id="clearBtn" class="clear-btn" style="display: none;" data-testid="card-button-clear">
+      🔄 Nova Consulta
+    </button>
+
+    <!-- Área de Resultado -->
+    <div id="output" class="output-area" data-testid="card-output-container"></div>
+  </div>
+
+  <div id="footer" data-testid="card-footer-container"></div>
+  <div class="skeleton skeleton-footer"></div>
+  
+  <script type="module" src="js/main.js"></script>
+  <script src="js/apiConfig.js"></script>
+  <script type="module" src="js/card.js"></script>
+</body>
+</html>

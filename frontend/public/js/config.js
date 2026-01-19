@@ -28,6 +28,16 @@ function getCurrentConfigSnapshot() {
       clearAfterSuccess: document.getElementById('clearAfterSuccess').checked,
       theme: document.getElementById('theme').value
     },
+    integrations: {
+      jira: {
+        enabled: document.getElementById('jiraEnabled').checked,
+        baseUrl: document.getElementById('jiraBaseUrl').value,
+        userEmail: document.getElementById('jiraUserEmail').value,
+        apiToken: document.getElementById('jiraApiToken').value,
+        subtaskIssueTypeId: document.getElementById('jiraSubtaskIssueTypeId').value,
+        requestTimeout: parseInt(document.getElementById('jiraRequestTimeout').value) || 30
+      }
+    },
     ia: {
       openai: {
         enabled: document.getElementById('openaiEnabled').checked,
@@ -66,6 +76,7 @@ function setupDirtyTracking() {
   const fields = [
     'userName', 'userEmail', 'userCompany',
     'defaultAI', 'defaultAnalyseType', 'autoCopy', 'clearAfterSuccess', 'theme',
+    'jiraEnabled', 'jiraBaseUrl', 'jiraUserEmail', 'jiraApiToken', 'jiraSubtaskIssueTypeId', 'jiraRequestTimeout',
     'openaiEnabled', 'maxTokens',
     'stackspotEnabled', 'streaming', 'stackspotKnowledge', 'returnKsInResponse',
     'openaiApiKey', 'stackspotClientId', 'stackspotClientSecret', 'stackspotRealm', 'stackspotAgentId'
@@ -156,6 +167,36 @@ async function loadApiConfig() {
 }
 
 function applyApiConfigToFields(apiConfig) {
+  // Configurações Jira
+  const jiraEnabled = document.getElementById('jiraEnabled');
+  const hasJiraConfig = apiConfig.JIRA_BASE_URL && apiConfig.JIRA_USER_EMAIL && apiConfig.JIRA_API_TOKEN;
+  if (hasJiraConfig) {
+    jiraEnabled.checked = true;
+    if (apiConfig.JIRA_BASE_URL) {
+      document.getElementById('jiraBaseUrl').value = apiConfig.JIRA_BASE_URL;
+      originalJiraConfig.jiraBaseUrl = apiConfig.JIRA_BASE_URL;
+    }
+    if (apiConfig.JIRA_USER_EMAIL) {
+      document.getElementById('jiraUserEmail').value = apiConfig.JIRA_USER_EMAIL;
+      originalJiraConfig.jiraUserEmail = apiConfig.JIRA_USER_EMAIL;
+    }
+    if (apiConfig.JIRA_API_TOKEN) {
+      document.getElementById('jiraApiToken').value = apiConfig.JIRA_API_TOKEN;
+      originalJiraConfig.jiraApiToken = apiConfig.JIRA_API_TOKEN;
+    }
+    if (apiConfig.JIRA_SUBTASK_ISSUE_TYPE_ID) {
+      document.getElementById('jiraSubtaskIssueTypeId').value = apiConfig.JIRA_SUBTASK_ISSUE_TYPE_ID;
+      originalJiraConfig.jiraSubtaskIssueTypeId = apiConfig.JIRA_SUBTASK_ISSUE_TYPE_ID;
+    }
+    if (apiConfig.JIRA_REQUEST_TIMEOUT) {
+      document.getElementById('jiraRequestTimeout').value = apiConfig.JIRA_REQUEST_TIMEOUT;
+      originalJiraConfig.jiraRequestTimeout = apiConfig.JIRA_REQUEST_TIMEOUT;
+    }
+  } else {
+    jiraEnabled.checked = false;
+  }
+  
+  // Configurações OpenAI
   const openaiEnabled = document.getElementById('openaiEnabled');
   const openaiApiKey = document.getElementById('openaiApiKey');
   if (apiConfig.OPENAI_API_KEY) {
@@ -167,6 +208,7 @@ function applyApiConfigToFields(apiConfig) {
     openaiEnabled.checked = false;
   }
   
+  // Configurações StackSpot
   const stackspotEnabled = document.getElementById('stackspotEnabled');
   const hasStackspotConfig = apiConfig.Client_ID_stackspot && apiConfig.Client_Key_stackspot && apiConfig.Realm_stackspot && apiConfig.STACKSPOT_AGENT_ID;
   if (hasStackspotConfig) {
@@ -228,13 +270,34 @@ function applyConfigToFields(config) {
 }
 
 // Variáveis para armazenar dados originais
+let originalJiraConfig = {};
 let originalOpenAIConfig = {};
 let originalStackSpotConfig = {};
 
 // Função para aplicar o estado dos campos baseado nos checkboxes habilitados
 function applyFieldStates() {
+  const jiraEnabled = document.getElementById('jiraEnabled').checked;
   const openaiEnabled = document.getElementById('openaiEnabled').checked;
   const stackspotEnabled = document.getElementById('stackspotEnabled').checked;
+  
+  // Aplicar estado dos campos Jira
+  const jiraFields = ['jiraBaseUrl', 'jiraUserEmail', 'jiraApiToken', 'jiraSubtaskIssueTypeId', 'jiraRequestTimeout'];
+  jiraFields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    field.disabled = !jiraEnabled;
+    if (!jiraEnabled) {
+      // Salvar valor atual antes de limpar
+      if (field.value) {
+        originalJiraConfig[fieldId] = field.value;
+      }
+      field.value = fieldId === 'jiraRequestTimeout' ? '30' : '';
+    } else {
+      // Restaurar valor original se existir
+      if (originalJiraConfig[fieldId]) {
+        field.value = originalJiraConfig[fieldId];
+      }
+    }
+  });
   
   // Aplicar estado dos campos OpenAI
   const openaiFields = ['openaiApiKey', 'maxTokens'];
@@ -303,6 +366,9 @@ function bindConfigEvents() {
     const selectedTheme = this.value;
     applyTheme(selectedTheme);
   });
+  document.getElementById('jiraEnabled').addEventListener('change', function() {
+    applyFieldStates();
+  });
   document.getElementById('openaiEnabled').addEventListener('change', function() {
     applyFieldStates();
     // Se desabilitou OpenAI, limpar dados originais APENAS se salvou
@@ -324,6 +390,7 @@ function bindConfigEvents() {
     });
   document.querySelector('button[onclick*="testApiConfig"]').onclick = testApiConfig;
   window.saveConfig = saveConfig;
+  window.testJiraConnection = testJiraConnection;
 }
 
 async function saveConfig() {
@@ -352,6 +419,11 @@ async function saveConfig() {
         clearAfterSuccess: document.getElementById('clearAfterSuccess').checked,
         theme: document.getElementById('theme').value
       },
+      integrations: {
+        jira: {
+          enabled: document.getElementById('jiraEnabled').checked
+        }
+      },
       ia: {
         openai: {
           enabled: document.getElementById('openaiEnabled').checked,
@@ -370,6 +442,13 @@ async function saveConfig() {
       }
     };
     const apiConfig = {
+      ...(document.getElementById('jiraEnabled').checked && {
+        JIRA_BASE_URL: document.getElementById('jiraBaseUrl').value,
+        JIRA_USER_EMAIL: document.getElementById('jiraUserEmail').value,
+        JIRA_API_TOKEN: document.getElementById('jiraApiToken').value,
+        JIRA_SUBTASK_ISSUE_TYPE_ID: document.getElementById('jiraSubtaskIssueTypeId').value,
+        JIRA_REQUEST_TIMEOUT: parseInt(document.getElementById('jiraRequestTimeout').value) || 30
+      }),
       ...(document.getElementById('openaiEnabled').checked && {
         OPENAI_API_KEY: document.getElementById('openaiApiKey').value
       }),
@@ -395,7 +474,11 @@ async function saveConfig() {
       // Sinalizar para outras abas/páginas que o tema foi alterado
       localStorage.setItem('bsqaThemeChanged', Date.now().toString());
       
-      // Limpar dados originais se IA foi desabilitada
+      // Limpar dados originais se integração foi desabilitada
+      const jiraEnabled = document.getElementById('jiraEnabled').checked;
+      if (!jiraEnabled) {
+        originalJiraConfig = {};
+      }
       if (!openaiEnabled) {
         originalOpenAIConfig = {};
       }
@@ -580,5 +663,69 @@ function checkUrlAnchor() {
         }, 3000);
       }
     }, 500);
+  }
+}
+
+// Função para testar conexão com Jira
+async function testJiraConnection() {
+  const testResult = document.getElementById('testJiraResult');
+  testResult.style.display = 'block';
+  testResult.innerHTML = '<div data-testid="config-test-jira-loading">🔄 Testando conexão com Jira...</div>';
+  testResult.style.background = 'rgba(255, 193, 7, 0.2)';
+  testResult.style.color = '#ffc107';
+  testResult.style.border = '1px solid #ffc107';
+  
+  try {
+    // Primeiro salvar as configurações do Jira no backend
+    const apiConfig = {
+      ...(document.getElementById('jiraEnabled').checked && {
+        JIRA_BASE_URL: document.getElementById('jiraBaseUrl').value,
+        JIRA_USER_EMAIL: document.getElementById('jiraUserEmail').value,
+        JIRA_API_TOKEN: document.getElementById('jiraApiToken').value,
+        JIRA_SUBTASK_ISSUE_TYPE_ID: document.getElementById('jiraSubtaskIssueTypeId').value,
+        JIRA_REQUEST_TIMEOUT: parseInt(document.getElementById('jiraRequestTimeout').value) || 30
+      })
+    };
+    
+    const saveResponse = await fetch(window.ApiConfig.buildUrl('/api-config'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(apiConfig)
+    });
+    
+    if (!saveResponse.ok) {
+      throw new Error('Erro ao salvar configurações do Jira');
+    }
+    
+    // Agora testar a conexão
+    const testResponse = await fetch(window.ApiConfig.buildUrl('/jira/test-connection'), { 
+      method: 'POST' 
+    });
+    
+    if (testResponse.ok) {
+      const testData = await testResponse.json();
+      if (testData.success) {
+        testResult.innerHTML = `<div data-testid="config-test-jira-success">✅ ${testData.message}</div>`;
+        testResult.style.background = 'rgba(76, 175, 80, 0.2)';
+        testResult.style.color = '#4caf50';
+        testResult.style.border = '1px solid #4caf50';
+      } else {
+        testResult.innerHTML = `<div data-testid="config-test-jira-error">❌ ${testData.message || 'Falha ao conectar com Jira'}</div>`;
+        testResult.style.background = 'rgba(244, 67, 54, 0.2)';
+        testResult.style.color = '#f44336';
+        testResult.style.border = '1px solid #f44336';
+      }
+    } else {
+      const errorData = await testResponse.json().catch(() => ({ detail: 'Erro desconhecido' }));
+      testResult.innerHTML = `<div data-testid="config-test-jira-error-api">❌ Erro ao testar conexão: ${errorData.detail}</div>`;
+      testResult.style.background = 'rgba(244, 67, 54, 0.2)';
+      testResult.style.color = '#f44336';
+      testResult.style.border = '1px solid #f44336';
+    }
+  } catch (error) {
+    testResult.innerHTML = `<div data-testid="config-test-jira-error-general">❌ Erro ao testar conexão: ${error.message}</div>`;
+    testResult.style.background = 'rgba(244, 67, 54, 0.2)';
+    testResult.style.color = '#f44336';
+    testResult.style.border = '1px solid #f44336';
   }
 } 

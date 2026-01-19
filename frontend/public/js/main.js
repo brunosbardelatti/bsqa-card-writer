@@ -46,8 +46,10 @@ window.isDevelopment = isDevelopment;
  * Histórico de Versões:
  * - 1.0.0: Versão inicial com cache LocalStorage
  * - 1.1.0: Estilos movidos de inline para CSS (REFACT_HEADER_FOOTER.md)
+ * - 1.2.0: Atualizado após REFACT_INCONSISTENCIAS.md
+ * - 1.3.0: Adicionado botão Card na navegação (Integração Jira)
  */
-const COMPONENTS_VERSION = '1.2.0'; // Atualizado após REFACT_INCONSISTENCIAS.md
+const COMPONENTS_VERSION = '1.3.0'; // Adicionado botão Card no header
 const CACHE_KEY_PREFIX = 'bsqa-component-';
 
 /**

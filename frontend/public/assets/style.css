@@ -307,6 +307,10 @@ select {
 .submit-btn {
   width: 100%;
   margin-top: 0.5rem;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .submit-btn:hover, .save-btn:hover, .primary-btn:hover {
@@ -339,6 +343,7 @@ button:hover {
   width: 100%;
   max-width: 100%;
   align-self: center;
+  min-height: 600px;
 }
 .result-container {
   position: relative;
@@ -346,8 +351,8 @@ button:hover {
   padding: 1rem;
   border-radius: var(--radius-md);
   white-space: pre-wrap;
-  min-height: calc(1.5em * 5);
-  max-height: calc(1.5em * 15 + 2rem);
+  min-height: calc(1.5em * 10);
+  max-height: calc(1.5em * 30 + 2rem);
   overflow-y: auto;
   width: 100%;
   box-sizing: border-box;
@@ -2223,4 +2228,405 @@ footer div:last-child {
 footer span {
   margin: 0 0.5rem;
   color: var(--muted-text);
+}
+
+/* ===============================================
+   ESTILOS DA PÁGINA CARD (Integração Jira)
+   =============================================== */
+
+/* Grupos de Checkbox */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: var(--bg-color);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  transition: background 0.2s ease;
+  font-size: var(--text-sm);
+}
+
+.checkbox-group label:hover {
+  background: var(--card-header-bg);
+}
+
+.checkbox-group input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.checkbox-group input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Hint text */
+.hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: var(--text-xs);
+  color: var(--muted-text);
+  font-style: italic;
+}
+
+/* Container de Resultado */
+.result-container {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+}
+
+/* Header do Resultado */
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.result-header h3 {
+  margin: 0;
+  color: var(--success-color);
+  font-size: var(--text-xl);
+}
+
+.result-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Informações do Card */
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: var(--bg-color);
+  border-radius: var(--radius-md);
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.info-item strong {
+  color: var(--accent-color);
+  font-size: var(--text-sm);
+}
+
+.card-key {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: var(--info-color);
+  color: white;
+  border-radius: var(--radius-sm);
+  font-weight: bold;
+  font-family: 'Courier New', monospace;
+  font-size: var(--text-sm);
+}
+
+.card-key:hover {
+  opacity: 0.9;
+}
+
+/* Campos do Card */
+.card-fields {
+  margin-top: 1.5rem;
+}
+
+.card-fields h4 {
+  margin-bottom: 1rem;
+  color: var(--accent-color);
+  font-size: var(--text-lg);
+}
+
+.field-item {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: var(--bg-color);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--info-color);
+}
+
+.field-value {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--card-bg);
+  border-radius: var(--radius-sm);
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+/* Tags (labels, components) */
+.tag {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  margin: 0.25rem;
+  background: var(--card-header-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--muted-text);
+}
+
+/* Steps Container */
+.step-container {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.step-container h4 {
+  margin-bottom: 0.75rem;
+  font-size: var(--text-lg);
+}
+
+.step-success {
+  background: rgba(var(--success-color-rgb), 0.1);
+  border-color: var(--success-color);
+}
+
+.step-error {
+  background: rgba(var(--danger-color-rgb), 0.1);
+  border-color: var(--danger-color);
+}
+
+.step-success h4 {
+  color: var(--success-color);
+}
+
+.step-error h4 {
+  color: var(--danger-color);
+}
+
+/* Resultado da IA */
+.ia-result {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ia-description {
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: var(--text-sm);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Subtask Criada */
+.subtask-created {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.subtask-created .info-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.copy-link-btn {
+  background: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 0.25rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+}
+
+.copy-link-btn:hover {
+  background: var(--card-bg);
+  opacity: 1;
+  border-color: var(--accent-color);
+}
+
+.copy-link-btn:active {
+  transform: scale(0.95);
+}
+
+.copy-link-btn svg {
+  display: block;
+}
+
+.success-message {
+  padding: 0.75rem;
+  background: rgba(var(--success-color-rgb), 0.2);
+  border-left: 3px solid var(--success-color);
+  border-radius: var(--radius-sm);
+  color: var(--success-color);
+  font-weight: 500;
+}
+
+/* Detalhes do Erro */
+.error-details {
+  padding: 0.75rem;
+  background: rgba(var(--danger-color-rgb), 0.1);
+  border-left: 3px solid var(--danger-color);
+  border-radius: var(--radius-sm);
+  color: var(--danger-color);
+}
+
+.error-details small {
+  display: block;
+  margin-top: 0.5rem;
+  opacity: 0.8;
+  font-size: var(--text-xs);
+}
+
+/* Mensagem de Erro */
+.error-message {
+  padding: 1.5rem;
+  background: rgba(var(--danger-color-rgb), 0.1);
+  border: 1px solid var(--danger-color);
+  border-radius: var(--radius-lg);
+  margin-top: 2rem;
+}
+
+.error-message h3 {
+  color: var(--danger-color);
+  margin-bottom: 0.75rem;
+  font-size: var(--text-xl);
+}
+
+.error-message p {
+  color: var(--text-color);
+  line-height: 1.6;
+}
+
+/* Botão de Nova Consulta (substitui submit após resultado) */
+.clear-btn {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--accent-color);
+  color: var(--bg-color);
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--text-base);
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.clear-btn:hover {
+  background: var(--muted-text);
+  transform: translateY(-1px);
+}
+
+.clear-btn:active {
+  transform: translateY(0);
+}
+
+.clear-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Botão de Copiar */
+.copy-btn {
+  padding: 0.5rem 1rem;
+  background: var(--info-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.copy-btn:hover {
+  background: var(--info-color);
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.copy-btn:active {
+  transform: translateY(0);
+}
+
+/* Animações para Feedback de Cópia */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* Responsividade para Página Card */
+@media (max-width: 768px) {
+  .checkbox-group {
+    flex-direction: column;
+  }
+  
+  .result-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .result-actions {
+    width: 100%;
+  }
+  
+  .copy-btn {
+    width: 100%;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .form-actions button {
+    width: 100%;
+  }
 } 

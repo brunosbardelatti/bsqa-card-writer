@@ -1,0 +1,642 @@
+// card.js - Lógica da página de integração Jira
+import { loadCommonComponents, loadThemeFromConfig, generateBreadcrumbs } from './main.js';
+
+// Flag para controlar se a página foi recarregada
+window.pageReloaded = true;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadCommonComponents();
+  loadThemeFromConfig();
+  await loadEnabledAIs();
+  bindFormEvents();
+  generateBreadcrumbs([
+    { name: 'Home', url: 'index.html' },
+    { name: 'Card Jira', url: 'card.html', active: true }
+  ]);
+});
+
+/**
+ * Carrega IAs habilitadas (mesma lógica do chat.js)
+ */
+async function loadEnabledAIs() {
+  const aiSelect = document.getElementById('ai_service');
+  if (!aiSelect) return;
+
+  try {
+    // Carregar configurações do localStorage
+    const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
+    const ia = config.ia || {};
+    
+    // Carregar configurações de API do servidor
+    let apiConfig = {};
+    try {
+      const response = await fetch(window.ApiConfig.buildUrl('/api-config'));
+      if (response.ok) {
+        apiConfig = await response.json();
+      }
+    } catch (error) {
+      console.error('Erro ao carregar configurações de API:', error);
+    }
+    
+    // Determinar quais IAs estão habilitadas
+    const enabledAIs = [];
+    
+    // Verificar OpenAI
+    if (ia.openai && ia.openai.enabled && apiConfig.OPENAI_API_KEY) {
+      enabledAIs.push({ value: 'openai', label: 'OpenAI' });
+    }
+    
+    // Verificar StackSpot
+    if (ia.stackspot && ia.stackspot.enabled && 
+        apiConfig.Client_ID_stackspot && apiConfig.Client_Key_stackspot && 
+        apiConfig.Realm_stackspot && apiConfig.STACKSPOT_AGENT_ID) {
+      enabledAIs.push({ value: 'stackspot', label: 'StackSpot AI' });
+    }
+    
+    // Atualizar select de IAs
+    if (enabledAIs.length === 0) {
+      aiSelect.innerHTML = '<option value="">❌ Nenhuma IA configurada</option>';
+      aiSelect.disabled = true;
+      return;
+    }
+    
+    // Gerar options
+    aiSelect.innerHTML = enabledAIs
+      .map(ai => `<option value="${ai.value}">${ai.label}</option>`)
+      .join('');
+    
+    // Selecionar primeira IA disponível
+    if (enabledAIs.length > 0) {
+      aiSelect.value = enabledAIs[0].value;
+    }
+    
+    aiSelect.disabled = false;
+
+  } catch (error) {
+    console.error('Erro ao carregar IAs:', error);
+    aiSelect.innerHTML = '<option value="">Erro ao carregar IAs</option>';
+    aiSelect.disabled = true;
+  }
+}
+
+/**
+ * Vincula eventos do formulário
+ */
+function bindFormEvents() {
+  const form = document.getElementById('cardForm');
+  const cardFunctionSelect = document.getElementById('card_function');
+  const aiSelectorGroup = document.getElementById('ai-selector-group');
+  const submitBtn = document.getElementById('submitBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const cardNumberInput = document.getElementById('card_number');
+
+  if (!form) return;
+
+  // Ao mudar a funcionalidade selecionada
+  cardFunctionSelect.addEventListener('change', (e) => {
+    if (e.target.value === 'query_and_create') {
+      // Mostrar seletor de IA
+      aiSelectorGroup.style.display = 'block';
+      submitBtn.innerHTML = '🚀 Consultar e Criar Subtask';
+    } else {
+      // Ocultar seletor de IA
+      aiSelectorGroup.style.display = 'none';
+      submitBtn.innerHTML = '🔍 Consultar Card';
+    }
+  });
+
+  // Formatar input do card number para maiúsculas
+  cardNumberInput.addEventListener('input', (e) => {
+    e.target.value = e.target.value.toUpperCase();
+  });
+
+  // Botão de limpar
+  clearBtn.addEventListener('click', () => {
+    clearForm();
+  });
+
+  // Submissão do formulário
+  form.onsubmit = async (e) => {
+    e.preventDefault();
+    await handleFormSubmit();
+  };
+}
+
+/**
+ * Valida o formato do número do card
+ */
+function validateCardNumber(value) {
+  const pattern = /^[A-Z]+-\d+$/;
+  return pattern.test(value.toUpperCase().trim());
+}
+
+/**
+ * Coleta os campos selecionados
+ */
+function getSelectedFields() {
+  const checkboxes = document.querySelectorAll('input[name="fields"]:checked');
+  return Array.from(checkboxes).map(cb => cb.value);
+}
+
+/**
+ * Processa o submit do formulário
+ */
+async function handleFormSubmit() {
+  const output = document.getElementById('output');
+  const submitBtn = document.getElementById('submitBtn');
+  const cardNumber = document.getElementById('card_number').value.toUpperCase().trim();
+  const cardFunction = document.getElementById('card_function').value;
+  const aiService = document.getElementById('ai_service').value;
+
+  // Limpar output anterior
+  output.innerHTML = '';
+
+  // Validar formato do card
+  if (!validateCardNumber(cardNumber)) {
+    showError('Formato inválido. Use: PROJETO-NUMERO (ex: PKGS-1104)');
+    return;
+  }
+
+  // Desabilitar form durante processamento
+  disableForm(true);
+  
+  // Mostrar loading
+  output.innerHTML = '<div class="loading" data-testid="card-loading-message">Processando requisição...</div>';
+
+  try {
+    // Determinar endpoint baseado na funcionalidade
+    const endpoint = cardFunction === 'query_card' 
+      ? '/jira/card' 
+      : '/jira/card-with-ai';
+
+    // Montar payload
+    const payload = {
+      card_number: cardNumber,
+      fields: getSelectedFields()
+    };
+
+    // Adicionar campos específicos para query_and_create
+    if (cardFunction === 'query_and_create') {
+      payload.ai_service = aiService;
+      payload.create_subtask = true;
+    }
+
+    // Fazer request
+    const response = await fetch(window.ApiConfig.buildUrl(endpoint), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || 'Erro ao processar requisição');
+    }
+
+    // Exibir resultado
+    displayResult(data, cardFunction);
+    
+    // Ocultar botão submit e mostrar botão nova consulta
+    showNewQueryButton();
+
+  } catch (error) {
+    console.error('Erro:', error);
+    showError(error.message || 'Erro ao processar requisição');
+    
+    // Mostrar botão nova consulta mesmo em caso de erro
+    showNewQueryButton();
+  } finally {
+    disableForm(false);
+  }
+}
+
+/**
+ * Mostra botão de nova consulta e oculta botão submit
+ */
+function showNewQueryButton() {
+  const submitBtn = document.getElementById('submitBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  
+  submitBtn.style.display = 'none';
+  clearBtn.style.display = 'block';
+}
+
+/**
+ * Desabilita/habilita elementos do formulário
+ */
+function disableForm(disabled) {
+  const submitBtn = document.getElementById('submitBtn');
+  const cardNumberInput = document.getElementById('card_number');
+  const cardFunctionSelect = document.getElementById('card_function');
+  const aiServiceSelect = document.getElementById('ai_service');
+  const checkboxes = document.querySelectorAll('input[name="fields"]:not([disabled])');
+
+  submitBtn.disabled = disabled;
+  cardNumberInput.disabled = disabled;
+  cardFunctionSelect.disabled = disabled;
+  aiServiceSelect.disabled = disabled;
+  
+  // Não desabilitar checkboxes obrigatórios (summary e description)
+  checkboxes.forEach(cb => {
+    if (cb.value !== 'summary' && cb.value !== 'description') {
+      cb.disabled = disabled;
+    }
+  });
+}
+
+/**
+ * Limpa o formulário e permite nova consulta
+ */
+function clearForm() {
+  const output = document.getElementById('output');
+  const cardNumberInput = document.getElementById('card_number');
+  const cardFunctionSelect = document.getElementById('card_function');
+  const aiSelectorGroup = document.getElementById('ai-selector-group');
+  const submitBtn = document.getElementById('submitBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  
+  // Limpar output
+  output.innerHTML = '';
+  
+  // Limpar input do card
+  cardNumberInput.value = '';
+  
+  // Resetar funcionalidade para "Consultar Card"
+  cardFunctionSelect.value = 'query_card';
+  aiSelectorGroup.style.display = 'none';
+  submitBtn.innerHTML = '🔍 Consultar Card';
+  
+  // Desmarcar e habilitar checkboxes opcionais
+  const checkboxes = document.querySelectorAll('input[name="fields"]');
+  checkboxes.forEach(cb => {
+    if (cb.value === 'summary' || cb.value === 'description') {
+      cb.checked = true;
+      // Manter disabled para campos obrigatórios
+    } else {
+      cb.checked = false;
+      cb.disabled = false; // Habilitar checkboxes opcionais
+    }
+  });
+  
+  // Mostrar botão submit e ocultar botão de limpar
+  submitBtn.style.display = 'block';
+  clearBtn.style.display = 'none';
+  
+  // Limpar dados armazenados
+  window.currentCardData = null;
+  window.currentIAResult = null;
+  
+  // Focar no input do card
+  cardNumberInput.focus();
+}
+
+/**
+ * Exibe mensagem de erro
+ */
+function showError(message) {
+  const output = document.getElementById('output');
+  output.innerHTML = `
+    <div class="error-message" data-testid="card-error-message">
+      <h3>❌ Erro</h3>
+      <p>${escapeHtml(message)}</p>
+    </div>
+  `;
+}
+
+/**
+ * Exibe o resultado da requisição
+ */
+function displayResult(data, cardFunction) {
+  const output = document.getElementById('output');
+  
+  if (cardFunction === 'query_card') {
+    // Exibir resultado simples de consulta
+    displayQueryResult(data);
+  } else {
+    // Exibir resultado com steps (query + IA + subtask)
+    displayQueryWithAIResult(data);
+  }
+}
+
+/**
+ * Exibe resultado de consulta simples
+ */
+function displayQueryResult(data) {
+  const output = document.getElementById('output');
+  const cardData = data.data;
+  
+  let html = `
+    <div class="result-container" data-testid="card-result-container">
+      <button class="copy-btn" onclick="copyCardData()" title="Copiar dados do card" style="position: sticky !important; top: 0.5rem !important; right: 0.5rem !important; left: auto !important; float: right !important; margin: 0.5rem !important; z-index: 10 !important;" data-testid="card-button-copy">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h6a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z"/>
+        </svg>
+      </button>
+      <div class="result-header">
+        <h3>✅ Card Encontrado</h3>
+      </div>
+      
+      <div class="card-info">
+        <div class="info-item">
+          <strong>🎫 Card:</strong> <span class="card-key">${escapeHtml(cardData.key)}</span>
+        </div>
+        <div class="info-item">
+          <strong>📁 Projeto:</strong> ${escapeHtml(cardData.project)}
+        </div>
+      </div>
+      
+      <div class="card-fields">
+        <h4>📋 Campos Consultados</h4>
+  `;
+  
+  // Exibir campos retornados
+  for (const [fieldName, fieldValue] of Object.entries(cardData.fields)) {
+    const displayName = getFieldDisplayName(fieldName);
+    const displayValue = formatFieldValue(fieldName, fieldValue);
+    
+    html += `
+      <div class="field-item">
+        <strong>${displayName}:</strong>
+        <div class="field-value">${displayValue}</div>
+      </div>
+    `;
+  }
+  
+  html += `
+      </div>
+    </div>
+  `;
+  
+  output.innerHTML = html;
+  
+  // Armazenar dados para copiar
+  window.currentCardData = formatCardDataForCopy(cardData);
+}
+
+/**
+ * Exibe resultado com steps (query + IA + subtask)
+ */
+function displayQueryWithAIResult(data) {
+  const output = document.getElementById('output');
+  const steps = data.steps;
+  
+  let html = '<div class="result-container" data-testid="card-result-container-with-ai">';
+  
+  // Step 1: Consulta Jira
+  html += renderStep(
+    '1. Consulta ao Jira',
+    steps.jira_query,
+    () => {
+      if (!steps.jira_query.success) return '';
+      const cardData = steps.jira_query.data;
+      return `
+        <div class="card-info">
+          <div class="info-item">
+            <strong>🎫 Card:</strong> <span class="card-key">${escapeHtml(cardData.key)}</span>
+          </div>
+          <div class="info-item">
+            <strong>📝 Título do Card:</strong> ${escapeHtml(cardData.fields.summary || 'N/A')}
+          </div>
+        </div>
+      `;
+    }
+  );
+  
+  // Step 2: Análise IA
+  html += renderStep(
+    '2. Análise com IA',
+    steps.ia_analysis,
+    () => {
+      if (!steps.ia_analysis.success) return '';
+      const parsed = steps.ia_analysis.parsed;
+      // Armazenar resultado para copiar
+      window.currentIAResult = steps.ia_analysis.result;
+      
+      return `
+        <div class="ia-result">
+          <button class="copy-btn" onclick="copyIAResult()" title="Copiar resultado da IA" style="position: sticky !important; top: 0.5rem !important; right: 0.5rem !important; left: auto !important; float: right !important; margin: 0.5rem !important; z-index: 10 !important;" data-testid="card-button-copy-ia">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h6a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z"/>
+            </svg>
+          </button>
+          <div class="info-item">
+            <strong>📌 Título da Subtask:</strong>
+            <div class="field-value">${escapeHtml(parsed.title)}</div>
+          </div>
+          <div class="info-item">
+            <strong>📝 Descrição Gerada:</strong>
+            <div class="field-value ia-description">${escapeHtml(parsed.description).replace(/\n/g, '<br>')}</div>
+          </div>
+        </div>
+      `;
+    }
+  );
+  
+  // Step 3: Criação de Subtask
+  html += renderStep(
+    '3. Criação de Subtask',
+    steps.subtask_created,
+    () => {
+      if (steps.subtask_created.skipped) {
+        return '<p>⏭️ Criação de subtask não solicitada</p>';
+      }
+      if (!steps.subtask_created.success) return '';
+      
+      const subtaskData = steps.subtask_created.data;
+      // Armazenar URL para função de copiar
+      window.currentSubtaskUrl = subtaskData.url;
+      
+      return `
+        <div class="subtask-created">
+          <div class="info-item">
+            <strong>🎫 Subtask Criada:</strong> <a href="${escapeHtml(subtaskData.url)}" target="_blank" class="card-key">${escapeHtml(subtaskData.key)} 🔗</a>
+            <button onclick="copySubtaskLink()" class="copy-link-btn" title="Copiar link da subtask" data-testid="card-button-copy-link">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h6a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z"/>
+              </svg>
+            </button>
+          </div>
+          <div class="success-message">
+            ✅ Subtask criada com sucesso no Jira!
+          </div>
+        </div>
+      `;
+    }
+  );
+  
+  html += '</div>';
+  
+  output.innerHTML = html;
+}
+
+/**
+ * Renderiza um step do processo
+ */
+function renderStep(title, stepData, contentRenderer) {
+  const statusIcon = stepData.success ? '✅' : '❌';
+  const statusClass = stepData.success ? 'step-success' : 'step-error';
+  
+  let html = `
+    <div class="step-container ${statusClass}">
+      <h4>${statusIcon} ${title}</h4>
+  `;
+  
+  if (stepData.success) {
+    html += contentRenderer();
+  } else {
+    html += `
+      <div class="error-details">
+        <strong>Erro:</strong> ${escapeHtml(stepData.error || 'Erro desconhecido')}
+        ${stepData.detail ? `<br><small>${escapeHtml(stepData.detail)}</small>` : ''}
+      </div>
+    `;
+  }
+  
+  html += '</div>';
+  return html;
+}
+
+/**
+ * Retorna o nome de exibição do campo
+ */
+function getFieldDisplayName(fieldName) {
+  const names = {
+    summary: '📝 Título do Card',
+    description: '📄 Descrição',
+    status: '🔄 Status',
+    priority: '⚡ Prioridade',
+    assignee: '👤 Responsável',
+    reporter: '📢 Relator',
+    created: '📅 Data de Criação',
+    updated: '🔄 Última Atualização',
+    labels: '🏷️ Labels',
+    components: '🧩 Componentes',
+    issuetype: '📋 Tipo de Issue'
+  };
+  return names[fieldName] || fieldName;
+}
+
+/**
+ * Formata o valor do campo para exibição
+ */
+function formatFieldValue(fieldName, value) {
+  if (value === null || value === undefined || value === '') {
+    return '<em>Não informado</em>';
+  }
+  
+  // Arrays (labels, components)
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '<em>Nenhum</em>';
+    return value.map(v => `<span class="tag">${escapeHtml(v)}</span>`).join(' ');
+  }
+  
+  // Descrição (preservar quebras de linha)
+  if (fieldName === 'description') {
+    return escapeHtml(value).replace(/\n/g, '<br>');
+  }
+  
+  return escapeHtml(String(value));
+}
+
+/**
+ * Formata dados do card para cópia
+ */
+function formatCardDataForCopy(cardData) {
+  let text = `Card: ${cardData.key}\n`;
+  text += `Projeto: ${cardData.project}\n\n`;
+  text += `Campos:\n`;
+  
+  for (const [fieldName, fieldValue] of Object.entries(cardData.fields)) {
+    const displayName = getFieldDisplayName(fieldName).replace(/[📝📄🔄⚡👤📢📅🏷️🧩📋]/g, '').trim();
+    
+    if (Array.isArray(fieldValue)) {
+      text += `${displayName}: ${fieldValue.join(', ') || 'Nenhum'}\n`;
+    } else {
+      text += `${displayName}: ${fieldValue || 'Não informado'}\n`;
+    }
+  }
+  
+  return text;
+}
+
+/**
+ * Copia dados do card para clipboard
+ */
+window.copyCardData = function() {
+  if (!window.currentCardData) return;
+  
+  navigator.clipboard.writeText(window.currentCardData).then(() => {
+    showCopyFeedback('Dados copiados!');
+  }).catch(err => {
+    console.error('Erro ao copiar:', err);
+    showCopyFeedback('Erro ao copiar', true);
+  });
+};
+
+/**
+ * Copia resultado da IA para clipboard
+ */
+window.copyIAResult = function() {
+  if (!window.currentIAResult) return;
+  
+  navigator.clipboard.writeText(window.currentIAResult).then(() => {
+    showCopyFeedback('Resultado da IA copiado!');
+  }).catch(err => {
+    console.error('Erro ao copiar:', err);
+    showCopyFeedback('Erro ao copiar', true);
+  });
+};
+
+/**
+ * Copia link da subtask para clipboard
+ */
+window.copySubtaskLink = function() {
+  if (!window.currentSubtaskUrl) return;
+  
+  navigator.clipboard.writeText(window.currentSubtaskUrl).then(() => {
+    showCopyFeedback('Link da subtask copiado!');
+  }).catch(err => {
+    console.error('Erro ao copiar:', err);
+    showCopyFeedback('Erro ao copiar', true);
+  });
+};
+
+/**
+ * Mostra feedback de cópia
+ */
+function showCopyFeedback(message, isError = false) {
+  const feedback = document.createElement('div');
+  feedback.className = `copy-feedback ${isError ? 'error' : 'success'}`;
+  feedback.textContent = message;
+  feedback.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${isError ? '#ff4444' : '#4CAF50'};
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    z-index: 10000;
+    animation: slideIn 0.3s ease-out;
+  `;
+  
+  document.body.appendChild(feedback);
+  
+  setTimeout(() => {
+    feedback.style.animation = 'slideOut 0.3s ease-out';
+    setTimeout(() => feedback.remove(), 300);
+  }, 2000);
+}
+
+/**
+ * Escapa HTML para prevenir XSS
+ */
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
