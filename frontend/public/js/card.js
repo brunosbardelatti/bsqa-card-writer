@@ -322,6 +322,64 @@ function displayResult(data, cardFunction) {
 }
 
 /**
+ * Helper para converter TAG em array
+ */
+function formatTagsAsArray(tagValue) {
+  if (Array.isArray(tagValue)) {
+    return tagValue.map(item => item.value || item);
+  }
+  if (typeof tagValue === 'object' && tagValue && tagValue.value) {
+    return [tagValue.value];
+  }
+  if (tagValue) {
+    return [String(tagValue)];
+  }
+  return [];
+}
+
+/**
+ * Retorna classe CSS para prioridade
+ */
+function getPriorityClass(priority) {
+  if (!priority) return 'priority-default';
+  
+  const priorityLower = priority.toLowerCase();
+  const map = {
+    'highest': 'priority-highest',
+    'high': 'priority-high',
+    'alta': 'priority-high',
+    'medium': 'priority-medium',
+    'média': 'priority-medium',
+    'low': 'priority-low',
+    'baixa': 'priority-low',
+    'lowest': 'priority-lowest'
+  };
+  
+  return map[priorityLower] || 'priority-default';
+}
+
+/**
+ * Retorna classe CSS para status
+ */
+function getStatusClass(status) {
+  if (!status) return 'status-default';
+  
+  const statusLower = status.toLowerCase();
+  const map = {
+    'to do': 'status-todo',
+    'a fazer': 'status-todo',
+    'in progress': 'status-inprogress',
+    'em progresso': 'status-inprogress',
+    'done': 'status-done',
+    'concluído': 'status-done',
+    'resolved': 'status-done',
+    'resolvido': 'status-done'
+  };
+  
+  return map[statusLower] || 'status-default';
+}
+
+/**
  * Exibe resultado de consulta simples
  */
 function displayQueryResult(data) {
@@ -339,36 +397,116 @@ function displayQueryResult(data) {
         <h3>✅ Card Encontrado</h3>
       </div>
       
-      <div class="card-info">
-        <div class="info-item">
-          <strong>🎫 Card:</strong> <span class="card-key">${escapeHtml(cardData.key)}</span>
-        </div>
-        <div class="info-item">
-          <strong>📁 Projeto:</strong> ${escapeHtml(cardData.project)}
-        </div>
+      <!-- Header Compacto -->
+      <div class="card-header-compact">
+        <span class="card-key-large">🎫 ${escapeHtml(cardData.key)}</span>
+        <span class="card-project">📁 ${escapeHtml(cardData.project || cardData.project_key || 'N/A')}</span>
       </div>
       
-      <div class="card-fields">
-        <h4>📋 Campos Consultados</h4>
+      <!-- Título (Destaque) -->
+      <div class="card-title-section">
+        <div class="title-label">Título:</div>
+        <h2 class="card-title">${escapeHtml(cardData.fields.summary || 'N/A')}</h2>
+      </div>
+      
+      <!-- Badges de Metadados -->
+      <div class="badges-container">
   `;
   
-  // Exibir campos retornados
-  for (const [fieldName, fieldValue] of Object.entries(cardData.fields)) {
-    const displayName = getFieldDisplayName(fieldName);
-    const displayValue = formatFieldValue(fieldName, fieldValue);
+  // Renderizar badges de metadados com labels
+  const badges = [];
+  
+  if (cardData.fields.priority) {
+    const priorityClass = getPriorityClass(cardData.fields.priority.name);
+    badges.push({
+      label: 'Prioridade:',
+      badge: `<span class="badge badge-priority ${priorityClass}">⚡ ${escapeHtml(cardData.fields.priority.name)}</span>`
+    });
+  }
+  
+  if (cardData.fields.status) {
+    const statusClass = getStatusClass(cardData.fields.status.name);
+    badges.push({
+      label: 'Status:',
+      badge: `<span class="badge badge-status ${statusClass}">🔄 ${escapeHtml(cardData.fields.status.name)}</span>`
+    });
+  }
+  
+  // TAGs como badges
+  if (cardData.fields.customfield_10068) {
+    const tags = formatTagsAsArray(cardData.fields.customfield_10068);
+    if (tags.length > 0) {
+      const tagBadges = tags.map(tag => 
+        `<span class="badge badge-tag">🏷️ ${escapeHtml(tag)}</span>`
+      ).join('');
+      badges.push({
+        label: 'TAG\'s:',
+        badge: tagBadges
+      });
+    }
+  }
+  
+  // Renderizar badges com labels
+  badges.forEach(({ label, badge }) => {
+    html += `
+      <div class="badge-group">
+        <span class="badge-label">${label}</span>
+        <span class="badge-items">${badge}</span>
+      </div>
+    `;
+  });
+  
+  html += `</div>`;
+  
+  // Responsáveis (se existirem)
+  const hasResponsaveis = cardData.fields.assignee || cardData.fields.customfield_10380;
+  if (hasResponsaveis) {
+    html += `
+      <div class="field-group field-group-responsaveis">
+        <h4 class="group-title">👥 Responsáveis</h4>
+        <div class="responsaveis-grid">
+    `;
+    
+    if (cardData.fields.assignee) {
+      html += `
+        <div class="responsavel-card">
+          <div class="responsavel-label">👤 Dev Responsável</div>
+          <div class="responsavel-name">${escapeHtml(cardData.fields.assignee.displayName || cardData.fields.assignee.name || 'N/A')}</div>
+          ${cardData.fields.assignee.emailAddress ? `<div class="responsavel-email">${escapeHtml(cardData.fields.assignee.emailAddress)}</div>` : ''}
+        </div>
+      `;
+    }
+    
+    if (cardData.fields.customfield_10380) {
+      html += `
+        <div class="responsavel-card responsavel-qa">
+          <div class="responsavel-label">👨‍💻 QA Responsável</div>
+          <div class="responsavel-name">${escapeHtml(cardData.fields.customfield_10380.displayName || cardData.fields.customfield_10380.name || 'N/A')}</div>
+          ${cardData.fields.customfield_10380.emailAddress ? `<div class="responsavel-email">${escapeHtml(cardData.fields.customfield_10380.emailAddress)}</div>` : ''}
+        </div>
+      `;
+    }
     
     html += `
-      <div class="field-item">
-        <strong>${displayName}:</strong>
-        <div class="field-value">${displayValue}</div>
+        </div>
       </div>
     `;
   }
   
-  html += `
+  // Descrição (por último) - sempre exibir se o campo foi solicitado
+  // description é campo obrigatório, então sempre deve estar presente
+  if (cardData.fields.hasOwnProperty('description')) {
+    html += `
+      <div class="field-group field-group-description">
+        <h4 class="group-title">📄 Descrição</h4>
+        <div class="description-content">
+          ${formatFieldValue('description', cardData.fields.description)}
+        </div>
       </div>
-    </div>
-  `;
+    `;
+  }
+  
+  html += `</div>`;
   
   output.innerHTML = html;
   
@@ -512,9 +650,10 @@ function getFieldDisplayName(fieldName) {
     reporter: '📢 Relator',
     created: '📅 Data de Criação',
     updated: '🔄 Última Atualização',
-    labels: '🏷️ Labels',
     components: '🧩 Componentes',
-    issuetype: '📋 Tipo de Issue'
+    issuetype: '📋 Tipo de Issue',
+    customfield_10068: '🏷️ TAG',
+    customfield_10380: '👨‍💻 QA Responsável'
   };
   return names[fieldName] || fieldName;
 }
@@ -527,7 +666,40 @@ function formatFieldValue(fieldName, value) {
     return '<em>Não informado</em>';
   }
   
-  // Arrays (labels, components)
+  // Tratamento específico para TAG (customfield_10068)
+  if (fieldName === 'customfield_10068') {
+    // TAG - pode ser array ou string
+    if (Array.isArray(value)) {
+      if (value.length === 0) return '<em>Nenhuma TAG</em>';
+      // Se for array de objetos com propriedade 'value'
+      if (value[0]?.value) {
+        return value.map(item => `<span class="tag">${escapeHtml(item.value)}</span>`).join(' ');
+      }
+      // Se for array de strings
+      return value.map(item => `<span class="tag">${escapeHtml(item)}</span>`).join(' ');
+    }
+    // Se for objeto com propriedade 'value'
+    if (typeof value === 'object' && value.value) {
+      return `<span class="tag">${escapeHtml(value.value)}</span>`;
+    }
+    return escapeHtml(String(value));
+  }
+  
+  // Tratamento específico para QA Responsável (customfield_10380)
+  if (fieldName === 'customfield_10380') {
+    // QA Responsável - deve ser um user object
+    if (typeof value === 'object') {
+      if (value.displayName) {
+        return `${escapeHtml(value.displayName)}${value.emailAddress ? ` (${escapeHtml(value.emailAddress)})` : ''}`;
+      }
+      if (value.name) {
+        return escapeHtml(value.name);
+      }
+    }
+    return escapeHtml(String(value));
+  }
+  
+  // Arrays (components, etc)
   if (Array.isArray(value)) {
     if (value.length === 0) return '<em>Nenhum</em>';
     return value.map(v => `<span class="tag">${escapeHtml(v)}</span>`).join(' ');

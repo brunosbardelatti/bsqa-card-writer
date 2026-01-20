@@ -54,6 +54,10 @@ class JiraService(IssueTrackerBase):
         if fields is None:
             fields = ["summary", "description"]
         
+        # Sempre incluir 'project' nos campos solicitados para obter nome completo
+        if "project" not in fields:
+            fields = fields + ["project"]
+        
         fields_param = ",".join(fields)
         url = f"{self.base_url}/rest/api/3/issue/{issue_key}?fields={fields_param}"
         
@@ -73,10 +77,23 @@ class JiraService(IssueTrackerBase):
         response.raise_for_status()
         
         data = response.json()
+        parsed_fields = self._parse_fields(data.get("fields", {}))
+        
+        # Garantir que campos solicitados sempre apareçam, mesmo se vazios
+        for field in fields:
+            if field not in parsed_fields:
+                parsed_fields[field] = None
+        
+        # Obter nome completo do projeto (se disponível) ou usar código como fallback
+        project_data = data.get("fields", {}).get("project", {})
+        project_name = project_data.get("name") if project_data else None
+        project_key = self.extract_project_key(data["key"])
+        
         return {
             "key": data["key"],
-            "project": self.extract_project_key(data["key"]),
-            "fields": self._parse_fields(data.get("fields", {}))
+            "project": project_name if project_name else project_key,  # Nome completo ou código
+            "project_key": project_key,  # Sempre manter código disponível
+            "fields": parsed_fields
         }
     
     def _parse_fields(self, fields: dict) -> dict:
@@ -84,19 +101,23 @@ class JiraService(IssueTrackerBase):
         parsed = {}
         
         for field_id, value in fields.items():
-            if field_id == "description" and value:
+            if field_id == "description":
                 # Converter Atlassian Document Format para texto
-                parsed[field_id] = self._adf_to_text(value)
+                # Sempre retornar, mesmo se vazio (campo obrigatório)
+                parsed[field_id] = self._adf_to_text(value) if value else ""
             elif field_id == "status" and value:
-                parsed[field_id] = value.get("name", "")
+                parsed[field_id] = value  # Manter objeto completo para compatibilidade
             elif field_id == "priority" and value:
-                parsed[field_id] = value.get("name", "")
+                parsed[field_id] = value  # Manter objeto completo para compatibilidade
             elif field_id == "assignee" and value:
-                parsed[field_id] = value.get("displayName", "")
+                parsed[field_id] = value  # Manter objeto completo
             elif field_id == "reporter" and value:
                 parsed[field_id] = value.get("displayName", "")
             elif field_id == "issuetype" and value:
                 parsed[field_id] = value.get("name", "")
+            elif field_id == "project" and value:
+                # Manter objeto completo do projeto (tem name, key, etc)
+                parsed[field_id] = value
             elif field_id == "labels":
                 parsed[field_id] = value if value else []
             elif field_id == "components":

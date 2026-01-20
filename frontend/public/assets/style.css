@@ -2388,6 +2388,288 @@ footer span {
   color: var(--muted-text);
 }
 
+/* ============================================
+   ESTILOS PARA REORGANIZAÇÃO DE CAMPOS (ordem-campos.md)
+   ============================================ */
+
+/* Header Compacto */
+.card-header-compact {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(var(--info-color-rgb), 0.1), transparent);
+  border-radius: var(--radius-md);
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.card-key-large {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: var(--info-color);
+}
+
+.card-project {
+  font-size: 1rem;
+  color: var(--muted-text);
+}
+
+/* Título Section */
+.card-title-section {
+  margin-bottom: 1.5rem;
+}
+
+.title-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted-text);
+  margin-bottom: 0.5rem;
+}
+
+.card-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Badges */
+.badge {
+  display: inline-block;
+  padding: 0.4rem 0.8rem;
+  margin: 0.25rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Container de badges */
+.badges-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+/* Grupo de badge com label */
+.badge-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.badge-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--muted-text);
+  min-width: 80px;
+}
+
+.badge-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Badges de Prioridade - Melhor contraste para tema escuro */
+.badge-priority.priority-highest,
+.badge-priority.priority-high {
+  background: rgba(244, 67, 54, 0.25);
+  color: #ff6b6b;
+  border: 1px solid #ff5252;
+  font-weight: 600;
+}
+
+.badge-priority.priority-medium {
+  background: rgba(255, 193, 7, 0.25);
+  color: #ffd54f;
+  border: 1px solid #ffc107;
+  font-weight: 600;
+}
+
+.badge-priority.priority-low,
+.badge-priority.priority-lowest {
+  background: rgba(76, 175, 80, 0.25);
+  color: #81c784;
+  border: 1px solid #66bb6a;
+  font-weight: 600;
+}
+
+.badge-priority.priority-default {
+  background: rgba(158, 158, 158, 0.2);
+  color: #bdbdbd;
+  border: 1px solid #9e9e9e;
+  font-weight: 500;
+}
+
+/* Badges de Status - Melhor contraste para tema escuro */
+.badge-status.status-todo {
+  background: rgba(158, 158, 158, 0.25);
+  color: #e0e0e0;
+  border: 1px solid #bdbdbd;
+  font-weight: 600;
+}
+
+.badge-status.status-inprogress {
+  background: rgba(33, 150, 243, 0.25);
+  color: #64b5f6;
+  border: 1px solid #42a5f5;
+  font-weight: 600;
+}
+
+.badge-status.status-done {
+  background: rgba(76, 175, 80, 0.25);
+  color: #81c784;
+  border: 1px solid #66bb6a;
+  font-weight: 600;
+}
+
+.badge-status.status-default {
+  background: rgba(158, 158, 158, 0.2);
+  color: #bdbdbd;
+  border: 1px solid #9e9e9e;
+  font-weight: 500;
+}
+
+/* Badges de TAG - Melhor contraste para tema escuro */
+.badge-tag {
+  background: rgba(156, 39, 176, 0.25);
+  color: #ba68c8;
+  border: 1px solid #ab47bc;
+  font-weight: 600;
+}
+
+/* Badges de Usuário */
+.badge-user {
+  background: rgba(var(--info-color-rgb), 0.2);
+  color: var(--info-color);
+  border: 1px solid var(--info-color);
+}
+
+.badge-user-qa {
+  background: rgba(var(--warning-color-rgb), 0.2);
+  color: var(--warning-color);
+  border: 1px solid var(--warning-color);
+}
+
+/* Field Groups */
+.field-group {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background: var(--card-bg);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+}
+
+.field-group-responsaveis {
+  border-left: 4px solid var(--info-color);
+}
+
+.field-group-description {
+  border-left: 4px solid var(--warning-color);
+}
+
+.group-title {
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+/* Grid de Responsáveis */
+.responsaveis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.responsavel-card {
+  padding: 1rem;
+  background: rgba(var(--info-color-rgb), 0.05);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--info-color);
+}
+
+.responsavel-card.responsavel-qa {
+  border-left-color: var(--warning-color);
+  background: rgba(var(--warning-color-rgb), 0.05);
+}
+
+.responsavel-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--muted-text);
+  margin-bottom: 0.25rem;
+}
+
+.responsavel-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.25rem;
+}
+
+.responsavel-email {
+  font-size: 0.9rem;
+  color: var(--muted-text);
+}
+
+/* Descrição */
+.description-content {
+  padding: 1rem;
+  background: var(--result-bg);
+  border-radius: var(--radius-sm);
+  max-height: 400px;
+  overflow-y: auto;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .card-header-compact {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .card-key-large {
+    font-size: 1.1rem;
+  }
+  
+  .card-title {
+    font-size: 1.2rem;
+  }
+  
+  .responsaveis-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .badges-container {
+    gap: 0.25rem;
+  }
+  
+  .badge {
+    font-size: 0.85rem;
+    padding: 0.35rem 0.7rem;
+  }
+  
+  .badge-label {
+    min-width: 70px;
+    font-size: 0.85rem;
+  }
+  
+  .badge-group {
+    gap: 0.5rem;
+  }
+}
+
 /* Steps Container */
 .step-container {
   margin-bottom: 1.5rem;
