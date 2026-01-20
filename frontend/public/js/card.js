@@ -714,20 +714,80 @@ function formatFieldValue(fieldName, value) {
 }
 
 /**
- * Formata dados do card para cópia
+ * Formata dados do card para cópia seguindo ordem lógica
+ * Ordem: Card → Projeto → Título → Metadados → Responsáveis → Descrição
  */
 function formatCardDataForCopy(cardData) {
   let text = `Card: ${cardData.key}\n`;
-  text += `Projeto: ${cardData.project}\n\n`;
-  text += `Campos:\n`;
+  text += `Projeto: ${cardData.project || cardData.project_key || 'N/A'}\n\n`;
   
-  for (const [fieldName, fieldValue] of Object.entries(cardData.fields)) {
-    const displayName = getFieldDisplayName(fieldName).replace(/[📝📄🔄⚡👤📢📅🏷️🧩📋]/g, '').trim();
+  // Título
+  if (cardData.fields.summary) {
+    text += `Título: ${cardData.fields.summary}\n\n`;
+  }
+  
+  // Metadados (Prioridade, Status, TAG)
+  const metadata = [];
+  
+  if (cardData.fields.priority) {
+    const priorityName = typeof cardData.fields.priority === 'object' 
+      ? cardData.fields.priority.name 
+      : cardData.fields.priority;
+    if (priorityName) {
+      metadata.push(`Prioridade: ${priorityName}`);
+    }
+  }
+  
+  if (cardData.fields.status) {
+    const statusName = typeof cardData.fields.status === 'object' 
+      ? cardData.fields.status.name 
+      : cardData.fields.status;
+    if (statusName) {
+      metadata.push(`Status: ${statusName}`);
+    }
+  }
+  
+  if (cardData.fields.customfield_10068) {
+    const tags = formatTagsAsArray(cardData.fields.customfield_10068);
+    if (tags.length > 0) {
+      metadata.push(`TAG: ${tags.join(', ')}`);
+    }
+  }
+  
+  if (metadata.length > 0) {
+    text += metadata.join('\n') + '\n\n';
+  }
+  
+  // Responsáveis (Responsável, QA Responsável)
+  const responsaveis = [];
+  
+  if (cardData.fields.assignee) {
+    const assignee = cardData.fields.assignee;
+    const assigneeText = assignee.displayName || assignee.name || 'N/A';
+    const assigneeEmail = assignee.emailAddress ? ` (${assignee.emailAddress})` : '';
+    responsaveis.push(`Dev Responsável: ${assigneeText}${assigneeEmail}`);
+  }
+  
+  if (cardData.fields.customfield_10380) {
+    const qa = cardData.fields.customfield_10380;
+    const qaText = qa.displayName || qa.name || 'N/A';
+    const qaEmail = qa.emailAddress ? ` (${qa.emailAddress})` : '';
+    responsaveis.push(`QA Responsável: ${qaText}${qaEmail}`);
+  }
+  
+  if (responsaveis.length > 0) {
+    text += responsaveis.join('\n') + '\n\n';
+  }
+  
+  // Descrição (por último)
+  if (cardData.fields.description) {
+    // Remover HTML tags se houver e preservar quebras de linha
+    const description = typeof cardData.fields.description === 'string' 
+      ? cardData.fields.description.replace(/<[^>]*>/g, '').trim()
+      : String(cardData.fields.description || '').trim();
     
-    if (Array.isArray(fieldValue)) {
-      text += `${displayName}: ${fieldValue.join(', ') || 'Nenhum'}\n`;
-    } else {
-      text += `${displayName}: ${fieldValue || 'Não informado'}\n`;
+    if (description) {
+      text += `Descrição:\n${description}\n`;
     }
   }
   
