@@ -22,6 +22,7 @@ class JiraService(IssueTrackerBase):
         {"id": "labels", "name": "Labels", "required": False},
         {"id": "components", "name": "Componentes", "required": False},
         {"id": "issuetype", "name": "Tipo de Issue", "required": False},
+        {"id": "changelog", "name": "Histórico", "required": False},
     ]
     
     def __init__(self):
@@ -54,12 +55,21 @@ class JiraService(IssueTrackerBase):
         if fields is None:
             fields = ["summary", "description"]
         
+        # Verificar se changelog foi solicitado
+        include_changelog = "changelog" in fields
+        # Remover changelog da lista de fields (não é um field real)
+        fields = [f for f in fields if f != "changelog"]
+        
         # Sempre incluir 'project' nos campos solicitados para obter nome completo
         if "project" not in fields:
             fields = fields + ["project"]
         
         fields_param = ",".join(fields)
         url = f"{self.base_url}/rest/api/3/issue/{issue_key}?fields={fields_param}"
+        
+        # Adicionar expand=changelog se solicitado
+        if include_changelog:
+            url += "&expand=changelog"
         
         response = requests.get(
             url,
@@ -79,10 +89,19 @@ class JiraService(IssueTrackerBase):
         data = response.json()
         parsed_fields = self._parse_fields(data.get("fields", {}))
         
+        # Processar changelog se presente
+        if include_changelog and "changelog" in data:
+            parsed_fields["changelog"] = self._parse_changelog(data.get("changelog", {}))
+        
         # Garantir que campos solicitados sempre apareçam, mesmo se vazios
         for field in fields:
             if field not in parsed_fields:
                 parsed_fields[field] = None
+        
+        # Garantir changelog se foi solicitado
+        if include_changelog:
+            if "changelog" not in parsed_fields:
+                parsed_fields["changelog"] = []
         
         # Obter nome completo do projeto (se disponível) ou usar código como fallback
         project_data = data.get("fields", {}).get("project", {})
@@ -126,6 +145,47 @@ class JiraService(IssueTrackerBase):
                 parsed[field_id] = value
         
         return parsed
+    
+    def _parse_changelog(self, changelog_data: dict) -> list:
+        """
+        Processa o changelog retornado pelo Jira.
+        Retorna lista de históricos ordenados do mais novo ao mais velho.
+        """
+        if not changelog_data or "histories" not in changelog_data:
+            return []
+        
+        histories = changelog_data.get("histories", [])
+        parsed_histories = []
+        
+        for history in histories:
+            author = history.get("author", {})
+            created = history.get("created", "")
+            items = history.get("items", [])
+            
+            parsed_items = []
+            for item in items:
+                parsed_items.append({
+                    "field": item.get("field", ""),
+                    "fieldtype": item.get("fieldtype", ""),
+                    "from": item.get("fromString") or item.get("from", ""),
+                    "to": item.get("toString") or item.get("to", "")
+                })
+            
+            parsed_histories.append({
+                "id": history.get("id", ""),
+                "author": {
+                    "displayName": author.get("displayName", "Desconhecido"),
+                    "emailAddress": author.get("emailAddress", "")
+                },
+                "created": created,
+                "items": parsed_items
+            })
+        
+        # Ordenar do mais novo ao mais velho (decrescente por data)
+        # A data vem no formato ISO 8601, então podemos ordenar diretamente
+        parsed_histories.sort(key=lambda x: x["created"], reverse=True)
+        
+        return parsed_histories
     
     def _adf_to_text(self, adf: dict) -> str:
         """Converte Atlassian Document Format para texto plano."""

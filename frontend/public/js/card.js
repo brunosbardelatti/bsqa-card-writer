@@ -586,6 +586,18 @@ function displayQueryResult(data) {
     `;
   }
   
+  // Histórico (exibir apenas se presente e solicitado)
+  if (cardData.fields.changelog && Array.isArray(cardData.fields.changelog) && cardData.fields.changelog.length > 0) {
+    html += `
+      <div class="field-group field-group-history">
+        <h4 class="group-title">📜 Histórico</h4>
+        <div class="history-content">
+          ${formatFieldValue('changelog', cardData.fields.changelog)}
+        </div>
+      </div>
+    `;
+  }
+  
   html += `</div>`;
   
   output.innerHTML = html;
@@ -733,7 +745,8 @@ function getFieldDisplayName(fieldName) {
     components: '🧩 Componentes',
     issuetype: '📋 Tipo de Issue',
     customfield_10068: '🏷️ TAG',
-    customfield_10380: '👨‍💻 QA Responsável'
+    customfield_10380: '👨‍💻 QA Responsável',
+    changelog: '📜 Histórico'
   };
   return names[fieldName] || fieldName;
 }
@@ -779,6 +792,16 @@ function formatFieldValue(fieldName, value) {
     return escapeHtml(String(value));
   }
   
+  // Tratamento específico para Histórico (changelog)
+  if (fieldName === 'changelog') {
+    if (!Array.isArray(value) || value.length === 0) {
+      return '<em>Nenhum histórico disponível</em>';
+    }
+    
+    // Formatar cada entrada do histórico
+    return formatChangelog(value);
+  }
+  
   // Arrays (components, etc)
   if (Array.isArray(value)) {
     if (value.length === 0) return '<em>Nenhum</em>';
@@ -791,6 +814,102 @@ function formatFieldValue(fieldName, value) {
   }
   
   return escapeHtml(String(value));
+}
+
+/**
+ * Formata o histórico (changelog) para exibição
+ * @param {Array} changelog - Array de históricos ordenados (mais novo primeiro)
+ * @returns {string} HTML formatado
+ */
+function formatChangelog(changelog) {
+  if (!Array.isArray(changelog) || changelog.length === 0) {
+    return '<em>Nenhum histórico disponível</em>';
+  }
+  
+  let html = '<div class="changelog-container">';
+  
+  changelog.forEach((history, index) => {
+    const author = history.author?.displayName || 'Desconhecido';
+    const email = history.author?.emailAddress || '';
+    const created = formatDate(history.created);
+    const items = history.items || [];
+    
+    html += `
+      <div class="changelog-entry" data-testid="changelog-entry-${index}">
+        <div class="changelog-header">
+          <span class="changelog-author">👤 ${escapeHtml(author)}${email ? ` (${escapeHtml(email)})` : ''}</span>
+          <span class="changelog-date">📅 ${escapeHtml(created)}</span>
+        </div>
+        <div class="changelog-items">
+    `;
+    
+    items.forEach((item, itemIndex) => {
+      const fieldName = formatFieldName(item.field);
+      const fromValue = item.from || '<em>vazio</em>';
+      const toValue = item.to || '<em>vazio</em>';
+      
+      html += `
+        <div class="changelog-item" data-testid="changelog-item-${index}-${itemIndex}">
+          <span class="changelog-field">${escapeHtml(fieldName)}:</span>
+          <span class="changelog-change">
+            ${fromValue} → ${toValue}
+          </span>
+        </div>
+      `;
+    });
+    
+    html += `
+        </div>
+      </div>
+    `;
+  });
+  
+  html += '</div>';
+  return html;
+}
+
+/**
+ * Formata nome do campo para exibição amigável
+ * @param {string} fieldId - ID do campo (ex: "status", "assignee")
+ * @returns {string} Nome amigável
+ */
+function formatFieldName(fieldId) {
+  const fieldNames = {
+    'status': 'Status',
+    'priority': 'Prioridade',
+    'assignee': 'Responsável',
+    'summary': 'Título',
+    'description': 'Descrição',
+    'labels': 'Labels',
+    'components': 'Componentes',
+    'issuetype': 'Tipo de Issue',
+    'resolution': 'Resolução',
+    'customfield_10068': 'TAG',
+    'customfield_10380': 'QA Responsável'
+  };
+  return fieldNames[fieldId] || fieldId;
+}
+
+/**
+ * Formata data ISO 8601 para formato legível
+ * @param {string} isoDate - Data no formato ISO 8601
+ * @returns {string} Data formatada (ex: "15/01/2024 10:30")
+ */
+function formatDate(isoDate) {
+  if (!isoDate) return 'Data não disponível';
+  
+  try {
+    const date = new Date(isoDate);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  } catch (e) {
+    return isoDate; // Retornar original se falhar
+  }
 }
 
 /**
@@ -867,10 +986,31 @@ function formatCardDataForCopy(cardData) {
       : String(cardData.fields.description || '').trim();
     
     if (description) {
-      text += `Descrição:\n${description}\n`;
+      text += `Descrição:\n${description}\n\n`;
     }
   }
   
+  // Histórico (após descrição, se presente)
+  if (cardData.fields.changelog && Array.isArray(cardData.fields.changelog) && cardData.fields.changelog.length > 0) {
+    text += `Histórico:\n`;
+    cardData.fields.changelog.forEach((history, index) => {
+      const author = history.author?.displayName || 'Desconhecido';
+      const email = history.author?.emailAddress || '';
+      const created = formatDate(history.created);
+      const items = history.items || [];
+      
+      text += `\n[${index + 1}] ${author}${email ? ` (${email})` : ''} - ${created}\n`;
+      
+      items.forEach(item => {
+        const fieldName = formatFieldName(item.field);
+        const fromValue = item.from || 'vazio';
+        const toValue = item.to || 'vazio';
+        text += `  • ${fieldName}: ${fromValue} → ${toValue}\n`;
+      });
+    });
+    text += '\n';
+  }
+
   return text;
 }
 

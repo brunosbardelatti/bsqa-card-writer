@@ -2718,6 +2718,113 @@ footer span {
   white-space: pre-wrap;
 }
 
+/* Histórico (Changelog) */
+.field-group-history {
+  margin-top: 0; /* gap do container pai cuida do espaçamento */
+}
+
+.history-content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-color);
+  opacity: 0.9;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  opacity: 0.95;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.changelog-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.changelog-entry {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-color);
+  opacity: 0.9;
+}
+
+.changelog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.changelog-author {
+  font-weight: 600;
+  color: var(--text-color);
+  opacity: 0.95;
+  font-size: 14px;
+}
+
+.changelog-date {
+  font-size: 12px;
+  color: var(--muted-text);
+  opacity: 0.8;
+}
+
+.changelog-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.changelog-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.changelog-field {
+  font-weight: 500;
+  color: var(--text-color);
+  opacity: 0.9;
+  min-width: 100px;
+}
+
+.changelog-change {
+  color: var(--text-color);
+  opacity: 0.85;
+}
+
+.changelog-change em {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* Responsividade para histórico */
+@media (max-width: 860px) {
+  .changelog-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .changelog-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .changelog-field {
+    min-width: auto;
+  }
+}
+}
+
 /* Responsividade - Refatorado (refact.md) */
 @media (max-width: 860px) {
   .badges-container {
