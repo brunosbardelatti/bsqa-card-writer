@@ -359,11 +359,10 @@ button:hover {
   border-radius: var(--radius-md);
   white-space: pre-wrap;
   min-height: calc(1.5em * 10);
-  max-height: calc(1.5em * 30 + 2rem);
-  overflow-y: auto;
+  /* max-height e overflow removidos - scroll fica apenas no .output-area */
   width: 100%;
   box-sizing: border-box;
-  overflow-x: hidden;
+  overflow: visible;
   
   /* Melhorias de layout - refact.md */
   /* max-width removido para ter mesma largura do formulário */
@@ -2253,6 +2252,36 @@ footer span {
    =============================================== */
 
 /* Grupos de Checkbox */
+/* Container para label e checkbox "Selecionar todos" */
+.fields-label-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.select-all-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.select-all-label:hover {
+  color: var(--accent-color);
+}
+
+.select-all-label input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
 .checkbox-group {
   display: flex;
   flex-wrap: wrap;
@@ -2937,6 +2966,12 @@ footer span {
 @media (max-width: 768px) {
   .checkbox-group {
     flex-direction: column;
+  }
+  
+  .fields-label-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
   }
   
   .result-header {

@@ -56,9 +56,15 @@
 
       <!-- Seletor de Campos (Multi-select com Checkboxes) -->
       <div class="form-group" data-testid="card-form-group-fields">
-        <label data-testid="card-label-fields">
-          📋 Campos a Consultar
-        </label>
+        <div class="fields-label-container">
+          <label data-testid="card-label-fields">
+            📋 Campos a Consultar
+          </label>
+          <label class="select-all-label" data-testid="card-label-select-all">
+            <input type="checkbox" id="select-all-fields" data-testid="card-checkbox-select-all">
+            Selecionar todos os campos
+          </label>
+        </div>
         <div id="fields-checkboxes" class="checkbox-group" data-testid="card-checkbox-group-fields">
           <label data-testid="card-checkbox-label-summary">
             <input type="checkbox" name="fields" value="summary" checked disabled data-testid="card-checkbox-summary"> 

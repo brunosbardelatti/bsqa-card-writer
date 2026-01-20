@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   loadThemeFromConfig();
   await loadEnabledAIs();
   bindFormEvents();
+  updateSelectAllState(); // Inicializar estado do "Selecionar todos"
   generateBreadcrumbs([
     { name: 'Home', url: 'index.html' },
     { name: 'Card Jira', url: 'card.html', active: true }
@@ -115,11 +116,52 @@ function bindFormEvents() {
     clearForm();
   });
 
+  // Checkbox "Selecionar todos os campos"
+  const selectAllCheckbox = document.getElementById('select-all-fields');
+  if (selectAllCheckbox) {
+    selectAllCheckbox.addEventListener('change', (e) => {
+      // Não executar se o checkbox estiver desabilitado
+      if (e.target.disabled) return;
+      
+      const optionalCheckboxes = document.querySelectorAll('input[name="fields"]:not([disabled])');
+      optionalCheckboxes.forEach(cb => {
+        cb.checked = e.target.checked;
+      });
+    });
+
+    // Atualizar estado do "Selecionar todos" quando campos individuais mudam
+    // Apenas se o checkbox "Selecionar todos" não estiver desabilitado
+    const allCheckboxes = document.querySelectorAll('input[name="fields"]');
+    allCheckboxes.forEach(cb => {
+      cb.addEventListener('change', () => {
+        const selectAll = document.getElementById('select-all-fields');
+        if (selectAll && !selectAll.disabled) {
+          updateSelectAllState();
+        }
+      });
+    });
+  }
+
   // Submissão do formulário
   form.onsubmit = async (e) => {
     e.preventDefault();
     await handleFormSubmit();
   };
+}
+
+/**
+ * Atualiza o estado do checkbox "Selecionar todos"
+ */
+function updateSelectAllState() {
+  const selectAllCheckbox = document.getElementById('select-all-fields');
+  if (!selectAllCheckbox || selectAllCheckbox.disabled) return;
+
+  const optionalCheckboxes = document.querySelectorAll('input[name="fields"]:not([disabled])');
+  const checkedOptional = Array.from(optionalCheckboxes).filter(cb => cb.checked);
+  
+  // Marcar "Selecionar todos" apenas se todos os campos opcionais estiverem marcados
+  selectAllCheckbox.checked = optionalCheckboxes.length > 0 && checkedOptional.length === optionalCheckboxes.length;
+  selectAllCheckbox.indeterminate = checkedOptional.length > 0 && checkedOptional.length < optionalCheckboxes.length;
 }
 
 /**
@@ -201,6 +243,10 @@ async function handleFormSubmit() {
     
     // Ocultar botão submit e mostrar botão nova consulta
     showNewQueryButton();
+    
+    // NÃO reabilitar formulário aqui - campos devem permanecer bloqueados
+    // até que o usuário clique em "Nova Consulta"
+    // O formulário será reabilitado apenas em clearForm()
 
   } catch (error) {
     console.error('Erro:', error);
@@ -208,7 +254,8 @@ async function handleFormSubmit() {
     
     // Mostrar botão nova consulta mesmo em caso de erro
     showNewQueryButton();
-  } finally {
+    
+    // Reabilitar formulário apenas em caso de erro (para permitir nova tentativa)
     disableForm(false);
   }
 }
@@ -232,12 +279,30 @@ function disableForm(disabled) {
   const cardNumberInput = document.getElementById('card_number');
   const cardFunctionSelect = document.getElementById('card_function');
   const aiServiceSelect = document.getElementById('ai_service');
-  const checkboxes = document.querySelectorAll('input[name="fields"]:not([disabled])');
+  const selectAllCheckbox = document.getElementById('select-all-fields');
+  
+  // Pegar checkboxes ANTES de desabilitá-los (para não perder referência)
+  const checkboxes = disabled 
+    ? document.querySelectorAll('input[name="fields"]:not([disabled])')
+    : document.querySelectorAll('input[name="fields"]');
 
   submitBtn.disabled = disabled;
   cardNumberInput.disabled = disabled;
   cardFunctionSelect.disabled = disabled;
   aiServiceSelect.disabled = disabled;
+  
+  // Desabilitar/habilitar checkbox "Selecionar todos"
+  // Preservar estado (checked/indeterminate) ao desabilitar
+  if (selectAllCheckbox) {
+    if (disabled) {
+      // Ao desabilitar: apenas desabilitar, preservar estado atual
+      selectAllCheckbox.disabled = true;
+    } else {
+      // Ao reabilitar: reabilitar e atualizar estado
+      selectAllCheckbox.disabled = false;
+      updateSelectAllState();
+    }
+  }
   
   // Não desabilitar checkboxes obrigatórios (summary e description)
   checkboxes.forEach(cb => {
@@ -261,16 +326,21 @@ function clearForm() {
   // Limpar output
   output.innerHTML = '';
   
-  // Limpar input do card
+  // Limpar e reabilitar input do card
   cardNumberInput.value = '';
+  cardNumberInput.disabled = false;
   
   // Resetar funcionalidade para "Consultar Card"
   cardFunctionSelect.value = 'query_card';
+  cardFunctionSelect.disabled = false;
   aiSelectorGroup.style.display = 'none';
   submitBtn.innerHTML = '🔍 Consultar Card';
+  submitBtn.disabled = false;
   
   // Desmarcar e habilitar checkboxes opcionais
   const checkboxes = document.querySelectorAll('input[name="fields"]');
+  const selectAllCheckbox = document.getElementById('select-all-fields');
+  
   checkboxes.forEach(cb => {
     if (cb.value === 'summary' || cb.value === 'description') {
       cb.checked = true;
@@ -280,6 +350,16 @@ function clearForm() {
       cb.disabled = false; // Habilitar checkboxes opcionais
     }
   });
+  
+  // Reabilitar checkbox "Selecionar todos"
+  if (selectAllCheckbox) {
+    selectAllCheckbox.disabled = false;
+    selectAllCheckbox.checked = false;
+    selectAllCheckbox.indeterminate = false;
+  }
+  
+  // Atualizar estado do "Selecionar todos"
+  updateSelectAllState();
   
   // Mostrar botão submit e ocultar botão de limpar
   submitBtn.style.display = 'block';
