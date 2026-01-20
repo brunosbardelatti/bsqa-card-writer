@@ -2467,9 +2467,16 @@ footer span {
   color: var(--muted-text);
 }
 
-/* Título Section - Refatorado (refact.md) */
+/* Título Section - Refatorado (refact.md) - Estilo similar ao header compacto */
 .card-title-section {
-  padding: 0 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  opacity: 0.95;
   /* margin-bottom removido - gap do container pai cuida disso */
 }
 
@@ -2478,7 +2485,7 @@ footer span {
   font-size: 12px;
   font-weight: 600;
   color: var(--muted-text);
-  margin-bottom: 6px;
+  margin-bottom: 0;
 }
 
 .card-title {
