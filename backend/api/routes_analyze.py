@@ -49,6 +49,7 @@ async def analyze(
         raise HTTPException(status_code=400, detail="Provide requirements via file or text.")
 
     prompt_template = load_prompt_template(analyse_type)
+    # Todos os templates usam {requirements} como placeholder
     prompt = prompt_template.format(requirements=content)
 
     try:

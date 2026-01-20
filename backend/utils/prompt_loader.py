@@ -8,6 +8,7 @@ def load_prompt_template(analyse_type: str) -> str:
         "robot_api_generator": "config/prompts/prompt_template_robot_API_generator.txt",
         "swagger_robot_generator": "config/prompts/prompt_template_swagger_robot_generator.txt",
         "code_review_diff": "config/prompts/prompt_template_code_review_diff.txt",
+        "sub_bug_writer": "config/prompts/prompt_template_sub_bug_writer.txt",
     }
     path = prompt_files.get(analyse_type)
     if not path:
@@ -25,6 +26,7 @@ def get_available_analysis_types():
         "robot_api_generator": "Curl Robot API Generator",
         "swagger_robot_generator": "Swagger Robot Generator",
         "code_review_diff": "Code Review Analyzer",
+        "sub_bug_writer": "Sub-Bug Writer",
     }
 
 def get_analysis_placeholders():
@@ -37,4 +39,5 @@ def get_analysis_placeholders():
         "robot_api_generator": "Digite o comando cURL (e opcionalmente a resposta) para gerar uma estrutura completa de automação de teste de API com Robot Framework, seguindo um padrão modular e reutilizável.",
         "swagger_robot_generator": "Faça upload do arquivo JSON do Swagger/OpenAPI para gerar uma estrutura completa de automação de testes em Robot Framework. O retorno incluirá keywords reutilizáveis, requests e casos de teste prontos.",
         "code_review_diff": "Insira abaixo o diff do Git gerado entre a sua branch e a main. O conteúdo será analisado com foco técnico, e você receberá feedback em português sobre possíveis erros, violações de boas práticas, oportunidades de melhoria e riscos de segurança.",
+        "sub_bug_writer": "Digite os dados do bug encontrado. Inclua informações como:\n• Contexto da funcionalidade\n• Passos para reproduzir\n• Resultado esperado vs observado\n• Severidade/Prioridade\n• Ambiente onde foi encontrado\n• Logs e evidências (screenshots, vídeos, logs)",
     } 
