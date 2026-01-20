@@ -349,7 +349,7 @@ button:hover {
 .output-area {
   max-height: 75vh;
   overflow: auto;
-  padding: 16px;
+  padding: 0; /* Padding removido - o .result-container já tem padding interno */
 }
 
 .result-container {
@@ -366,8 +366,8 @@ button:hover {
   overflow-x: hidden;
   
   /* Melhorias de layout - refact.md */
-  max-width: 980px;
-  margin: 0 auto;
+  /* max-width removido para ter mesma largura do formulário */
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1788,8 +1788,8 @@ body {
   color: var(--text-color) !important;
 }
 
-/* Garantir que badges usem o tema */
-.badge {
+/* Garantir que badges usem o tema - Exceção para badges específicos de card */
+.badge:not(.badge-priority):not(.badge-status):not(.badge-tag) {
   color: var(--bg-color) !important;
 }
 
@@ -2475,6 +2475,7 @@ footer span {
   font-weight: 500;
   line-height: 1;
   white-space: nowrap;
+  color: var(--text-color); /* Cor padrão para badges - pode ser sobrescrita por classes específicas */
 }
 
 /* Container de badges - Refatorado (refact.md) */
@@ -2515,14 +2516,14 @@ footer span {
 .badge-priority.priority-highest,
 .badge-priority.priority-high {
   background: rgba(244, 67, 54, 0.25);
-  color: #ff6b6b;
+  color: var(--text-color) !important;
   border: 1px solid #ff5252;
   font-weight: 600;
 }
 
 .badge-priority.priority-medium {
   background: rgba(255, 193, 7, 0.25);
-  color: #ffd54f;
+  color: var(--text-color) !important;
   border: 1px solid #ffc107;
   font-weight: 600;
 }
@@ -2530,14 +2531,14 @@ footer span {
 .badge-priority.priority-low,
 .badge-priority.priority-lowest {
   background: rgba(76, 175, 80, 0.25);
-  color: #81c784;
+  color: var(--text-color) !important;
   border: 1px solid #66bb6a;
   font-weight: 600;
 }
 
 .badge-priority.priority-default {
   background: rgba(158, 158, 158, 0.2);
-  color: #bdbdbd;
+  color: var(--text-color) !important;
   border: 1px solid #9e9e9e;
   font-weight: 500;
 }
@@ -2545,28 +2546,28 @@ footer span {
 /* Badges de Status - Melhor contraste para tema escuro */
 .badge-status.status-todo {
   background: rgba(158, 158, 158, 0.25);
-  color: #e0e0e0;
+  color: var(--text-color) !important;
   border: 1px solid #bdbdbd;
   font-weight: 600;
 }
 
 .badge-status.status-inprogress {
   background: rgba(33, 150, 243, 0.25);
-  color: #64b5f6;
+  color: var(--text-color) !important;
   border: 1px solid #42a5f5;
   font-weight: 600;
 }
 
 .badge-status.status-done {
   background: rgba(76, 175, 80, 0.25);
-  color: #81c784;
+  color: var(--text-color) !important;
   border: 1px solid #66bb6a;
   font-weight: 600;
 }
 
 .badge-status.status-default {
   background: rgba(158, 158, 158, 0.2);
-  color: #bdbdbd;
+  color: var(--text-color) !important;
   border: 1px solid #9e9e9e;
   font-weight: 500;
 }
@@ -2574,7 +2575,7 @@ footer span {
 /* Badges de TAG - Melhor contraste para tema escuro */
 .badge-tag {
   background: rgba(156, 39, 176, 0.25);
-  color: #ba68c8;
+  color: var(--text-color) !important;
   border: 1px solid #ab47bc;
   font-weight: 600;
 }
