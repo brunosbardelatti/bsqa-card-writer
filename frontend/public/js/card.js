@@ -388,7 +388,7 @@ function displayQueryResult(data) {
   
   let html = `
     <div class="result-container" data-testid="card-result-container">
-      <button class="copy-btn" onclick="copyCardData()" title="Copiar dados do card" style="position: sticky !important; top: 0.5rem !important; right: 0.5rem !important; left: auto !important; float: right !important; margin: 0.5rem !important; z-index: 10 !important;" data-testid="card-button-copy">
+      <button class="copy-btn" onclick="copyCardData()" title="Copiar dados do card" data-testid="card-button-copy">
         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h6a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z"/>
         </svg>

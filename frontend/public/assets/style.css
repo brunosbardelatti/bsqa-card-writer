@@ -345,6 +345,13 @@ button:hover {
   align-self: center;
   min-height: 600px;
 }
+/* Área de Output */
+.output-area {
+  max-height: 75vh;
+  overflow: auto;
+  padding: 16px;
+}
+
 .result-container {
   position: relative;
   background: var(--result-bg);
@@ -357,38 +364,49 @@ button:hover {
   width: 100%;
   box-sizing: border-box;
   overflow-x: hidden;
+  
+  /* Melhorias de layout - refact.md */
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
-/* Botão de cópia do resultado do chat - posicionamento específico */
-.copy-btn {
-  position: sticky !important;
-  top: 0.5rem !important;
-  right: 0.5rem !important;
-  width: 32px !important;
-  height: 32px !important;
-  background: rgba(255, 255, 255, 0.15) !important;
-  border: none !important;
-  color: var(--text-color) !important;
-  border-radius: 4px !important;
-  cursor: pointer !important;
-  transition: all .3s !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  z-index: 10 !important;
-  padding: 0 !important;
-  line-height: 1 !important;
-  left: auto !important;
-  float: right !important;
-  margin: 0.5rem !important;
+/* Botão de cópia do resultado - refatorado (refact.md) */
+.result-container .copy-btn {
+  position: sticky;
+  top: 12px;
+  align-self: flex-end;
+  z-index: 20;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px); /* Safari */
+  border-radius: 10px;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  margin: 0;
+  float: none;
+  left: auto;
+  right: auto;
 }
-.copy-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: scale(1.05);
+.result-container .copy-btn:hover {
+  transform: translateY(-1px);
+  background: var(--card-bg);
+  opacity: 0.9;
 }
-.copy-btn.copied {
+
+.result-container .copy-btn.copied {
   background: rgba(76, 175, 80, 0.3);
-  color: #4caf50 !important;
-  transform: scale(1.1);
+  color: #4caf50;
+  transform: scale(1.05);
 }
 .copy-btn svg {
   width: 16px;
@@ -2290,20 +2308,21 @@ footer span {
   border: 1px solid var(--border-color);
 }
 
-/* Header do Resultado */
+/* Header do Resultado - Refatorado (refact.md) */
 .result-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-color);
+  justify-content: space-between;
+  padding: 8px 0;
+  margin-bottom: 0;
+  border-bottom: none;
 }
 
 .result-header h3 {
   margin: 0;
+  font-size: 18px;
+  line-height: 1.2;
   color: var(--success-color);
-  font-size: var(--text-xl);
 }
 
 .result-actions {
@@ -2392,87 +2411,104 @@ footer span {
    ESTILOS PARA REORGANIZAÇÃO DE CAMPOS (ordem-campos.md)
    ============================================ */
 
-/* Header Compacto */
+/* Header Compacto - Refatorado (refact.md) */
 .card-header-compact {
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 1rem;
-  background: linear-gradient(135deg, rgba(var(--info-color-rgb), 0.1), transparent);
-  border-radius: var(--radius-md);
-  margin-bottom: 1.5rem;
   flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  opacity: 0.95;
+  /* margin-bottom removido - gap do container pai cuida disso */
 }
 
 .card-key-large {
+  font-weight: 700;
+  letter-spacing: 0.3px;
   font-size: 1.3rem;
-  font-weight: bold;
   color: var(--info-color);
 }
 
 .card-project {
+  opacity: 0.9;
   font-size: 1rem;
   color: var(--muted-text);
 }
 
-/* Título Section */
+/* Título Section - Refatorado (refact.md) */
 .card-title-section {
-  margin-bottom: 1.5rem;
+  padding: 0 6px;
+  /* margin-bottom removido - gap do container pai cuida disso */
 }
 
 .title-label {
-  font-size: 0.9rem;
+  opacity: 0.7;
+  font-size: 12px;
   font-weight: 600;
   color: var(--muted-text);
-  margin-bottom: 0.5rem;
+  margin-bottom: 6px;
 }
 
 .card-title {
-  font-size: 1.4rem;
+  margin: 0;
+  font-size: 22px;
   font-weight: 600;
   color: var(--text-color);
-  margin: 0;
-  line-height: 1.4;
+  line-height: 1.25;
 }
 
-/* Badges */
+/* Badges - Refatorado (refact.md) */
 .badge {
-  display: inline-block;
-  padding: 0.4rem 0.8rem;
-  margin: 0.25rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  margin: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  opacity: 0.9;
+  font-size: 12px;
   font-weight: 500;
+  line-height: 1;
   white-space: nowrap;
 }
 
-/* Container de badges */
+/* Container de badges - Refatorado (refact.md) */
 .badges-container {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin: 1rem 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  /* margin removido - gap do container pai cuida disso */
 }
 
-/* Grupo de badge com label */
+/* Grupo de badge com label - Refatorado (refact.md) */
 .badge-group {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  opacity: 0.95;
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .badge-label {
-  font-size: 0.9rem;
+  font-size: 12px;
   font-weight: 600;
   color: var(--muted-text);
-  min-width: 80px;
+  opacity: 0.7;
+  min-width: auto;
 }
 
 .badge-items {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 8px;
 }
 
 /* Badges de Prioridade - Melhor contraste para tema escuro */
@@ -2556,13 +2592,14 @@ footer span {
   border: 1px solid var(--warning-color);
 }
 
-/* Field Groups */
+/* Field Groups - Refatorado (refact.md) */
 .field-group {
-  margin: 1.5rem 0;
-  padding: 1rem;
-  background: var(--card-bg);
-  border-radius: var(--radius-md);
+  padding: 14px;
+  border-radius: 14px;
   border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  opacity: 0.95;
+  /* margin removido - gap do container pai cuida disso */
 }
 
 .field-group-responsaveis {
@@ -2574,65 +2611,86 @@ footer span {
 }
 
 .group-title {
-  margin: 0 0 1rem 0;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 1rem;
+  margin: 0 0 12px 0;
+  padding-bottom: 0;
+  border-bottom: none;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text-color);
+  opacity: 0.9;
 }
 
-/* Grid de Responsáveis */
+/* Grid de Responsáveis - Refatorado (refact.md) */
 .responsaveis-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .responsavel-card {
-  padding: 1rem;
-  background: rgba(var(--info-color-rgb), 0.05);
-  border-radius: var(--radius-sm);
+  padding: 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  background: var(--card-bg);
+  opacity: 0.95;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   border-left: 3px solid var(--info-color);
 }
 
 .responsavel-card.responsavel-qa {
   border-left-color: var(--warning-color);
-  background: rgba(var(--warning-color-rgb), 0.05);
+  background: var(--card-bg);
+  opacity: 0.95;
 }
 
 .responsavel-label {
-  font-size: 0.85rem;
+  font-size: 12px;
   font-weight: 600;
   color: var(--muted-text);
-  margin-bottom: 0.25rem;
+  opacity: 0.75;
+  margin-bottom: 0;
 }
 
 .responsavel-name {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--text-color);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0;
 }
 
 .responsavel-email {
-  font-size: 0.9rem;
+  font-size: 12px;
   color: var(--muted-text);
+  opacity: 0.75;
+  word-break: break-word;
 }
 
-/* Descrição */
+/* Descrição - Refatorado (refact.md) - Mantendo scroll funcional */
 .description-content {
-  padding: 1rem;
+  font-size: 14px;
+  line-height: 1.45;
+  opacity: 0.95;
+  padding: 12px;
+  border-radius: 10px;
   background: var(--result-bg);
-  border-radius: var(--radius-sm);
-  max-height: 400px;
-  overflow-y: auto;
-  line-height: 1.6;
+  border: 1px solid var(--border-color);
+  max-height: 400px; /* Mantido para funcionalidade */
+  overflow-y: auto; /* Mantido para funcionalidade */
   white-space: pre-wrap;
 }
 
-/* Responsividade */
-@media (max-width: 768px) {
+/* Responsividade - Refatorado (refact.md) */
+@media (max-width: 860px) {
+  .badges-container {
+    grid-template-columns: 1fr;
+  }
+
+  .responsaveis-grid {
+    grid-template-columns: 1fr;
+  }
+  
   .card-header-compact {
     flex-direction: column;
     align-items: flex-start;
@@ -2647,26 +2705,17 @@ footer span {
     font-size: 1.2rem;
   }
   
-  .responsaveis-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .badges-container {
-    gap: 0.25rem;
-  }
-  
   .badge {
-    font-size: 0.85rem;
-    padding: 0.35rem 0.7rem;
+    font-size: 11px;
+    padding: 5px 8px;
   }
   
   .badge-label {
-    min-width: 70px;
-    font-size: 0.85rem;
+    font-size: 11px;
   }
   
   .badge-group {
-    gap: 0.5rem;
+    gap: 6px;
   }
 }
 
