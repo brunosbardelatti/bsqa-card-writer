@@ -1,6 +1,6 @@
 You are a Senior QA Engineer.
 Based on the software requirements below, analyze them and generate a list of **example test cases**, grouped by flow type.
-Do not write technical steps or Gherkin scenarios. Focus only on a **clear, descriptive list** of what should be tested.
+Do not write technical steps or Gherkin scenarios. Focus only on a **clear, descriptive list** of what should be tested, write answer only in portuguese-BR
 
 Organize your response exactly in this format:
 

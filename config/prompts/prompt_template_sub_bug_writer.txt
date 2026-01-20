@@ -10,6 +10,7 @@ RULES
 - Steps to reproduce must be numbered and actionable.
 - Always include Expected vs Observed in a clear, objective way.
 - Keep the writing concise, technical, and testable.
+- write answer only in portuguese-BR
 
 ---
 
@@ -26,6 +27,14 @@ Reproduction:
 3) <step 3>  
 ...
 
+BDD Scenario (Gherkin):  
+```gherkin
+Scenario: <scenario title>
+  Given <preconditions>
+  When <action>
+  Then <expected outcome>
+```
+
 Expected Result:  
 <what should happen>
 
@@ -41,15 +50,6 @@ Environment:
 Logs and Evidence:  
 - <links, screenshots, videos, request/response, console logs, backend logs>  
 - If there is no evidence yet: PENDENTE: evidence/logs
-
-BDD Scenario (Gherkin):  
-```gherkin
-Scenario: <scenario title>
-  Given <preconditions>
-  When <action>
-  Then <expected outcome>
-```
-
 ---
 
 The following bug data must be used as the source for writing the Sub-Bug:  

@@ -30,6 +30,8 @@ class JiraService(IssueTrackerBase):
         self.email = os.getenv("JIRA_USER_EMAIL")
         self.api_token = os.getenv("JIRA_API_TOKEN")
         self.subtask_type_id = os.getenv("JIRA_SUBTASK_ISSUE_TYPE_ID", "10003")
+        self.bug_type_id = os.getenv("JIRA_BUG_ISSUE_TYPE_ID", "10004")
+        self.sub_bug_type_id = os.getenv("JIRA_SUB_BUG_ISSUE_TYPE_ID", "10271")
         self.timeout = int(os.getenv("JIRA_REQUEST_TIMEOUT", "30"))
         
         if not all([self.base_url, self.email, self.api_token]):
@@ -256,6 +258,176 @@ class JiraService(IssueTrackerBase):
             "self": data["self"],
             "url": f"{self.base_url}/browse/{data['key']}"
         }
+    
+    def create_bug(
+        self,
+        project_key: str,
+        summary: str,
+        description: str,
+        issue_type: str = "bug",  # "bug" ou "sub_bug"
+        parent_key: Optional[str] = None
+    ) -> dict:
+        """
+        Cria um Bug ou Sub-Bug no Jira com estrutura mínima.
+        
+        Args:
+            project_key: Chave do projeto (ex: "PKGS")
+            summary: Título do bug (extraído da IA)
+            description: Descrição completa em formato ADF (formatada pela IA)
+            issue_type: "bug" ou "sub_bug"
+            parent_key: Chave da issue pai (obrigatório se issue_type="sub_bug")
+        
+        Returns:
+            dict com dados da issue criada (key, id, self, url)
+        """
+        # Determinar Issue Type ID
+        if issue_type == "sub_bug":
+            if not parent_key:
+                raise ValueError("parent_key é obrigatório para Sub-Bug")
+            # Para Sub-Bug, tentar buscar o Issue Type ID do parent primeiro
+            # Isso garante compatibilidade, pois Sub-Bug geralmente usa o mesmo tipo do parent
+            try:
+                parent_issue = self.get_issue(parent_key, ["issuetype"])
+                parent_issuetype = parent_issue["fields"].get("issuetype", {})
+                # Usar o mesmo Issue Type ID do parent (geralmente funciona para subtasks)
+                issuetype_id = parent_issuetype.get("id")
+                if not issuetype_id:
+                    # Fallback para o ID configurado se não conseguir do parent
+                    issuetype_id = self.sub_bug_type_id
+            except Exception:
+                # Se falhar ao buscar parent, usar ID configurado
+                issuetype_id = self.sub_bug_type_id
+        else:
+            issuetype_id = self.bug_type_id
+        
+        # Converter descrição para ADF se for string
+        if isinstance(description, str):
+            adf_description = self._text_to_adf(description)
+        else:
+            adf_description = description
+        
+        # Montar payload mínimo (sem campos opcionais)
+        payload = {
+            "fields": {
+                "project": {"key": project_key},
+                "issuetype": {"id": issuetype_id},
+                "summary": summary,
+                "description": adf_description
+            }
+        }
+        
+        # Adicionar parent se for Sub-Bug
+        if issue_type == "sub_bug" and parent_key:
+            payload["fields"]["parent"] = {"key": parent_key}
+        
+        url = f"{self.base_url}/rest/api/3/issue"
+        
+        response = requests.post(
+            url,
+            headers=self._get_headers(),
+            json=payload,
+            timeout=self.timeout
+        )
+        
+        if response.status_code == 400:
+            error_data = response.json()
+            errors = error_data.get("errors", {})
+            error_messages = error_data.get("errorMessages", [])
+            
+            # Melhorar mensagem de erro se for problema com Issue Type
+            error_detail = errors or error_messages
+            
+            if isinstance(errors, dict) and "issuetype" in errors:
+                issuetype_error = errors.get("issuetype", "")
+                if isinstance(issuetype_error, str):
+                    # Mensagem mais amigável para erro de Issue Type
+                    if issue_type == "sub_bug":
+                        error_detail = (
+                            f"O projeto '{project_key}' não aceita criar Sub-Bug com o Issue Type ID '{issuetype_id}'. "
+                            f"Este projeto pode aceitar apenas o tipo padrão de 'Subtarefa'. "
+                            f"Erro do Jira: {issuetype_error}. "
+                            f"Verifique se o Issue Type está configurado corretamente no .env (JIRA_SUB_BUG_ISSUE_TYPE_ID) "
+                            f"ou se o projeto aceita esse tipo de issue."
+                        )
+                    else:
+                        error_detail = (
+                            f"O projeto '{project_key}' não aceita criar Bug com o Issue Type ID '{issuetype_id}'. "
+                            f"Erro do Jira: {issuetype_error}. "
+                            f"Verifique se o Issue Type está configurado corretamente no .env (JIRA_BUG_ISSUE_TYPE_ID)."
+                        )
+                else:
+                    error_detail = f"Issue Type ID '{issuetype_id}' inválido para o projeto '{project_key}'. Erro: {issuetype_error}"
+            
+            raise ValueError(f"Erro ao criar {issue_type}: {error_detail}")
+        if response.status_code == 401:
+            raise PermissionError("Token de API do Jira inválido ou expirado.")
+        if response.status_code == 403:
+            raise PermissionError("Sem permissão para criar issues neste projeto.")
+        
+        response.raise_for_status()
+        
+        data = response.json()
+        return {
+            "key": data["key"],
+            "id": data["id"],
+            "self": data["self"],
+            "url": f"{self.base_url}/browse/{data['key']}"
+        }
+    
+    def upload_attachments(
+        self,
+        issue_key: str,
+        files: list[tuple[str, bytes, str]]
+    ) -> list[dict]:
+        """
+        Faz upload de anexos para uma issue do Jira.
+        
+        Args:
+            issue_key: Chave da issue (ex: "PKGS-1234")
+            files: Lista de tuplas (filename, file_content, content_type)
+        
+        Returns:
+            Lista de dicts com informações dos anexos enviados
+        """
+        if not files:
+            return []
+        
+        url = f"{self.base_url}/rest/api/3/issue/{issue_key}/attachments"
+        
+        # Headers específicos para upload de anexos
+        headers = {
+            "Accept": "application/json",
+            "X-Atlassian-Token": "no-check",  # Obrigatório para bypass XSRF
+            "Authorization": f"Basic {self.auth_header}"
+        }
+        
+        # Preparar FormData
+        files_data = []
+        for filename, content, content_type in files:
+            files_data.append(
+                ("file", (filename, content, content_type))
+            )
+        
+        response = requests.post(
+            url,
+            headers=headers,
+            files=files_data,
+            timeout=self.timeout
+        )
+        
+        if response.status_code == 400:
+            error_data = response.json()
+            errors = error_data.get("errors", {})
+            error_messages = error_data.get("errorMessages", [])
+            raise ValueError(f"Erro ao fazer upload de anexos: {errors or error_messages}")
+        if response.status_code == 401:
+            raise PermissionError("Token de API do Jira inválido ou expirado.")
+        if response.status_code == 403:
+            raise PermissionError("Sem permissão para anexar arquivos nesta issue.")
+        
+        response.raise_for_status()
+        
+        return response.json()
     
     def _text_to_adf(self, text: str) -> dict:
         """Converte texto plano para Atlassian Document Format."""

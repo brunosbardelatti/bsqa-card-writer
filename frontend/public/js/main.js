@@ -48,8 +48,9 @@ window.isDevelopment = isDevelopment;
  * - 1.1.0: Estilos movidos de inline para CSS (REFACT_HEADER_FOOTER.md)
  * - 1.2.0: Atualizado após REFACT_INCONSISTENCIAS.md
  * - 1.3.0: Adicionado botão Card na navegação (Integração Jira)
+ * - 1.4.0: Adicionado botão Bug na navegação (Abertura de Bug/Sub-Bug)
  */
-const COMPONENTS_VERSION = '1.3.0'; // Adicionado botão Card no header
+const COMPONENTS_VERSION = '1.4.0'; // Adicionado botão Bug no header
 const CACHE_KEY_PREFIX = 'bsqa-component-';
 
 /**
@@ -193,15 +194,23 @@ function highlightActivePage() {
 
 // Função para gerar breadcrumbs dinamicamente
 export function generateBreadcrumbs(items) {
+  const breadcrumbsContainer = document.querySelector('.breadcrumbs');
+  if (!breadcrumbsContainer) return;
+  
   const breadcrumbs = items.map((item, index) => {
-    if (index === items.length - 1) {
-      return `<span data-testid="breadcrumb-current">${item.text}</span>`;
+    // Suportar tanto 'text' quanto 'name' para compatibilidade
+    const text = item.text || item.name || 'Página';
+    const url = item.url || '';
+    const isActive = item.active !== false && index === items.length - 1;
+    
+    if (isActive) {
+      return `<span data-testid="breadcrumb-current">${text}</span>`;
     } else {
-      return `<a href="${item.url}" data-testid="breadcrumb-link">${item.text}</a>`;
+      return `<a href="${url}" data-testid="breadcrumb-link">${text}</a>`;
     }
   }).join(' > ');
   
-  return `<div class="breadcrumbs" data-testid="breadcrumbs-container">${breadcrumbs}</div>`;
+  breadcrumbsContainer.innerHTML = breadcrumbs;
 }
 
 // Função para adicionar breadcrumbs baseado na página atual
@@ -231,6 +240,18 @@ export function addBreadcrumbs() {
       breadcrumbItems = [
         { text: 'Home', url: 'index.html' },
         { text: 'Chat', url: '' }
+      ];
+      break;
+    case 'card.html':
+      breadcrumbItems = [
+        { text: 'Home', url: 'index.html' },
+        { text: 'Card Jira', url: '' }
+      ];
+      break;
+    case 'bug.html':
+      breadcrumbItems = [
+        { text: 'Home', url: 'index.html' },
+        { text: 'Bug', url: '' }
       ];
       break;
     case 'index.html':
