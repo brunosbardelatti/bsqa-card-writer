@@ -99,6 +99,11 @@ function bindFormEvents() {
     e.target.value = value.toUpperCase();
   });
 
+  // Formatar input do parent_key para maiúsculas (mesmo comportamento do card_number)
+  parentKeyInput.addEventListener('input', (e) => {
+    e.target.value = e.target.value.toUpperCase();
+  });
+
   // Toggle Issue Pai baseado no tipo
   issueTypeSelect.addEventListener('change', () => toggleParentKeyField(parentKeyGroup, parentKeyInput));
   
