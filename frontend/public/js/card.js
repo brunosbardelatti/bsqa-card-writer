@@ -93,17 +93,37 @@ function bindFormEvents() {
 
   if (!form) return;
 
-  // Ao mudar a funcionalidade selecionada
-  cardFunctionSelect.addEventListener('change', (e) => {
-    if (e.target.value === 'query_and_create') {
+  // Função para atualizar UI baseado na funcionalidade selecionada
+  const updateFunctionUI = (value) => {
+    const fieldsGroup = document.querySelector('[data-testid="card-form-group-fields"]');
+    
+    if (value === 'query_and_create') {
       // Mostrar seletor de IA
       aiSelectorGroup.style.display = 'block';
+      // Mostrar seleção de campos
+      if (fieldsGroup) fieldsGroup.style.display = 'block';
       submitBtn.innerHTML = '🚀 Consultar e Criar Subtask';
-    } else {
-      // Ocultar seletor de IA
+    } else if (value === 'search_subtasks') {
+      // Ocultar seletor de IA (não necessário para busca)
       aiSelectorGroup.style.display = 'none';
+      // Ocultar seleção de campos (não necessário para buscar subtasks)
+      if (fieldsGroup) fieldsGroup.style.display = 'none';
+      submitBtn.innerHTML = '🔍 Buscar Subtasks';
+    } else {
+      // query_card
+      aiSelectorGroup.style.display = 'none';
+      // Mostrar seleção de campos
+      if (fieldsGroup) fieldsGroup.style.display = 'block';
       submitBtn.innerHTML = '🔍 Consultar Card';
     }
+  };
+  
+  // Aplicar estado inicial
+  updateFunctionUI(cardFunctionSelect.value);
+  
+  // Ao mudar a funcionalidade selecionada
+  cardFunctionSelect.addEventListener('change', (e) => {
+    updateFunctionUI(e.target.value);
   });
 
   // Formatar input do card number para maiúsculas
@@ -196,6 +216,12 @@ async function handleFormSubmit() {
   // Validar formato do card
   if (!validateCardNumber(cardNumber)) {
     showError('Formato inválido. Use: PROJETO-NUMERO (ex: PKGS-1104)');
+    return;
+  }
+
+  // Tratar busca de subtasks separadamente
+  if (cardFunction === 'search_subtasks') {
+    await handleSearchSubtasks(cardNumber);
     return;
   }
 
@@ -320,6 +346,7 @@ function clearForm() {
   const cardNumberInput = document.getElementById('card_number');
   const cardFunctionSelect = document.getElementById('card_function');
   const aiSelectorGroup = document.getElementById('ai-selector-group');
+  const fieldsGroup = document.querySelector('[data-testid="card-form-group-fields"]');
   const submitBtn = document.getElementById('submitBtn');
   const clearBtn = document.getElementById('clearBtn');
   
@@ -334,6 +361,8 @@ function clearForm() {
   cardFunctionSelect.value = 'query_card';
   cardFunctionSelect.disabled = false;
   aiSelectorGroup.style.display = 'none';
+  // Mostrar seleção de campos ao resetar
+  if (fieldsGroup) fieldsGroup.style.display = 'block';
   submitBtn.innerHTML = '🔍 Consultar Card';
   submitBtn.disabled = false;
   
@@ -1091,4 +1120,288 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+/**
+ * Handler para busca de subtasks
+ */
+async function handleSearchSubtasks(parentKey) {
+  disableForm(true);
+  
+  const output = document.getElementById('output');
+  output.innerHTML = '<div class="loading" data-testid="card-loading-subtasks">Buscando card pai e subtasks...</div>';
+  
+  try {
+    // Primeiro, buscar o card pai para obter o summary
+    let parentSummary = null;
+    try {
+      const parentResponse = await fetch(window.ApiConfig.buildUrl('/jira/card'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          card_number: parentKey,
+          fields: ['summary']
+        })
+      });
+      
+      if (parentResponse.ok) {
+        const parentData = await parentResponse.json();
+        if (parentData.success && parentData.data && parentData.data.fields) {
+          parentSummary = parentData.data.fields.summary || null;
+        }
+      }
+    } catch (parentError) {
+      // Se falhar ao buscar o card pai, continua sem o summary
+      console.warn('Não foi possível buscar o summary do card pai:', parentError);
+    }
+    
+    // Agora buscar as subtasks
+    const response = await fetch(window.ApiConfig.buildUrl('/jira/subtasks'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        parent_key: parentKey,
+        max_results: 100
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.detail || 'Erro ao buscar subtasks');
+    }
+    
+    if (data.success) {
+      displaySubtasksTable(data.data, parentKey, parentSummary);
+      showNewQueryButton();
+    } else {
+      showError('Erro ao buscar subtasks: ' + (data.error || 'Erro desconhecido'));
+      showNewQueryButton();
+      disableForm(false);
+    }
+  } catch (error) {
+    console.error('Erro:', error);
+    showError('Erro ao processar requisição: ' + error.message);
+    showNewQueryButton();
+    disableForm(false);
+  }
+}
+
+/**
+ * Exibe tabela de subtasks encontradas
+ */
+function displaySubtasksTable(data, parentKey, parentSummary = null) {
+  const output = document.getElementById('output');
+  const issues = data.issues || [];
+  // Se houver itens no array, usar o tamanho do array (mais confiável)
+  // Caso contrário, usar o total retornado pela API
+  const total = issues.length > 0 ? issues.length : (data.total || 0);
+  
+  let html = '<div class="result-container" data-testid="card-result-container">';
+  html += '<button class="copy-btn" onclick="copySubtasksData()" title="Copiar dados das subtasks" data-testid="card-button-copy-subtasks">';
+  html += '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">';
+  html += '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-4 4h6a2 2 0 012 2v6a2 2 0 01-2 2h-8a2 2 0 01-2-2v-6a2 2 0 012-2z"/>';
+  html += '</svg>';
+  html += '</button>';
+  html += '<div class="result-header" style="width: 100%; max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;">';
+  
+  // Construir URL do card pai (extrair base URL da primeira subtask se disponível)
+  let parentUrl = '';
+  if (issues.length > 0 && issues[0].url) {
+    const firstIssueUrl = issues[0].url;
+    const urlParts = firstIssueUrl.split('/browse/');
+    if (urlParts.length > 0) {
+      parentUrl = `${urlParts[0]}/browse/${parentKey}`;
+    }
+  }
+  
+  // Linha 1: Card pai | Qtd subtasks (Grid de 2 colunas)
+  html += '<div style="width: 100%; display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; background: var(--card-header-bg);">';
+  html += '<div style="padding: 14px 18px; display: flex; align-items: center; gap: 10px; color: var(--text-color); min-height: 52px;">';
+  html += '<strong>Card pai:</strong>';
+  if (parentUrl) {
+    html += `<a href="${parentUrl}" target="_blank" class="issue-link" style="font-family: monospace; color: var(--accent-color); text-decoration: none;">${escapeHtml(parentKey)}</a>`;
+  } else {
+    html += `<span style="font-family: monospace; color: var(--accent-color);">${escapeHtml(parentKey)}</span>`;
+  }
+  html += '</div>';
+  html += '<div style="padding: 14px 18px; display: flex; align-items: center; justify-content: flex-end; gap: 10px; color: var(--text-color); border-left: 1px solid var(--border-color); min-height: 52px;">';
+  html += '<strong>✅ Subtasks encontradas:</strong>';
+  html += `<span style="color: var(--success-color); font-weight: 700;">${total}</span>`;
+  html += '</div>';
+  html += '</div>';
+  
+  // Linha 2: Summary Card Pai
+  if (parentSummary) {
+    html += '<div style="width: 100%; border: 1px solid var(--border-color); border-radius: var(--radius-lg); background: var(--card-header-secondary-bg); padding: 18px; min-height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">';
+    html += `<div style="font-size: var(--text-xl); color: var(--text-color); font-weight: 700; line-height: 1.3;">${escapeHtml(parentSummary)}</div>`;
+    html += '</div>';
+  }
+  
+  html += '</div>';
+  
+  if (issues.length === 0) {
+    html += '<p>Nenhuma subtask encontrada para este card.</p>';
+  } else {
+    html += '<div class="subtasks-table-container">';
+    html += '<table class="subtasks-table" data-testid="card-subtasks-table">';
+    html += '<thead>';
+    html += '<tr>';
+    html += '<th class="sortable" data-sort="issuetype" style="cursor: pointer; user-select: none;">Issue Type <span class="sort-indicator">↕</span></th>';
+    html += '<th class="sortable" data-sort="key" style="cursor: pointer; user-select: none;">Key <span class="sort-indicator">↕</span></th>';
+    html += '<th>Summary</th>';
+    html += '<th>Assigned</th>';
+    html += '<th>Status</th>';
+    html += '</tr>';
+    html += '</thead>';
+    html += '<tbody id="subtasks-tbody">';
+    
+    issues.forEach(issue => {
+      const fields = issue.fields || {};
+      const assignee = fields.assignee;
+      const assigneeName = assignee ? assignee.displayName : 'Não atribuído';
+      
+      html += '<tr>';
+      html += `<td data-sort-value="${escapeHtml(fields.issuetype || 'N/A')}">${escapeHtml(fields.issuetype || 'N/A')}</td>`;
+      html += `<td data-sort-value="${escapeHtml(issue.key)}"><a href="${issue.url}" target="_blank" class="issue-link">${escapeHtml(issue.key)}</a></td>`;
+      html += `<td>${escapeHtml(fields.summary || 'Sem título')}</td>`;
+      html += `<td>${escapeHtml(assigneeName)}</td>`;
+      html += `<td><span class="badge badge-status">${escapeHtml(fields.status || 'N/A')}</span></td>`;
+      html += '</tr>';
+    });
+    
+    html += '</tbody>';
+    html += '</table>';
+    html += '</div>';
+    
+    // Armazenar dados originais para ordenação
+    window.subtasksData = issues;
+  }
+  
+  html += '</div>';
+  output.innerHTML = html;
+  
+  // Formatar e armazenar dados para cópia
+  window.currentSubtasksData = formatSubtasksDataForCopy(data, parentKey, parentSummary);
+  
+  // Adicionar event listeners para ordenação
+  if (issues.length > 0) {
+    setupSubtasksSorting();
+  }
+}
+
+/**
+ * Formata dados das subtasks para cópia em texto
+ */
+function formatSubtasksDataForCopy(data, parentKey, parentSummary) {
+  const issues = data.issues || [];
+  const total = issues.length > 0 ? issues.length : (data.total || 0);
+  
+  let text = `Card Pai: ${parentKey}\n`;
+  if (parentSummary) {
+    text += `Summary: ${parentSummary}\n`;
+  }
+  text += `Subtasks Encontradas: ${total}\n\n`;
+  text += '─'.repeat(80) + '\n\n';
+  
+  if (issues.length === 0) {
+    text += 'Nenhuma subtask encontrada para este card.\n';
+  } else {
+    text += 'Issue Type | Key | Summary | Assigned | Status\n';
+    text += '─'.repeat(80) + '\n';
+    
+    issues.forEach(issue => {
+      const fields = issue.fields || {};
+      const assignee = fields.assignee;
+      const assigneeName = assignee ? assignee.displayName : 'Não atribuído';
+      
+      text += `${fields.issuetype || 'N/A'} | ${issue.key} | ${fields.summary || 'Sem título'} | ${assigneeName} | ${fields.status || 'N/A'}\n`;
+    });
+  }
+  
+  return text;
+}
+
+/**
+ * Copia dados das subtasks para clipboard
+ */
+window.copySubtasksData = function() {
+  if (!window.currentSubtasksData) return;
+  
+  navigator.clipboard.writeText(window.currentSubtasksData).then(() => {
+    showCopyFeedback('Dados das subtasks copiados!');
+  }).catch(err => {
+    console.error('Erro ao copiar:', err);
+    showCopyFeedback('Erro ao copiar', true);
+  });
+};
+
+/**
+ * Configura ordenação clicável nas colunas da tabela de subtasks
+ */
+function setupSubtasksSorting() {
+  const sortableHeaders = document.querySelectorAll('.subtasks-table .sortable');
+  let currentSort = { column: null, direction: 'asc' };
+  
+  sortableHeaders.forEach(header => {
+    header.addEventListener('click', () => {
+      const column = header.getAttribute('data-sort');
+      const tbody = document.getElementById('subtasks-tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      
+      // Determinar direção da ordenação
+      if (currentSort.column === column) {
+        // Alternar entre asc e desc
+        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+      } else {
+        // Nova coluna, começar com asc
+        currentSort.column = column;
+        currentSort.direction = 'asc';
+      }
+      
+      // Ordenar linhas
+      rows.sort((a, b) => {
+        let aValue = '';
+        let bValue = '';
+        
+        if (column === 'key') {
+          // Para coluna "key", pegar o texto do link (segunda coluna, índice 1)
+          const aCell = a.cells[1];
+          const bCell = b.cells[1];
+          aValue = aCell ? aCell.textContent.trim() : '';
+          bValue = bCell ? bCell.textContent.trim() : '';
+        } else if (column === 'issuetype') {
+          // Para "issuetype", usar o valor do data-sort-value (primeira coluna, índice 0)
+          const aCell = a.cells[0];
+          const bCell = b.cells[0];
+          aValue = aCell ? (aCell.getAttribute('data-sort-value') || aCell.textContent.trim()) : '';
+          bValue = bCell ? (bCell.getAttribute('data-sort-value') || bCell.textContent.trim()) : '';
+        }
+        
+        // Comparar valores
+        const comparison = aValue.localeCompare(bValue, undefined, { numeric: true, sensitivity: 'base' });
+        return currentSort.direction === 'asc' ? comparison : -comparison;
+      });
+      
+      // Limpar tbody e reordenar
+      tbody.innerHTML = '';
+      rows.forEach(row => tbody.appendChild(row));
+      
+      // Atualizar indicadores visuais
+      sortableHeaders.forEach(h => {
+        const indicator = h.querySelector('.sort-indicator');
+        if (h.getAttribute('data-sort') === column) {
+          indicator.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
+          indicator.style.opacity = '1';
+        } else {
+          indicator.textContent = '↕';
+          indicator.style.opacity = '0.5';
+        }
+      });
+    });
+  });
 }

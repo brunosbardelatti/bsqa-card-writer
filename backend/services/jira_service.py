@@ -429,6 +429,118 @@ class JiraService(IssueTrackerBase):
         
         return response.json()
     
+    def search_subtasks(
+        self,
+        parent_key: str,
+        fields: Optional[list[str]] = None,
+        max_results: int = 100
+    ) -> dict:
+        """
+        Busca todas as subtasks de uma issue pai usando JQL.
+        
+        Args:
+            parent_key: Chave da issue pai (ex: "PKGS-1160")
+            fields: Lista de campos a retornar (default: ["issuetype", "summary", "assignee", "status"])
+            max_results: Número máximo de resultados (default: 100)
+        
+        Returns:
+            dict com:
+            - issues: Lista de subtasks encontradas
+            - total: Total de subtasks encontradas
+            - maxResults: Número máximo de resultados solicitados
+        """
+        if fields is None:
+            fields = ["issuetype", "summary", "assignee", "status"]
+        
+        # Montar JQL query
+        jql = f"parent = {parent_key} ORDER BY created ASC"
+        
+        # Montar payload
+        payload = {
+            "jql": jql,
+            "fields": fields,
+            "maxResults": max_results
+        }
+        
+        url = f"{self.base_url}/rest/api/3/search/jql"
+        
+        response = requests.post(
+            url,
+            headers=self._get_headers(),
+            json=payload,
+            timeout=self.timeout
+        )
+        
+        if response.status_code == 400:
+            error_data = response.json()
+            errors = error_data.get("errors", {})
+            error_messages = error_data.get("errorMessages", [])
+            raise ValueError(f"Erro na busca JQL: {errors or error_messages}")
+        if response.status_code == 401:
+            raise PermissionError("Token de API do Jira inválido ou expirado.")
+        if response.status_code == 403:
+            raise PermissionError("Sem permissão para buscar issues neste projeto.")
+        
+        response.raise_for_status()
+        
+        data = response.json()
+        
+        # Processar issues retornadas
+        processed_issues = []
+        for issue in data.get("issues", []):
+            processed_issue = {
+                "key": issue.get("key"),
+                "self": issue.get("self"),
+                "url": f"{self.base_url}/browse/{issue.get('key')}",
+                "fields": self._parse_subtask_fields(issue.get("fields", {}))
+            }
+            processed_issues.append(processed_issue)
+        
+        return {
+            "issues": processed_issues,
+            "total": data.get("total", 0),
+            "maxResults": data.get("maxResults", max_results)
+        }
+    
+    def _parse_subtask_fields(self, fields: dict) -> dict:
+        """
+        Processa campos de uma subtask retornada pela busca JQL.
+        
+        Args:
+            fields: Dict com campos brutos do Jira
+        
+        Returns:
+            Dict com campos processados
+        """
+        parsed = {}
+        
+        # Issue Type
+        if "issuetype" in fields:
+            issuetype = fields["issuetype"]
+            parsed["issuetype"] = issuetype.get("name", "N/A") if isinstance(issuetype, dict) else str(issuetype)
+        
+        # Summary
+        if "summary" in fields:
+            parsed["summary"] = fields["summary"] or "Sem título"
+        
+        # Assignee
+        if "assignee" in fields:
+            assignee = fields["assignee"]
+            if assignee:
+                parsed["assignee"] = {
+                    "displayName": assignee.get("displayName", "N/A"),
+                    "emailAddress": assignee.get("emailAddress", "")
+                }
+            else:
+                parsed["assignee"] = None
+        
+        # Status
+        if "status" in fields:
+            status = fields["status"]
+            parsed["status"] = status.get("name", "N/A") if isinstance(status, dict) else str(status)
+        
+        return parsed
+    
     def _text_to_adf(self, text: str) -> dict:
         """Converte texto plano para Atlassian Document Format."""
         paragraphs = text.split("\n\n") if "\n\n" in text else [text]

@@ -2608,6 +2608,106 @@ footer span {
   font-weight: 500;
 }
 
+/* ============================================
+   Tabela de Subtasks
+   ============================================ */
+
+/* Container da tabela de subtasks */
+.subtasks-table-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 1rem;
+}
+
+/* Tabela de subtasks */
+.subtasks-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.subtasks-table thead {
+  background: var(--accent-color);
+  color: var(--bg-color);
+}
+
+.subtasks-table th {
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.subtasks-table th.sortable {
+  position: relative;
+  transition: background-color 0.2s;
+}
+
+.subtasks-table th.sortable:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.subtasks-table th .sort-indicator {
+  display: inline-block;
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.subtasks-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  transition: background-color 0.2s;
+}
+
+.subtasks-table tbody tr:hover {
+  background: var(--result-bg);
+}
+
+.subtasks-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.subtasks-table td {
+  padding: 1rem;
+  color: var(--text-color);
+  font-size: 0.95rem;
+}
+
+.subtasks-table .issue-link {
+  color: var(--accent-color);
+  text-decoration: none;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.subtasks-table .issue-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+/* Responsividade para tabela */
+@media (max-width: 768px) {
+  .subtasks-table-container {
+    overflow-x: scroll;
+  }
+  
+  .subtasks-table {
+    min-width: 600px;
+  }
+  
+  .subtasks-table th,
+  .subtasks-table td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+}
+
 /* Badges de TAG - Melhor contraste para tema escuro */
 .badge-tag {
   background: rgba(156, 39, 176, 0.25);

@@ -50,6 +50,16 @@ class CardWithAIRequest(BaseModel):
             raise ValueError('Serviço de IA deve ser "openai" ou "stackspot"')
         return v.lower()
 
+class SubtasksSearchRequest(BaseModel):
+    parent_key: str = Field(..., description="Chave da issue pai (ex: PKGS-1160)")
+    max_results: Optional[int] = Field(100, description="Número máximo de resultados")
+    
+    @validator('parent_key')
+    def validate_parent_format(cls, v):
+        if not validate_card_number(v):
+            raise ValueError('Formato inválido. Use: PROJETO-NUMERO (ex: PKGS-1160)')
+        return v.upper().strip()
+
 # ============================================
 # ENDPOINTS
 # ============================================
@@ -173,6 +183,25 @@ Descrição:
         }
     
     return result
+
+@router.post("/subtasks")
+async def search_subtasks(request: SubtasksSearchRequest):
+    """Busca todas as subtasks de uma issue pai."""
+    try:
+        jira = get_issue_tracker("jira")
+        data = jira.search_subtasks(
+            parent_key=request.parent_key,
+            max_results=request.max_results
+        )
+        return {"success": True, "data": data}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except PermissionError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao buscar subtasks: {str(e)}")
 
 @router.post("/test-connection")
 async def test_jira_connection():
