@@ -6,6 +6,7 @@ from backend.api.routes_analyze import router as analyze_router
 from backend.api.routes_config import router as config_router
 from backend.api.routes_jira import router as jira_router
 from backend.api.routes_bug import router as bug_router
+from backend.api.routes_dashboard import router as dashboard_router
 from dotenv import load_dotenv
 import os
 import sys
@@ -44,6 +45,7 @@ app.include_router(analyze_router)
 app.include_router(config_router)
 app.include_router(jira_router)
 app.include_router(bug_router)
+app.include_router(dashboard_router)
 
 # Servir arquivos estáticos do frontend
 # Usa caminho absoluto para funcionar em produção

@@ -455,22 +455,19 @@ class JiraService(IssueTrackerBase):
         # Montar JQL query
         jql = f"parent = {parent_key} ORDER BY created ASC"
         
-        # Montar payload
+        # Usar enhanced POST /rest/api/3/search/jql (nextPageToken). O clássico /rest/api/3/search retorna 410 Gone.
         payload = {
             "jql": jql,
             "fields": fields,
             "maxResults": max_results
         }
-        
         url = f"{self.base_url}/rest/api/3/search/jql"
-        
         response = requests.post(
             url,
             headers=self._get_headers(),
             json=payload,
             timeout=self.timeout
         )
-        
         if response.status_code == 400:
             error_data = response.json()
             errors = error_data.get("errors", {})
@@ -480,14 +477,13 @@ class JiraService(IssueTrackerBase):
             raise PermissionError("Token de API do Jira inválido ou expirado.")
         if response.status_code == 403:
             raise PermissionError("Sem permissão para buscar issues neste projeto.")
-        
         response.raise_for_status()
-        
         data = response.json()
-        
+        issues_raw = data.get("issues", [])
+
         # Processar issues retornadas
         processed_issues = []
-        for issue in data.get("issues", []):
+        for issue in issues_raw:
             processed_issue = {
                 "key": issue.get("key"),
                 "self": issue.get("self"),
@@ -495,12 +491,85 @@ class JiraService(IssueTrackerBase):
                 "fields": self._parse_subtask_fields(issue.get("fields", {}))
             }
             processed_issues.append(processed_issue)
-        
+        # Enhanced API não retorna "total"; usamos o tamanho da página quando uma única página é suficiente
+        total = len(processed_issues) if data.get("isLast", True) else max_results
         return {
             "issues": processed_issues,
-            "total": data.get("total", 0),
-            "maxResults": data.get("maxResults", max_results)
+            "total": total,
+            "maxResults": max_results
         }
+
+    def search_issues_paginated(
+        self,
+        jql: str,
+        fields: Optional[list[str]] = None,
+        max_results_per_page: int = 100
+    ) -> list[dict]:
+        """
+        Busca issues por JQL com paginação até trazer todas.
+        Usa POST /rest/api/3/search/jql (enhanced), com nextPageToken para paginação.
+        O endpoint clássico POST /rest/api/3/search retorna 410 Gone.
+        """
+        if fields is None:
+            fields = ["issuetype", "status", "created"]
+        url = f"{self.base_url}/rest/api/3/search/jql"
+        all_issues: list[dict] = []
+        next_page_token: Optional[str] = None
+
+        while True:
+            payload = {
+                "jql": jql,
+                "fields": fields,
+                "maxResults": max_results_per_page
+            }
+            if next_page_token:
+                payload["nextPageToken"] = next_page_token
+
+            response = requests.post(
+                url,
+                headers=self._get_headers(),
+                json=payload,
+                timeout=self.timeout
+            )
+            if response.status_code == 400:
+                error_data = response.json()
+                errors = error_data.get("errors", {})
+                error_messages = error_data.get("errorMessages", [])
+                raise ValueError(f"Erro na busca JQL: {errors or error_messages}")
+            if response.status_code == 401:
+                raise PermissionError("Token de API do Jira inválido ou expirado.")
+            if response.status_code == 403:
+                raise PermissionError("Sem permissão para buscar issues neste projeto.")
+            response.raise_for_status()
+
+            data = response.json()
+            issues = data.get("issues", [])
+            is_last = data.get("isLast", True)
+            next_page_token = data.get("nextPageToken")
+
+            for issue in issues:
+                raw_fields = issue.get("fields", {})
+                parsed = self._parse_dashboard_issue_fields(raw_fields, fields)
+                parsed["key"] = issue.get("key")
+                all_issues.append(parsed)
+
+            if is_last or not next_page_token or not issues:
+                break
+
+        return all_issues
+
+    def _parse_dashboard_issue_fields(self, fields: dict, requested: list[str]) -> dict:
+        """Extrai apenas os campos solicitados para agregação do dashboard."""
+        parsed = {}
+        if "issuetype" in requested and "issuetype" in fields:
+            it = fields["issuetype"]
+            parsed["issuetype"] = it.get("name", "") if isinstance(it, dict) else str(it)
+        if "status" in requested and "status" in fields:
+            st = fields["status"]
+            parsed["status"] = st.get("name", "") if isinstance(st, dict) else str(st)
+        if "created" in requested and "created" in fields:
+            parsed["created"] = fields["created"] or ""
+        return parsed
     
     def _parse_subtask_fields(self, fields: dict) -> dict:
         """
@@ -604,3 +673,166 @@ class JiraService(IssueTrackerBase):
                 "error": "Erro de conexão",
                 "detail": "Não foi possível conectar ao Jira. Verifique a URL."
             }
+
+    def project_search_all(self, max_results_per_page: int = 50) -> list[dict]:
+        """
+        Busca todos os projetos disponíveis para o usuário (paginação).
+        Retorna lista com id, key, name. Filtra arquivados se o campo existir.
+        Ordenação alfabética por name é feita no retorno.
+        """
+        url = f"{self.base_url}/rest/api/3/project/search"
+        all_projects = []
+        start_at = 0
+
+        while True:
+            params = {"startAt": start_at, "maxResults": max_results_per_page}
+            response = requests.get(
+                url,
+                headers=self._get_headers(),
+                params=params,
+                timeout=self.timeout
+            )
+
+            if response.status_code == 401:
+                raise PermissionError("Token de API do Jira inválido ou expirado.")
+            if response.status_code == 403:
+                raise PermissionError("Sem permissão para listar projetos.")
+            response.raise_for_status()
+
+            data = response.json()
+            values = data.get("values", [])
+            total = data.get("total", 0)
+
+            for p in values:
+                # Filtrar arquivados se o campo existir na resposta
+                if p.get("archived") is True:
+                    continue
+                all_projects.append({
+                    "id": str(p.get("id", "")),
+                    "key": p.get("key", ""),
+                    "name": p.get("name", "")
+                })
+
+            if start_at + len(values) >= total:
+                break
+            start_at += len(values)
+            if not values:
+                break
+
+        # Ordenação alfabética por name
+        all_projects.sort(key=lambda x: (x.get("name") or "").lower())
+        return all_projects
+
+    def get_project(self, project_key: str) -> dict:
+        """
+        Retorna dados básicos do projeto (key, name) por chave.
+        Se o projeto não existir ou não tiver permissão, retorna { key: project_key, name: "" }.
+        """
+        url = f"{self.base_url}/rest/api/3/project/{project_key}"
+        try:
+            response = requests.get(
+                url,
+                headers=self._get_headers(),
+                timeout=self.timeout
+            )
+            if response.status_code in (401, 403, 404):
+                return {"key": project_key, "name": ""}
+            response.raise_for_status()
+            data = response.json()
+            return {"key": data.get("key", project_key), "name": data.get("name", "")}
+        except Exception:
+            return {"key": project_key, "name": ""}
+
+    def _agile_url(self, path: str) -> str:
+        """URL base para Jira Agile API (rest/agile/1.0)."""
+        base = self.base_url.rstrip("/")
+        return f"{base}/rest/agile/1.0{path}"
+
+    def agile_get_boards(self, project_key_or_id: str, max_results: int = 50) -> list[dict]:
+        """
+        Lista boards do projeto (Jira Agile API).
+        Returns list of boards com id, name, type.
+        """
+        url = self._agile_url("/board")
+        params = {"projectKeyOrId": project_key_or_id, "maxResults": max_results}
+        response = requests.get(
+            url,
+            headers=self._get_headers(),
+            params=params,
+            timeout=self.timeout
+        )
+        if response.status_code == 401:
+            raise PermissionError("Token de API do Jira inválido ou expirado.")
+        if response.status_code == 403:
+            raise PermissionError("Sem permissão para acessar boards do projeto.")
+        response.raise_for_status()
+        data = response.json()
+        return data.get("values", [])
+
+    def agile_get_active_sprints(self, board_id: int, max_results: int = 50) -> list[dict]:
+        """
+        Lista sprints ativas do board (Jira Agile API).
+        Returns list of sprints com id, name, state, startDate, endDate, etc.
+        """
+        url = self._agile_url(f"/board/{board_id}/sprint")
+        params = {"state": "active", "maxResults": max_results}
+        response = requests.get(
+            url,
+            headers=self._get_headers(),
+            params=params,
+            timeout=self.timeout
+        )
+        if response.status_code == 401:
+            raise PermissionError("Token de API do Jira inválido ou expirado.")
+        if response.status_code == 403:
+            raise PermissionError("Sem permissão para acessar sprints do board.")
+        response.raise_for_status()
+        data = response.json()
+        return data.get("values", [])
+
+    def get_sprint_current_dates(self, project_key: str) -> tuple[str, str, dict]:
+        """
+        Obtém start_date e end_date da sprint ativa do projeto (board scrum "Downstream").
+        Returns (start_date_YYYY_MM_DD, end_date_YYYY_MM_DD, sprint_info_dict).
+        Raises ValueError se não houver board downstream ou sprint ativa.
+        """
+        boards = self.agile_get_boards(project_key)
+        scrum_downstream = [
+            b for b in boards
+            if (b.get("type") or "").lower() == "scrum"
+            and "downstream" in (b.get("name") or "").lower()
+        ]
+        if not scrum_downstream:
+            raise ValueError("Sprint atual indisponível para o projeto informado.")
+
+        best_sprint = None
+        best_start = None
+
+        for board in scrum_downstream:
+            board_id = board.get("id")
+            if board_id is None:
+                continue
+            sprints = self.agile_get_active_sprints(board_id)
+            for sp in sprints:
+                start_str = sp.get("startDate") or ""
+                if not start_str:
+                    continue
+                start_date_only = start_str[:10]
+                if best_start is None or start_date_only > best_start:
+                    best_start = start_date_only
+                    end_str = sp.get("endDate") or ""
+                    end_date_only = end_str[:10] if len(end_str) >= 10 else end_str
+                    best_sprint = {
+                        "id": sp.get("id"),
+                        "name": sp.get("name"),
+                        "startDate": start_date_only,
+                        "endDate": end_date_only,
+                        "state": sp.get("state"),
+                    }
+        if best_sprint is None or best_start is None:
+            raise ValueError("Sprint atual indisponível para o projeto informado.")
+        return (
+            best_sprint["startDate"],
+            best_sprint["endDate"],
+            best_sprint,
+        )
