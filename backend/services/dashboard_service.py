@@ -354,7 +354,7 @@ class DashboardService:
 
         jql = build_status_time_jql(project_key, start_date_str, end_date_str)
         issues_from_search = jira.search_issues_paginated(
-            jql, ["summary", "status", "created"], max_results_per_page=MAX_ISSUES_STATUS_TIME
+            jql, ["summary", "status", "created", "issuetype"], max_results_per_page=MAX_ISSUES_STATUS_TIME
         )
         issues_slice = issues_from_search[:MAX_ISSUES_STATUS_TIME]
 
@@ -366,6 +366,10 @@ class DashboardService:
             key = item.get("key")
             if not key:
                 continue
+            
+            # Pegar issuetype da busca inicial (já parseado como string)
+            issue_type = item.get("issuetype") or "-"
+            
             try:
                 full = jira.get_issue(key, fields=["summary", "created", "status", "changelog"])
             except Exception as e:
@@ -393,6 +397,7 @@ class DashboardService:
             totals_in_test += in_test_ms
             rows.append({
                 "key": key,
+                "issueType": issue_type,
                 "summary": summary,
                 "currentStatus": current_status,
                 "readyToTestHours": ready_h,

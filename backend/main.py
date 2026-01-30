@@ -122,6 +122,13 @@ try:
                 return FileResponse(bug_file)
             return JSONResponse({"error": "Frontend not found"}, status_code=404)
         
+        @app.get("/dashboard.html")
+        async def read_dashboard():
+            dashboard_file = os.path.join(frontend_path, "dashboard.html")
+            if os.path.exists(dashboard_file):
+                return FileResponse(dashboard_file)
+            return JSONResponse({"error": "Frontend not found"}, status_code=404)
+        
         print(f"[DEBUG] Frontend routes configured successfully")
     else:
         print(f"[WARNING] Frontend path does not exist: {frontend_path}")

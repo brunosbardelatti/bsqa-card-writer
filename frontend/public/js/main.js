@@ -49,8 +49,9 @@ window.isDevelopment = isDevelopment;
  * - 1.2.0: Atualizado após REFACT_INCONSISTENCIAS.md
  * - 1.3.0: Adicionado botão Card na navegação (Integração Jira)
  * - 1.4.0: Adicionado botão Bug na navegação (Abertura de Bug/Sub-Bug)
+ * - 1.5.0: Adicionado botão Dashboard na navegação (Dashboard de Métricas QA)
  */
-const COMPONENTS_VERSION = '1.4.0'; // Adicionado botão Bug no header
+const COMPONENTS_VERSION = '1.5.0'; // Adicionado botão Dashboard no header
 const CACHE_KEY_PREFIX = 'bsqa-component-';
 
 /**
@@ -252,6 +253,12 @@ export function addBreadcrumbs() {
       breadcrumbItems = [
         { text: 'Home', url: 'index.html' },
         { text: 'Bug', url: '' }
+      ];
+      break;
+    case 'dashboard.html':
+      breadcrumbItems = [
+        { text: 'Home', url: 'index.html' },
+        { text: 'Dashboard QA', url: '' }
       ];
       break;
     case 'index.html':

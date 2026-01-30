@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>📊 Dashboard QA - BSQA Card Writer</title>
+  
+  <!-- Preload de componentes críticos -->
+  <link rel="preload" href="components/header.html" as="fetch" crossorigin>
+  <link rel="preload" href="components/footer.html" as="fetch" crossorigin>
+  
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+  
+  <!-- Chart.js para gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  
+  <!-- jsPDF + html2canvas para geração de PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div id="header" data-testid="dashboard-header-container"></div>
+  <div class="skeleton skeleton-header"></div>
+  
+  <div class="container" data-testid="dashboard-main-container">
+    <!-- Breadcrumbs -->
+    <div class="breadcrumbs" data-testid="dashboard-breadcrumbs-container"></div>
+    
+    <!-- Título -->
+    <h1 data-testid="dashboard-title">📊 Dashboard de Métricas QA</h1>
+    <p class="subtitle" data-testid="dashboard-subtitle">Visualize métricas de performance da equipe de QA com dados do Jira</p>
+    
+    <!-- Seção de Filtros -->
+    <div class="filters-section" data-testid="dashboard-filters-section">
+      <h2>Filtros</h2>
+      <form id="dashboardFilters" data-testid="dashboard-filters-form">
+        <div class="filters-row">
+          <!-- Projeto -->
+          <div class="form-group">
+            <label for="projectSelect" data-testid="dashboard-label-project">Projeto *</label>
+            <select id="projectSelect" name="projectKey" required data-testid="dashboard-select-project">
+              <option value="">Carregando projetos...</option>
+            </select>
+          </div>
+          
+          <!-- Período -->
+          <div class="form-group">
+            <label for="periodType" data-testid="dashboard-label-period">Período *</label>
+            <select id="periodType" name="periodType" required data-testid="dashboard-select-period">
+              <option value="month_current">Mês Atual</option>
+              <option value="sprint_current">Sprint Atual</option>
+              <option value="custom">Período Personalizado</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- Campos de data customizada (visíveis apenas quando period=custom) -->
+        <div class="filters-row custom-dates-row" id="customDatesRow" style="display: none;">
+          <div class="form-group">
+            <label for="startDate" data-testid="dashboard-label-startdate">Data Inicial *</label>
+            <input type="date" id="startDate" name="startDate" data-testid="dashboard-input-startdate">
+          </div>
+          <div class="form-group">
+            <label for="endDate" data-testid="dashboard-label-enddate">Data Final *</label>
+            <input type="date" id="endDate" name="endDate" data-testid="dashboard-input-enddate">
+          </div>
+        </div>
+        
+        <!-- Checkbox Status Time -->
+        <div class="filters-row">
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label" data-testid="dashboard-label-statustime">
+              <input type="checkbox" id="includeStatusTime" name="includeStatusTime" data-testid="dashboard-checkbox-statustime">
+              <span>Incluir Status Time na geração</span>
+              <small>(tempo em "Ready to test" e "In Test" - pode demorar mais)</small>
+            </label>
+          </div>
+        </div>
+        
+        <!-- Botão Gerar -->
+        <div class="filters-row">
+          <button type="submit" class="submit-btn" id="generateBtn" data-testid="dashboard-btn-generate">
+            🚀 Gerar Dashboard
+          </button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Área de Resultados -->
+    <div id="dashboardOutput" class="dashboard-output" data-testid="dashboard-output-container">
+      <!-- Conteúdo será preenchido dinamicamente -->
+      <div class="empty-state" data-testid="dashboard-empty-state">
+        <p>Selecione um projeto e período para gerar o dashboard.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="footer" data-testid="dashboard-footer-container"></div>
+  <div class="skeleton skeleton-footer"></div>
+  
+  <script type="module" src="js/main.js"></script>
+  <script src="js/apiConfig.js"></script>
+  <script type="module" src="js/dashboard.js"></script>
+</body>
+</html>
