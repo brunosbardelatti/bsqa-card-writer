@@ -1,14 +1,43 @@
 # backend/api/routes_dashboard.py
 
 from typing import Optional, Literal
+from base64 import b64decode
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Header
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, validator
 
 from backend.services.dashboard_service import DashboardService
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard QA"])
+
+
+def decode_jira_auth(auth_header: Optional[str], base_url_header: Optional[str] = None) -> Optional[dict]:
+    """
+    Decodifica o header X-Jira-Auth (Base64 de email:token) e retorna dict de credenciais.
+    
+    Args:
+        auth_header: Header X-Jira-Auth em Base64
+        base_url_header: Header X-Jira-Base-Url (opcional)
+    
+    Returns:
+        Dict com {base_url, email, api_token} ou None se não fornecido
+    """
+    if not auth_header:
+        return None
+    
+    try:
+        decoded = b64decode(auth_header).decode('utf-8')
+        if ':' not in decoded:
+            return None
+        email, api_token = decoded.split(':', 1)
+        return {
+            "base_url": base_url_header.rstrip('/') if base_url_header else None,
+            "email": email,
+            "api_token": api_token
+        }
+    except Exception:
+        return None
 
 # ============================================
 # SCHEMAS
@@ -74,16 +103,26 @@ def _error_response(code: str, message: str, status_code: int = 400, details: Op
 
 
 @router.post("")
-async def dashboard_post(request: DashboardRequest):
+async def dashboard_post(
+    request: DashboardRequest,
+    x_jira_auth: Optional[str] = Header(None, alias="X-Jira-Auth"),
+    x_jira_base_url: Optional[str] = Header(None, alias="X-Jira-Base-Url"),
+):
     """
     POST /dashboard — Endpoint único.
     - action=projects: retorna lista de projetos para dropdown (ordenada por name).
     - action=dashboard: retorna métricas e séries do dashboard (implementado em fase posterior).
+    
+    Headers opcionais para autenticação por usuário:
+    - X-Jira-Auth: Base64(email:token)
+    - X-Jira-Base-Url: URL base do Jira
     """
+    credentials = decode_jira_auth(x_jira_auth, x_jira_base_url)
+    
     if request.action == "projects":
         try:
             service = DashboardService()
-            projects = service.get_projects()
+            projects = service.get_projects(credentials=credentials)
             return {
                 "success": True,
                 "data": {"projects": projects}
@@ -116,6 +155,7 @@ async def dashboard_post(request: DashboardRequest):
                 period_type=period.type,
                 custom_start=period.startDate,
                 custom_end=period.endDate,
+                credentials=credentials,
             )
             return {
                 "success": True,
@@ -162,12 +202,22 @@ class StatusTimeRequest(BaseModel):
 
 @router.post("/status-time")
 @router.post("/statusTime")
-async def dashboard_status_time(request: StatusTimeRequest):
+async def dashboard_status_time(
+    request: StatusTimeRequest,
+    x_jira_auth: Optional[str] = Header(None, alias="X-Jira-Auth"),
+    x_jira_base_url: Optional[str] = Header(None, alias="X-Jira-Base-Url"),
+):
     """
     POST /dashboard/status-time — Dados para tabela e resumo Status Time.
     Issues que já passaram por QA; tempo em Ready to test e In Test (changelog).
     Chamar apenas quando o usuário abrir a seção Status Time (pode ser lento).
+    
+    Headers opcionais para autenticação por usuário:
+    - X-Jira-Auth: Base64(email:token)
+    - X-Jira-Base-Url: URL base do Jira
     """
+    credentials = decode_jira_auth(x_jira_auth, x_jira_base_url)
+    
     try:
         service = DashboardService()
         payload = service.get_status_time(
@@ -175,6 +225,7 @@ async def dashboard_status_time(request: StatusTimeRequest):
             period_type=request.period.type,
             custom_start=request.period.startDate,
             custom_end=request.period.endDate,
+            credentials=credentials,
         )
         return {
             "success": True,

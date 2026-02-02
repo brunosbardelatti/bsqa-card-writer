@@ -25,7 +25,14 @@ class JiraService(IssueTrackerBase):
         {"id": "changelog", "name": "Histórico", "required": False},
     ]
     
-    def __init__(self):
+    def __init__(self, skip_env_validation: bool = False):
+        """
+        Inicializa o JiraService.
+        
+        Args:
+            skip_env_validation: Se True, não valida credenciais do .env (útil para
+                                 uso com credenciais dinâmicas por request)
+        """
         self.base_url = os.getenv("JIRA_BASE_URL")
         self.email = os.getenv("JIRA_USER_EMAIL")
         self.api_token = os.getenv("JIRA_API_TOKEN")
@@ -34,26 +41,54 @@ class JiraService(IssueTrackerBase):
         self.sub_bug_type_id = os.getenv("JIRA_SUB_BUG_ISSUE_TYPE_ID", "10271")
         self.timeout = int(os.getenv("JIRA_REQUEST_TIMEOUT", "30"))
         
-        if not all([self.base_url, self.email, self.api_token]):
-            raise RuntimeError(
-                "Configurações do Jira incompletas. "
-                "Verifique JIRA_BASE_URL, JIRA_USER_EMAIL e JIRA_API_TOKEN."
-            )
+        self.auth_header = None
         
-        # Montar header de autenticação Basic
-        credentials = f"{self.email}:{self.api_token}"
-        self.auth_header = b64encode(credentials.encode()).decode()
+        if not skip_env_validation:
+            if not all([self.base_url, self.email, self.api_token]):
+                raise RuntimeError(
+                    "Configurações do Jira incompletas. "
+                    "Verifique JIRA_BASE_URL, JIRA_USER_EMAIL e JIRA_API_TOKEN."
+                )
+            
+            # Montar header de autenticação Basic
+            credentials = f"{self.email}:{self.api_token}"
+            self.auth_header = b64encode(credentials.encode()).decode()
     
-    def _get_headers(self) -> dict:
-        """Retorna headers padrão para requests."""
+    def _get_headers(self, credentials: Optional[dict] = None) -> dict:
+        """
+        Retorna headers padrão para requests.
+        
+        Args:
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica.
+                         Se não fornecido, usa credenciais do .env
+        """
+        if credentials:
+            auth_str = f"{credentials['email']}:{credentials['api_token']}"
+            auth_header = b64encode(auth_str.encode()).decode()
+        else:
+            auth_header = self.auth_header
+        
         return {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "Authorization": f"Basic {self.auth_header}"
+            "Authorization": f"Basic {auth_header}"
         }
     
-    def get_issue(self, issue_key: str, fields: Optional[list[str]] = None) -> dict:
-        """Busca uma issue no Jira."""
+    def _get_base_url(self, credentials: Optional[dict] = None) -> str:
+        """Retorna base_url das credenciais dinâmicas ou do .env"""
+        if credentials and credentials.get("base_url"):
+            return credentials["base_url"].rstrip("/")
+        return self.base_url.rstrip("/") if self.base_url else ""
+    
+    def get_issue(self, issue_key: str, fields: Optional[list[str]] = None, credentials: Optional[dict] = None) -> dict:
+        """
+        Busca uma issue no Jira.
+        
+        Args:
+            issue_key: Chave da issue (ex: "PROJ-123")
+            fields: Lista de campos a retornar
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
+        """
         if fields is None:
             fields = ["summary", "description"]
         
@@ -67,7 +102,8 @@ class JiraService(IssueTrackerBase):
             fields = fields + ["project"]
         
         fields_param = ",".join(fields)
-        url = f"{self.base_url}/rest/api/3/issue/{issue_key}?fields={fields_param}"
+        base_url = self._get_base_url(credentials)
+        url = f"{base_url}/rest/api/3/issue/{issue_key}?fields={fields_param}"
         
         # Adicionar expand=changelog se solicitado
         if include_changelog:
@@ -75,7 +111,7 @@ class JiraService(IssueTrackerBase):
         
         response = requests.get(
             url,
-            headers=self._get_headers(),
+            headers=self._get_headers(credentials),
             timeout=self.timeout
         )
         
@@ -503,16 +539,24 @@ class JiraService(IssueTrackerBase):
         self,
         jql: str,
         fields: Optional[list[str]] = None,
-        max_results_per_page: int = 100
+        max_results_per_page: int = 100,
+        credentials: Optional[dict] = None
     ) -> list[dict]:
         """
         Busca issues por JQL com paginação até trazer todas.
         Usa POST /rest/api/3/search/jql (enhanced), com nextPageToken para paginação.
         O endpoint clássico POST /rest/api/3/search retorna 410 Gone.
+        
+        Args:
+            jql: Query JQL
+            fields: Lista de campos a retornar
+            max_results_per_page: Máximo de resultados por página
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
         """
         if fields is None:
             fields = ["issuetype", "status", "created"]
-        url = f"{self.base_url}/rest/api/3/search/jql"
+        base_url = self._get_base_url(credentials)
+        url = f"{base_url}/rest/api/3/search/jql"
         all_issues: list[dict] = []
         next_page_token: Optional[str] = None
 
@@ -527,7 +571,7 @@ class JiraService(IssueTrackerBase):
 
             response = requests.post(
                 url,
-                headers=self._get_headers(),
+                headers=self._get_headers(credentials),
                 json=payload,
                 timeout=self.timeout
             )
@@ -632,14 +676,20 @@ class JiraService(IssueTrackerBase):
         """Retorna campos disponíveis para consulta."""
         return self.AVAILABLE_FIELDS
     
-    def test_connection(self) -> dict:
-        """Testa a conexão com o Jira."""
-        url = f"{self.base_url}/rest/api/3/myself"
+    def test_connection(self, credentials: Optional[dict] = None) -> dict:
+        """
+        Testa a conexão com o Jira.
+        
+        Args:
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
+        """
+        base_url = self._get_base_url(credentials)
+        url = f"{base_url}/rest/api/3/myself"
         
         try:
             response = requests.get(
                 url,
-                headers=self._get_headers(),
+                headers=self._get_headers(credentials),
                 timeout=self.timeout
             )
             
@@ -674,13 +724,18 @@ class JiraService(IssueTrackerBase):
                 "detail": "Não foi possível conectar ao Jira. Verifique a URL."
             }
 
-    def project_search_all(self, max_results_per_page: int = 50) -> list[dict]:
+    def project_search_all(self, max_results_per_page: int = 50, credentials: Optional[dict] = None) -> list[dict]:
         """
         Busca todos os projetos disponíveis para o usuário (paginação).
         Retorna lista com id, key, name. Filtra arquivados se o campo existir.
         Ordenação alfabética por name é feita no retorno.
+        
+        Args:
+            max_results_per_page: Máximo de resultados por página
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
         """
-        url = f"{self.base_url}/rest/api/3/project/search"
+        base_url = self._get_base_url(credentials)
+        url = f"{base_url}/rest/api/3/project/search"
         all_projects = []
         start_at = 0
 
@@ -688,7 +743,7 @@ class JiraService(IssueTrackerBase):
             params = {"startAt": start_at, "maxResults": max_results_per_page}
             response = requests.get(
                 url,
-                headers=self._get_headers(),
+                headers=self._get_headers(credentials),
                 params=params,
                 timeout=self.timeout
             )
@@ -723,16 +778,21 @@ class JiraService(IssueTrackerBase):
         all_projects.sort(key=lambda x: (x.get("name") or "").lower())
         return all_projects
 
-    def get_project(self, project_key: str) -> dict:
+    def get_project(self, project_key: str, credentials: Optional[dict] = None) -> dict:
         """
         Retorna dados básicos do projeto (key, name) por chave.
         Se o projeto não existir ou não tiver permissão, retorna { key: project_key, name: "" }.
+        
+        Args:
+            project_key: Chave do projeto
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
         """
-        url = f"{self.base_url}/rest/api/3/project/{project_key}"
+        base_url = self._get_base_url(credentials)
+        url = f"{base_url}/rest/api/3/project/{project_key}"
         try:
             response = requests.get(
                 url,
-                headers=self._get_headers(),
+                headers=self._get_headers(credentials),
                 timeout=self.timeout
             )
             if response.status_code in (401, 403, 404):
@@ -743,21 +803,26 @@ class JiraService(IssueTrackerBase):
         except Exception:
             return {"key": project_key, "name": ""}
 
-    def _agile_url(self, path: str) -> str:
+    def _agile_url(self, path: str, credentials: Optional[dict] = None) -> str:
         """URL base para Jira Agile API (rest/agile/1.0)."""
-        base = self.base_url.rstrip("/")
+        base = self._get_base_url(credentials)
         return f"{base}/rest/agile/1.0{path}"
 
-    def agile_get_boards(self, project_key_or_id: str, max_results: int = 50) -> list[dict]:
+    def agile_get_boards(self, project_key_or_id: str, max_results: int = 50, credentials: Optional[dict] = None) -> list[dict]:
         """
         Lista boards do projeto (Jira Agile API).
         Returns list of boards com id, name, type.
+        
+        Args:
+            project_key_or_id: Chave ou ID do projeto
+            max_results: Máximo de resultados
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
         """
-        url = self._agile_url("/board")
+        url = self._agile_url("/board", credentials)
         params = {"projectKeyOrId": project_key_or_id, "maxResults": max_results}
         response = requests.get(
             url,
-            headers=self._get_headers(),
+            headers=self._get_headers(credentials),
             params=params,
             timeout=self.timeout
         )
@@ -769,17 +834,23 @@ class JiraService(IssueTrackerBase):
         data = response.json()
         return data.get("values", [])
 
-    def agile_get_sprints_by_state(self, board_id: int, state: str = "active", max_results: int = 50) -> list[dict]:
+    def agile_get_sprints_by_state(self, board_id: int, state: str = "active", max_results: int = 50, credentials: Optional[dict] = None) -> list[dict]:
         """
         Lista sprints do board por estado (Jira Agile API).
         state: 'active', 'closed', 'future'
         Returns list of sprints com id, name, state, startDate, endDate, etc.
+        
+        Args:
+            board_id: ID do board
+            state: Estado das sprints ('active', 'closed', 'future')
+            max_results: Máximo de resultados
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
         """
-        url = self._agile_url(f"/board/{board_id}/sprint")
+        url = self._agile_url(f"/board/{board_id}/sprint", credentials)
         params = {"state": state, "maxResults": max_results}
         response = requests.get(
             url,
-            headers=self._get_headers(),
+            headers=self._get_headers(credentials),
             params=params,
             timeout=self.timeout
         )
@@ -791,20 +862,29 @@ class JiraService(IssueTrackerBase):
         data = response.json()
         return data.get("values", [])
 
-    def agile_get_active_sprints(self, board_id: int, max_results: int = 50) -> list[dict]:
+    def agile_get_active_sprints(self, board_id: int, max_results: int = 50, credentials: Optional[dict] = None) -> list[dict]:
         """
         Lista sprints ativas do board (Jira Agile API).
         Returns list of sprints com id, name, state, startDate, endDate, etc.
+        
+        Args:
+            board_id: ID do board
+            max_results: Máximo de resultados
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
         """
-        return self.agile_get_sprints_by_state(board_id, state="active", max_results=max_results)
+        return self.agile_get_sprints_by_state(board_id, state="active", max_results=max_results, credentials=credentials)
 
-    def get_sprint_current_dates(self, project_key: str) -> tuple[str, str, dict]:
+    def get_sprint_current_dates(self, project_key: str, credentials: Optional[dict] = None) -> tuple[str, str, dict]:
         """
         Obtém start_date e end_date da sprint ativa do projeto (board scrum "Downstream").
         Returns (start_date_YYYY_MM_DD, end_date_YYYY_MM_DD, sprint_info_dict).
         Raises ValueError se não houver board downstream ou sprint ativa.
+        
+        Args:
+            project_key: Chave do projeto
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
         """
-        boards = self.agile_get_boards(project_key)
+        boards = self.agile_get_boards(project_key, credentials=credentials)
         scrum_downstream = [
             b for b in boards
             if (b.get("type") or "").lower() == "scrum"
@@ -820,7 +900,7 @@ class JiraService(IssueTrackerBase):
             board_id = board.get("id")
             if board_id is None:
                 continue
-            sprints = self.agile_get_active_sprints(board_id)
+            sprints = self.agile_get_active_sprints(board_id, credentials=credentials)
             for sp in sprints:
                 start_str = sp.get("startDate") or ""
                 if not start_str:
@@ -845,13 +925,17 @@ class JiraService(IssueTrackerBase):
             best_sprint,
         )
 
-    def get_sprint_previous_dates(self, project_key: str) -> tuple[str, str, dict]:
+    def get_sprint_previous_dates(self, project_key: str, credentials: Optional[dict] = None) -> tuple[str, str, dict]:
         """
         Obtém start_date e end_date da última sprint fechada do projeto (board scrum "Downstream").
         Returns (start_date_YYYY_MM_DD, end_date_YYYY_MM_DD, sprint_info_dict).
         Raises ValueError se não houver board downstream ou sprint fechada.
+        
+        Args:
+            project_key: Chave do projeto
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
         """
-        boards = self.agile_get_boards(project_key)
+        boards = self.agile_get_boards(project_key, credentials=credentials)
         scrum_downstream = [
             b for b in boards
             if (b.get("type") or "").lower() == "scrum"
@@ -868,7 +952,7 @@ class JiraService(IssueTrackerBase):
             if board_id is None:
                 continue
             # Buscar sprints fechadas
-            sprints = self.agile_get_sprints_by_state(board_id, state="closed", max_results=20)
+            sprints = self.agile_get_sprints_by_state(board_id, state="closed", max_results=20, credentials=credentials)
             for sp in sprints:
                 end_str = sp.get("endDate") or ""
                 if not end_str:

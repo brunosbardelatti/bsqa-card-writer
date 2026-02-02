@@ -112,13 +112,28 @@ def _calc_time_in_statuses(
 class DashboardService:
     """Serviço de lógica de negócio do Dashboard de Performance QA."""
 
-    def get_projects(self) -> List[dict]:
+    def _get_jira(self, credentials: Optional[dict] = None):
+        """
+        Retorna instância do JiraService.
+        Se credentials for fornecido, usa skip_env_validation=True.
+        """
+        if credentials:
+            # Usar instância que não valida .env
+            jira = get_issue_tracker("jira", skip_env_validation=True)
+        else:
+            jira = get_issue_tracker("jira")
+        return jira
+
+    def get_projects(self, credentials: Optional[dict] = None) -> List[dict]:
         """
         Retorna lista de projetos disponíveis para o usuário (não arquivados).
         Ordenação alfabética por name é feita no jira_service.
+        
+        Args:
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
         """
-        jira = get_issue_tracker("jira")
-        projects = jira.project_search_all()
+        jira = self._get_jira(credentials)
+        projects = jira.project_search_all(credentials=credentials)
         return [{"id": p["id"], "key": p["key"], "name": p["name"]} for p in projects]
 
     def get_dashboard_period(
@@ -127,19 +142,23 @@ class DashboardService:
         period_type: str,
         custom_start: Optional[str] = None,
         custom_end: Optional[str] = None,
+        credentials: Optional[dict] = None,
     ) -> dict:
         """
         Resolve o período (start/end) conforme type e retorna payload mínimo:
         project + period (timezone, startDate, endDate, source, sprint?).
         Raises ValueError para período inválido ou sprint indisponível.
+        
+        Args:
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
         """
-        jira = get_issue_tracker("jira")
+        jira = self._get_jira(credentials)
 
         def get_sprint_dates(pk: str):
-            return jira.get_sprint_current_dates(pk)
+            return jira.get_sprint_current_dates(pk, credentials=credentials)
 
         def get_sprint_previous_dates(pk: str):
-            return jira.get_sprint_previous_dates(pk)
+            return jira.get_sprint_previous_dates(pk, credentials=credentials)
 
         start_date, end_date, meta = resolve_period(
             period_type=period_type,
@@ -171,20 +190,24 @@ class DashboardService:
         period_type: str,
         custom_start: Optional[str] = None,
         custom_end: Optional[str] = None,
+        credentials: Optional[dict] = None,
     ) -> dict:
         """
         Retorna DTO completo do dashboard: project, period, metrics, series, meta.
         Uma única busca JQL paginada; agregação e cálculos no backend.
+        
+        Args:
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
         """
         import time
         t0 = time.perf_counter()
-        jira = get_issue_tracker("jira")
+        jira = self._get_jira(credentials)
 
         def get_sprint_dates(pk: str):
-            return jira.get_sprint_current_dates(pk)
+            return jira.get_sprint_current_dates(pk, credentials=credentials)
 
         def get_sprint_previous_dates(pk: str):
-            return jira.get_sprint_previous_dates(pk)
+            return jira.get_sprint_previous_dates(pk, credentials=credentials)
 
         start_date_str, end_date_str, meta = resolve_period(
             period_type=period_type,
@@ -206,7 +229,7 @@ class DashboardService:
             period_payload["sprint"] = meta["sprint"]
 
         jql = build_defects_base_jql(project_key, start_date_str, end_date_str)
-        issues = jira.search_issues_paginated(jql, ["issuetype", "status", "created"])
+        issues = jira.search_issues_paginated(jql, ["issuetype", "status", "created"], credentials=credentials)
 
         start_d = date.fromisoformat(start_date_str)
         end_d = date.fromisoformat(end_date_str)
@@ -349,7 +372,7 @@ class DashboardService:
             project_key, period_type, start_date_str, end_date_str, len(issues), elapsed_ms,
         )
 
-        project_info = jira.get_project(project_key)
+        project_info = jira.get_project(project_key, credentials=credentials)
         return {
             "project": project_info,
             "period": period_payload,
@@ -364,20 +387,24 @@ class DashboardService:
         period_type: str,
         custom_start: Optional[str] = None,
         custom_end: Optional[str] = None,
+        credentials: Optional[dict] = None,
     ) -> dict:
         """
         Retorna DTO para Status Time: issues que passaram por QA com tempo em
         Ready to test e In Test. Limita a MAX_ISSUES_STATUS_TIME issues;
         para cada uma faz GET com changelog e calcula intervalos.
+        
+        Args:
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
         """
         t0 = time_module.perf_counter()
-        jira = get_issue_tracker("jira")
+        jira = self._get_jira(credentials)
 
         def get_sprint_dates(pk: str):
-            return jira.get_sprint_current_dates(pk)
+            return jira.get_sprint_current_dates(pk, credentials=credentials)
 
         def get_sprint_previous_dates(pk: str):
-            return jira.get_sprint_previous_dates(pk)
+            return jira.get_sprint_previous_dates(pk, credentials=credentials)
 
         start_date_str, end_date_str, meta = resolve_period(
             period_type=period_type,
@@ -400,7 +427,7 @@ class DashboardService:
 
         jql = build_status_time_jql(project_key, start_date_str, end_date_str)
         issues_from_search = jira.search_issues_paginated(
-            jql, ["summary", "status", "created", "issuetype"], max_results_per_page=MAX_ISSUES_STATUS_TIME
+            jql, ["summary", "status", "created", "issuetype"], max_results_per_page=MAX_ISSUES_STATUS_TIME, credentials=credentials
         )
         issues_slice = issues_from_search[:MAX_ISSUES_STATUS_TIME]
 
@@ -417,7 +444,7 @@ class DashboardService:
             issue_type = item.get("issuetype") or "-"
             
             try:
-                full = jira.get_issue(key, fields=["summary", "created", "status", "changelog"])
+                full = jira.get_issue(key, fields=["summary", "created", "status", "changelog"], credentials=credentials)
             except Exception as e:
                 logger.warning("[statusTime] skip issue %s: %s", key, e)
                 continue
@@ -463,7 +490,7 @@ class DashboardService:
         avg_ready = round(total_ready_h / count, 2) if count else 0
         avg_in_test = round(total_in_test_h / count, 2) if count else 0
 
-        project_info = jira.get_project(project_key)
+        project_info = jira.get_project(project_key, credentials=credentials)
         generated_at = datetime.now(TIMEZONE).strftime("%Y-%m-%dT%H:%M:%S%z")
         if len(generated_at) == 22 and generated_at[-5] in "+-":
             generated_at = generated_at[:-2] + ":" + generated_at[-2:]

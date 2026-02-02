@@ -10,12 +10,13 @@ ISSUE_TRACKERS = {
     # "github": GitHubService,              # Futuro
 }
 
-def get_issue_tracker(tracker_name: str = "jira"):
+def get_issue_tracker(tracker_name: str = "jira", skip_env_validation: bool = False):
     """
     Factory para obter instância do Issue Tracker.
     
     Args:
         tracker_name: Nome do tracker (default: jira)
+        skip_env_validation: Se True, não valida credenciais do .env (para uso com credentials dinâmicos)
         
     Returns:
         Instância do Issue Tracker
@@ -26,7 +27,14 @@ def get_issue_tracker(tracker_name: str = "jira"):
     tracker_name = tracker_name.lower()
     if tracker_name not in ISSUE_TRACKERS:
         raise ValueError(f"Issue Tracker '{tracker_name}' não suportado.")
-    return ISSUE_TRACKERS[tracker_name]()
+    
+    tracker_class = ISSUE_TRACKERS[tracker_name]
+    
+    # JiraService aceita skip_env_validation
+    if tracker_name == "jira":
+        return tracker_class(skip_env_validation=skip_env_validation)
+    
+    return tracker_class()
 
 def get_available_trackers() -> list[dict]:
     """Retorna lista de Issue Trackers disponíveis."""

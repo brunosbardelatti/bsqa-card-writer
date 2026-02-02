@@ -20,6 +20,84 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
+  <!-- Modal de Login Jira -->
+  <div id="jiraLoginModal" class="modal" data-testid="jira-login-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="modal-close-btn" id="jiraLoginModalCloseBtn" title="Fechar" aria-label="Fechar">&times;</button>
+        <h2 id="jiraLoginModalTitle">Conectar ao Jira</h2>
+        <p class="modal-subtitle" id="jiraLoginModalSubtitle">Informe suas credenciais para acessar o Dashboard</p>
+      </div>
+
+      <div id="jiraLoginUserSummary" class="jira-login-user-summary hidden" aria-hidden="true">
+        <div class="jira-summary-row">
+          <span class="jira-summary-label">Instância</span>
+          <span class="jira-summary-instance">—</span>
+        </div>
+        <div class="jira-summary-row">
+          <span class="jira-summary-label">Usuário</span>
+          <span class="jira-summary-name">—</span>
+        </div>
+        <div class="jira-summary-row">
+          <span class="jira-summary-label">Email</span>
+          <span class="jira-summary-email">—</span>
+        </div>
+      </div>
+      
+      <form id="jiraLoginForm" class="modal-form">
+        <fieldset class="modal-form-section">
+          <legend class="modal-form-legend">Credenciais</legend>
+          <div class="form-group">
+            <label for="jiraBaseUrl">URL do Jira *</label>
+            <input type="url" id="jiraBaseUrl" placeholder="https://sua-empresa.atlassian.net" />
+            <small class="field-hint">Ex: https://sua-empresa.atlassian.net</small>
+          </div>
+          <div class="form-group">
+            <label for="jiraEmail">Email do Jira *</label>
+            <input type="email" id="jiraEmail" placeholder="seu.email@empresa.com" />
+          </div>
+          <div class="form-group">
+            <label for="jiraToken">Token de API *</label>
+            <input type="password" id="jiraToken" placeholder="Seu token de API" />
+            <small class="field-hint">
+              <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener">Gerar token no Atlassian</a>
+            </small>
+          </div>
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" id="rememberSession" checked />
+              <span>Lembrar durante esta sessão</span>
+            </label>
+          </div>
+        </fieldset>
+        
+        <fieldset class="modal-form-section import-credentials">
+          <legend class="import-credentials-legend">
+            <span class="import-credentials-title">Importar credenciais</span>
+          </legend>
+          <input type="file" id="jiraImportFile" accept=".json,application/json" hidden />
+          <div class="import-paste-area">
+            <textarea id="jiraImportJson" placeholder='Cole o JSON e clique em Conectar: {"baseUrl":"https://...","email":"...","token":"..."}' rows="3"></textarea>
+            <button type="button" class="import-submit-btn" id="jiraImportFileBtn" title="Selecionar arquivo JSON">Importar</button>
+          </div>
+        </fieldset>
+        
+        <div id="jiraLoginError" class="error-message" style="display: none;"></div>
+        
+        <div class="modal-form-actions">
+          <button type="submit" class="submit-btn" id="jiraLoginBtn" data-testid="jira-login-submit">
+            <span class="btn-text">Conectar</span>
+            <span class="btn-loading" style="display: none;">Conectando...</span>
+          </button>
+        </div>
+      </form>
+      
+      <div class="modal-footer">
+        <small>Suas credenciais são armazenadas apenas no seu navegador e não são enviadas para nosso servidor.</small>
+      </div>
+    </div>
+  </div>
+
   <div id="header" data-testid="dashboard-header-container"></div>
   <div class="skeleton skeleton-header"></div>
   

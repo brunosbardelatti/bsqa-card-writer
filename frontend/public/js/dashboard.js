@@ -24,13 +24,535 @@ let chartInstances = {
 };
 
 // ============================================
+// MÓDULO DE AUTENTICAÇÃO JIRA
+// ============================================
+
+const JiraAuth = {
+  STORAGE_KEY: 'jira_auth',
+  
+  /**
+   * Salva credenciais no sessionStorage.
+   * userDisplayName e userEmail são opcionais (preenchidos após test-connection).
+   */
+  save(baseUrl, email, token, userDisplayName, userEmail) {
+    const data = { baseUrl, email, token };
+    if (userDisplayName != null) data.userDisplayName = userDisplayName;
+    if (userEmail != null) data.userEmail = userEmail;
+    sessionStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+  },
+  
+  /**
+   * Retorna credenciais armazenadas ou null
+   */
+  get() {
+    const stored = sessionStorage.getItem(this.STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  },
+  
+  /**
+   * Remove credenciais
+   */
+  clear() {
+    sessionStorage.removeItem(this.STORAGE_KEY);
+  },
+  
+  /**
+   * Verifica se está autenticado
+   */
+  isAuthenticated() {
+    return this.get() !== null;
+  },
+  
+  /**
+   * Retorna header de autenticação Base64(email:token)
+   */
+  getAuthHeader() {
+    const creds = this.get();
+    if (!creds) return null;
+    return btoa(`${creds.email}:${creds.token}`);
+  },
+  
+  /**
+   * Retorna base URL do Jira
+   */
+  getBaseUrl() {
+    const creds = this.get();
+    return creds?.baseUrl || null;
+  },
+  
+  /**
+   * Retorna headers para requisições ao backend
+   */
+  getHeaders() {
+    const auth = this.getAuthHeader();
+    const baseUrl = this.getBaseUrl();
+    
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    
+    if (auth) {
+      headers['X-Jira-Auth'] = auth;
+    }
+    if (baseUrl) {
+      headers['X-Jira-Base-Url'] = baseUrl;
+    }
+    
+    return headers;
+  }
+};
+
+// Expor globalmente para debug
+window.JiraAuth = JiraAuth;
+
+/**
+ * Deriva nome da instância/empresa do baseUrl (ex: https://suprema-gaming.atlassian.net -> "Suprema Gaming").
+ */
+function getInstanceNameFromBaseUrl(baseUrl) {
+  if (!baseUrl || typeof baseUrl !== 'string') return '';
+  try {
+    const url = new URL(baseUrl.startsWith('http') ? baseUrl : `https://${baseUrl}`);
+    const host = url.hostname || '';
+    const match = host.match(/^([^.]+)(\.atlassian\.net)?/i);
+    const slug = match ? match[1] : host.split('.')[0] || '';
+    const words = slug.replace(/-/g, ' ').split(/\s+/).filter(Boolean);
+    return words.map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ') || slug;
+  } catch {
+    return '';
+  }
+}
+
+// ============================================
+// MODAL DE LOGIN
+// ============================================
+
+function showLoginModal() {
+  const modal = document.getElementById('jiraLoginModal');
+  if (!modal) return;
+
+  const creds = JiraAuth.get();
+  const isLoggedIn = JiraAuth.isAuthenticated() && creds;
+  const summaryEl = document.getElementById('jiraLoginUserSummary');
+  const titleEl = document.getElementById('jiraLoginModalTitle');
+  const subtitleEl = document.getElementById('jiraLoginModalSubtitle');
+
+  if (summaryEl) {
+    if (isLoggedIn && (creds.userDisplayName || creds.email)) {
+      summaryEl.classList.remove('hidden');
+      summaryEl.setAttribute('aria-hidden', 'false');
+      const instanceEl = summaryEl.querySelector('.jira-summary-instance');
+      const nameEl = summaryEl.querySelector('.jira-summary-name');
+      const emailEl = summaryEl.querySelector('.jira-summary-email');
+      if (instanceEl) instanceEl.textContent = getInstanceNameFromBaseUrl(creds.baseUrl) || 'Jira';
+      if (nameEl) nameEl.textContent = creds.userDisplayName || creds.displayName || creds.email || '—';
+      if (emailEl) emailEl.textContent = creds.userEmail || creds.email || '—';
+    } else {
+      summaryEl.classList.add('hidden');
+      summaryEl.setAttribute('aria-hidden', 'true');
+    }
+  }
+
+  if (titleEl) {
+    titleEl.textContent = isLoggedIn ? 'Conta Jira' : 'Conectar ao Jira';
+  }
+  if (subtitleEl) {
+    subtitleEl.textContent = isLoggedIn ? 'Altere as credenciais ou importe de outro ambiente.' : 'Informe suas credenciais para acessar o Dashboard';
+  }
+
+  modal.classList.add('open');
+  setTimeout(() => {
+    document.getElementById('jiraBaseUrl')?.focus();
+  }, 100);
+}
+
+function hideLoginModal() {
+  const modal = document.getElementById('jiraLoginModal');
+  if (modal) {
+    modal.classList.remove('open');
+  }
+}
+
+/**
+ * Fecha o modal: se o usuário estiver autenticado, apenas fecha;
+ * se não estiver com credenciais válidas, redireciona para index.html.
+ */
+function closeLoginModalOrRedirect() {
+  if (JiraAuth.isAuthenticated()) {
+    hideLoginModal();
+  } else {
+    window.location.href = 'index.html';
+  }
+}
+
+function showLoginError(message) {
+  const errorEl = document.getElementById('jiraLoginError');
+  if (errorEl) {
+    errorEl.textContent = message;
+    errorEl.style.display = 'block';
+  }
+}
+
+function hideLoginError() {
+  const errorEl = document.getElementById('jiraLoginError');
+  if (errorEl) {
+    errorEl.style.display = 'none';
+  }
+}
+
+function setLoginLoading(loading) {
+  const btn = document.getElementById('jiraLoginBtn');
+  const btnText = btn?.querySelector('.btn-text');
+  const btnLoading = btn?.querySelector('.btn-loading');
+  
+  if (btn) {
+    btn.disabled = loading;
+  }
+  if (btnText) {
+    btnText.style.display = loading ? 'none' : 'inline';
+  }
+  if (btnLoading) {
+    btnLoading.style.display = loading ? 'inline' : 'none';
+  }
+}
+
+async function handleJiraLogin(e) {
+  e.preventDefault();
+
+  let baseUrl, email, token;
+  const jsonRaw = document.getElementById('jiraImportJson')?.value?.trim();
+
+  if (jsonRaw) {
+    // Credenciais vindas do JSON colado: validar e usar
+    try {
+      const obj = JSON.parse(jsonRaw);
+      if (!validateImportedCreds(obj)) {
+        showLoginError('JSON inválido. Use baseUrl, email e token.');
+        return;
+      }
+      baseUrl = (obj.baseUrl || '').trim();
+      email = (obj.email || '').trim();
+      token = (obj.token || '').trim();
+    } catch {
+      showLoginError('JSON inválido. Verifique o formato.');
+      return;
+    }
+  } else {
+    // Credenciais manuais
+    baseUrl = document.getElementById('jiraBaseUrl')?.value?.trim();
+    email = document.getElementById('jiraEmail')?.value?.trim();
+    token = document.getElementById('jiraToken')?.value?.trim();
+    if (!baseUrl || !email || !token) {
+      showLoginError('Preencha todos os campos obrigatórios ou cole um JSON.');
+      return;
+    }
+  }
+
+  if (!baseUrl.startsWith('https://')) {
+    showLoginError('URL deve começar com https://');
+    return;
+  }
+
+  hideLoginError();
+  setLoginLoading(true);
+
+  try {
+    const response = await fetch(window.ApiConfig.buildUrl('/jira/test-connection'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Jira-Auth': btoa(`${email}:${token}`),
+        'X-Jira-Base-Url': baseUrl
+      }
+    });
+
+    const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.detail || data.error || 'Credenciais inválidas');
+    }
+
+    const userDisplayName = data.user?.displayName;
+    const userEmail = data.user?.emailAddress;
+    JiraAuth.save(baseUrl, email, token, userDisplayName, userEmail);
+
+    hideLoginModal();
+    const userName = userDisplayName || email;
+    showSuccess(`Conectado como ${userName}`);
+
+    if (jsonRaw) {
+      document.getElementById('jiraImportJson').value = '';
+    }
+    refreshAccountButton();
+    await loadProjects();
+  } catch (error) {
+    showLoginError(error.message || 'Erro ao conectar. Verifique suas credenciais.');
+  } finally {
+    setLoginLoading(false);
+  }
+}
+
+function bindLoginEvents() {
+  const form = document.getElementById('jiraLoginForm');
+  if (form) {
+    form.addEventListener('submit', handleJiraLogin);
+  }
+
+  const modal = document.getElementById('jiraLoginModal');
+  const closeBtn = document.getElementById('jiraLoginModalCloseBtn');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', closeLoginModalOrRedirect);
+  }
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeLoginModalOrRedirect();
+      }
+    });
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const m = document.getElementById('jiraLoginModal');
+      if (m && m.classList.contains('open')) {
+        closeLoginModalOrRedirect();
+      }
+    }
+  });
+}
+
+// ============================================
+// BOTÃO DE CONTA E DROPDOWN
+// ============================================
+
+function setupAccountButton() {
+  const headerNav = document.querySelector('#header .header-nav');
+  if (!headerNav) return;
+
+  const wrap = document.createElement('div');
+  wrap.className = 'dashboard-account-wrap';
+  wrap.innerHTML = `
+    <button type="button" class="dashboard-account-btn" id="dashboardAccountBtn" title="Conta Jira" aria-expanded="false" aria-haspopup="true">
+      <span class="account-icon">👤</span>
+      <span class="account-label" id="dashboardAccountLabel">Conectar</span>
+    </button>
+    <div class="dashboard-account-dropdown" id="dashboardAccountDropdown" role="menu" aria-hidden="true">
+      <button type="button" class="dropdown-item" id="dashboardAlterarContaBtn" role="menuitem">✏️ Alterar conta</button>
+      <button type="button" class="dropdown-item" id="dashboardExportBtn" role="menuitem">📤 Exportar credenciais</button>
+      <button type="button" class="dropdown-item" id="dashboardLogoutBtn" role="menuitem">🚪 Sair</button>
+      <p class="dropdown-hint">O arquivo exportado contém dados sensíveis. Guarde com segurança.</p>
+    </div>
+  `;
+  headerNav.appendChild(wrap);
+
+  const btn = document.getElementById('dashboardAccountBtn');
+  const dropdown = document.getElementById('dashboardAccountDropdown');
+  const alterarContaBtn = document.getElementById('dashboardAlterarContaBtn');
+  const logoutBtn = document.getElementById('dashboardLogoutBtn');
+  const exportBtn = document.getElementById('dashboardExportBtn');
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (!JiraAuth.isAuthenticated()) {
+      showLoginModal();
+      return;
+    }
+    const isOpen = dropdown.classList.toggle('open');
+    btn.setAttribute('aria-expanded', isOpen);
+    dropdown.setAttribute('aria-hidden', !isOpen);
+  });
+
+  document.addEventListener('click', () => {
+    dropdown.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+    dropdown.setAttribute('aria-hidden', 'true');
+  });
+
+  dropdown.addEventListener('click', (e) => e.stopPropagation());
+
+  if (alterarContaBtn) {
+    alterarContaBtn.addEventListener('click', () => {
+      dropdown.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+      dropdown.setAttribute('aria-hidden', 'true');
+      showLoginModal();
+    });
+  }
+  logoutBtn.addEventListener('click', handleLogout);
+  exportBtn.addEventListener('click', handleExportCredentials);
+}
+
+function refreshAccountButton() {
+  const btn = document.getElementById('dashboardAccountBtn');
+  const label = document.getElementById('dashboardAccountLabel');
+  const dropdown = document.getElementById('dashboardAccountDropdown');
+  if (!btn || !label) return;
+
+  if (JiraAuth.isAuthenticated()) {
+    const creds = JiraAuth.get();
+    const displayName = creds?.userDisplayName || creds?.displayName || creds?.email || '';
+    label.textContent = displayName.length > 24 ? displayName.slice(0, 21) + '...' : displayName || 'Conectado';
+    btn.style.display = '';
+    if (dropdown) {
+      dropdown.querySelector('#dashboardLogoutBtn').style.display = '';
+      dropdown.querySelector('#dashboardExportBtn').style.display = '';
+      const alterarBtn = dropdown.querySelector('#dashboardAlterarContaBtn');
+      if (alterarBtn) alterarBtn.style.display = '';
+    }
+  } else {
+    label.textContent = 'Conectar';
+    btn.style.display = '';
+    if (dropdown) {
+      dropdown.classList.remove('open');
+      dropdown.querySelector('#dashboardLogoutBtn').style.display = 'none';
+      dropdown.querySelector('#dashboardExportBtn').style.display = 'none';
+      const alterarBtn = dropdown.querySelector('#dashboardAlterarContaBtn');
+      if (alterarBtn) alterarBtn.style.display = 'none';
+    }
+  }
+}
+
+function handleLogout() {
+  JiraAuth.clear();
+  const dropdown = document.getElementById('dashboardAccountDropdown');
+  if (dropdown) dropdown.classList.remove('open');
+  refreshAccountButton();
+  showLoginModal();
+  const projectDropdown = document.getElementById('projectDropdown');
+  if (projectDropdown) {
+    projectDropdown.innerHTML = '<div class="select-option disabled">Faça login para ver projetos</div>';
+  }
+  const projectSearch = document.getElementById('projectSearch');
+  if (projectSearch) {
+    projectSearch.value = '';
+    projectSearch.disabled = true;
+    projectSearch.placeholder = 'Faça login para buscar projetos';
+  }
+  document.getElementById('projectKey').value = '';
+  validateGenerateButton();
+}
+
+function handleExportCredentials() {
+  const creds = JiraAuth.get();
+  if (!creds) return;
+  const payload = {
+    baseUrl: creds.baseUrl,
+    email: creds.email,
+    token: creds.token,
+    _exportedAt: new Date().toISOString()
+  };
+  const json = JSON.stringify(payload, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'jira-credentials.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  const dropdown = document.getElementById('dashboardAccountDropdown');
+  if (dropdown) dropdown.classList.remove('open');
+  showSuccess('Credenciais exportadas (jira-credentials.json)');
+}
+
+// ============================================
+// IMPORTAR CREDENCIAIS
+// ============================================
+
+function validateImportedCreds(obj) {
+  return obj && typeof obj === 'object' &&
+    typeof obj.baseUrl === 'string' && obj.baseUrl.trim() !== '' &&
+    typeof obj.email === 'string' && obj.email.trim() !== '' &&
+    typeof obj.token === 'string' && obj.token.trim() !== '';
+}
+
+function applyImportedCreds(baseUrl, email, token, user) {
+  baseUrl = (baseUrl || '').trim();
+  email = (email || '').trim();
+  token = (token || '').trim();
+  if (!baseUrl || !email || !token) {
+    showLoginError('JSON deve conter baseUrl, email e token (não vazios).');
+    return false;
+  }
+  if (!baseUrl.startsWith('https://')) {
+    showLoginError('baseUrl deve começar com https://');
+    return false;
+  }
+  const userDisplayName = user?.displayName;
+  const userEmail = user?.emailAddress;
+  JiraAuth.save(baseUrl, email, token, userDisplayName, userEmail);
+  hideLoginModal();
+  showSuccess('Credenciais importadas.');
+  refreshAccountButton();
+  loadProjects();
+  return true;
+}
+
+async function handleImportFile(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  hideLoginError();
+  try {
+    const text = await file.text();
+    const obj = JSON.parse(text);
+    if (!validateImportedCreds(obj)) {
+      showLoginError('Arquivo inválido. Use baseUrl, email e token.');
+      return;
+    }
+    const data = await testAndApplyImportedCreds(obj.baseUrl, obj.email, obj.token);
+    if (data) applyImportedCreds(obj.baseUrl, obj.email, obj.token, data.user);
+  } catch (err) {
+    showLoginError(err.message || 'Arquivo JSON inválido.');
+  }
+  e.target.value = '';
+}
+
+async function testAndApplyImportedCreds(baseUrl, email, token) {
+  try {
+    const response = await fetch(window.ApiConfig.buildUrl('/jira/test-connection'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Jira-Auth': btoa(`${email}:${token}`),
+        'X-Jira-Base-Url': baseUrl
+      }
+    });
+    const data = await response.json();
+    if (!data.success) {
+      showLoginError(data.detail || data.error || 'Credenciais inválidas.');
+      return null;
+    }
+    return data;
+  } catch (err) {
+    showLoginError(err.message || 'Erro ao testar conexão.');
+    return null;
+  }
+}
+
+function bindImportEvents() {
+  const fileInput = document.getElementById('jiraImportFile');
+  const importFileBtn = document.getElementById('jiraImportFileBtn');
+  if (fileInput && importFileBtn) {
+    importFileBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', handleImportFile);
+  }
+}
+
+// ============================================
 // INICIALIZAÇÃO
 // ============================================
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
   loadThemeFromConfig();
-  await loadProjects();
+  bindLoginEvents();
+  setupAccountButton();
+  refreshAccountButton();
+  bindImportEvents();
+
+  if (!JiraAuth.isAuthenticated()) {
+    showLoginModal();
+  } else {
+    await loadProjects();
+  }
+
   bindFilterEvents();
   generateBreadcrumbs([
     { name: 'Home', url: 'index.html' },
@@ -50,6 +572,12 @@ async function loadProjects() {
   const projectKey = document.getElementById('projectKey');
   
   if (!projectSearch || !projectDropdown) return;
+  
+  // Verificar autenticação
+  if (!JiraAuth.isAuthenticated()) {
+    projectDropdown.innerHTML = '<div class="select-option disabled">Faça login para ver projetos</div>';
+    return;
+  }
 
   try {
     projectSearch.disabled = true;
@@ -58,13 +586,19 @@ async function loadProjects() {
 
     const response = await fetch(window.ApiConfig.buildUrl('/dashboard'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: JiraAuth.getHeaders(),
       body: JSON.stringify({ action: 'projects' })
     });
 
     const data = await response.json();
 
     if (!data.success) {
+      // Se erro de autenticação, mostrar modal de login
+      if (data.error?.code === 'PROJECT_NOT_ACCESSIBLE' || response.status === 401) {
+        JiraAuth.clear();
+        showLoginModal();
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
       throw new Error(data.error?.message || 'Erro ao carregar projetos');
     }
 
@@ -309,10 +843,16 @@ async function handleGenerateDashboard(e) {
   disableForm(true);
   
   try {
+    // Verificar autenticação
+    if (!JiraAuth.isAuthenticated()) {
+      showLoginModal();
+      throw new Error('Faça login para continuar');
+    }
+    
     // Buscar dados do dashboard
     const dashboardResponse = await fetch(window.ApiConfig.buildUrl('/dashboard'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: JiraAuth.getHeaders(),
       body: JSON.stringify({
         action: 'dashboard',
         projectKey,
@@ -323,6 +863,12 @@ async function handleGenerateDashboard(e) {
     const dashboardData = await dashboardResponse.json();
     
     if (!dashboardData.success) {
+      // Se erro de autenticação, mostrar modal de login
+      if (dashboardData.error?.code === 'PROJECT_NOT_ACCESSIBLE' || dashboardResponse.status === 401) {
+        JiraAuth.clear();
+        showLoginModal();
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
       throw new Error(dashboardData.error?.message || 'Erro ao carregar dashboard');
     }
     
@@ -335,7 +881,7 @@ async function handleGenerateDashboard(e) {
         showLoading('Carregando Status Time... (pode demorar alguns segundos)');
         const statusTimeResponse = await fetch(window.ApiConfig.buildUrl('/dashboard/status-time'), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: JiraAuth.getHeaders(),
           body: JSON.stringify({ projectKey, period })
         });
         
@@ -378,6 +924,8 @@ function renderDashboard() {
   if (!output || !currentDashboardData) return;
   
   const { project, period, metrics, series, meta } = currentDashboardData;
+  const creds = JiraAuth.get();
+  const generatedByUser = creds?.userDisplayName || creds?.displayName || creds?.email || '—';
   
   output.innerHTML = `
     <!-- Info do Projeto e Período -->
@@ -458,6 +1006,7 @@ function renderDashboard() {
     <!-- Meta info -->
     <div class="meta-info" data-testid="dashboard-meta-info">
       <small>Gerado em: ${escapeHtml(meta?.generatedAt || new Date().toISOString())}</small>
+      <small class="meta-info-user">Usuário: ${escapeHtml(generatedByUser)}</small>
     </div>
   `;
   
@@ -1006,9 +1555,15 @@ async function loadStatusTime() {
   `;
   
   try {
+    // Verificar autenticação
+    if (!JiraAuth.isAuthenticated()) {
+      showLoginModal();
+      throw new Error('Faça login para continuar');
+    }
+    
     const response = await fetch(window.ApiConfig.buildUrl('/dashboard/status-time'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: JiraAuth.getHeaders(),
       body: JSON.stringify({
         projectKey: currentFilters.projectKey,
         period: currentFilters.period
@@ -1018,6 +1573,12 @@ async function loadStatusTime() {
     const data = await response.json();
     
     if (!data.success) {
+      // Se erro de autenticação, mostrar modal de login
+      if (data.error?.code === 'PROJECT_NOT_ACCESSIBLE' || response.status === 401) {
+        JiraAuth.clear();
+        showLoginModal();
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
       throw new Error(data.error?.message || 'Erro ao carregar Status Time');
     }
     
@@ -1155,6 +1716,9 @@ async function generatePDF() {
   doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
   doc.text(`Gerado em: ${meta?.generatedAt || new Date().toISOString()}`, pageWidth - margin, yPos + 7, { align: 'right' });
+  const creds = JiraAuth.get();
+  const generatedBy = creds?.userDisplayName || creds?.displayName || creds?.email || '—';
+  doc.text(`Usuário: ${generatedBy}`, pageWidth - margin, yPos + 12, { align: 'right' });
   
   yPos += 20;
   
@@ -1460,6 +2024,26 @@ function showError(message) {
       </div>
     `;
   }
+}
+
+function showSuccess(message) {
+  // Mostra uma mensagem de sucesso temporária na tela
+  const existing = document.querySelector('.success-toast');
+  if (existing) existing.remove();
+  
+  const toast = document.createElement('div');
+  toast.className = 'success-toast';
+  toast.innerHTML = `<span>✅ ${escapeHtml(message)}</span>`;
+  document.body.appendChild(toast);
+  
+  // Animação de entrada
+  setTimeout(() => toast.classList.add('show'), 10);
+  
+  // Remover após 3 segundos
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }
 
 function disableForm(disabled) {
