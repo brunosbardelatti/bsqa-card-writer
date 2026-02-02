@@ -96,11 +96,20 @@ async def get_available_fields():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/card")
-async def query_card(request: CardQueryRequest):
-    """Consulta um card no Jira pelo número."""
+async def query_card(
+    request: CardQueryRequest,
+    x_jira_auth: Optional[str] = Header(None, alias="X-Jira-Auth"),
+    x_jira_base_url: Optional[str] = Header(None, alias="X-Jira-Base-Url"),
+):
+    """Consulta um card no Jira pelo número. Credenciais via headers ou .env."""
+    credentials = decode_jira_auth(x_jira_auth, x_jira_base_url)
     try:
-        jira = get_issue_tracker("jira")
-        data = jira.get_issue(request.card_number, request.fields)
+        if credentials:
+            jira = get_issue_tracker("jira", skip_env_validation=True)
+            data = jira.get_issue(request.card_number, request.fields, credentials=credentials)
+        else:
+            jira = get_issue_tracker("jira")
+            data = jira.get_issue(request.card_number, request.fields)
         return {"success": True, "data": data}
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -112,8 +121,15 @@ async def query_card(request: CardQueryRequest):
         raise HTTPException(status_code=500, detail=f"Erro ao consultar card: {str(e)}")
 
 @router.post("/card-with-ai")
-async def query_card_with_ai(request: CardWithAIRequest):
-    """Consulta card, envia para IA, e cria subtask automaticamente."""
+async def query_card_with_ai(
+    request: CardWithAIRequest,
+    x_jira_auth: Optional[str] = Header(None, alias="X-Jira-Auth"),
+    x_jira_base_url: Optional[str] = Header(None, alias="X-Jira-Base-Url"),
+):
+    """Consulta card, envia para IA, e cria subtask automaticamente. Credenciais via headers ou .env."""
+    credentials = decode_jira_auth(x_jira_auth, x_jira_base_url)
+    jira = get_issue_tracker("jira", skip_env_validation=True) if credentials else get_issue_tracker("jira")
+
     result = {
         "success": True,
         "steps": {
@@ -122,13 +138,12 @@ async def query_card_with_ai(request: CardWithAIRequest):
             "subtask_created": {"success": False}
         }
     }
-    
+
     try:
         # Step 1: Consultar card no Jira
-        jira = get_issue_tracker("jira")
-        card_data = jira.get_issue(request.card_number, request.fields)
+        card_data = jira.get_issue(request.card_number, request.fields, credentials=credentials) if credentials else jira.get_issue(request.card_number, request.fields)
         result["steps"]["jira_query"] = {"success": True, "data": card_data}
-        
+
     except Exception as e:
         result["success"] = False
         result["steps"]["jira_query"] = {
@@ -186,10 +201,11 @@ Descrição:
             subtask_data = jira.create_subtask(
                 parent_key=request.card_number,
                 summary=title,
-                description=description
+                description=description,
+                credentials=credentials,
             )
             result["steps"]["subtask_created"] = {"success": True, "data": subtask_data}
-            
+
         except Exception as e:
             result["success"] = False
             result["steps"]["subtask_created"] = {
@@ -207,14 +223,27 @@ Descrição:
     return result
 
 @router.post("/subtasks")
-async def search_subtasks(request: SubtasksSearchRequest):
-    """Busca todas as subtasks de uma issue pai."""
+async def search_subtasks(
+    request: SubtasksSearchRequest,
+    x_jira_auth: Optional[str] = Header(None, alias="X-Jira-Auth"),
+    x_jira_base_url: Optional[str] = Header(None, alias="X-Jira-Base-Url"),
+):
+    """Busca todas as subtasks de uma issue pai. Credenciais via headers ou .env."""
+    credentials = decode_jira_auth(x_jira_auth, x_jira_base_url)
     try:
-        jira = get_issue_tracker("jira")
-        data = jira.search_subtasks(
-            parent_key=request.parent_key,
-            max_results=request.max_results
-        )
+        if credentials:
+            jira = get_issue_tracker("jira", skip_env_validation=True)
+            data = jira.search_subtasks(
+                parent_key=request.parent_key,
+                max_results=request.max_results,
+                credentials=credentials,
+            )
+        else:
+            jira = get_issue_tracker("jira")
+            data = jira.search_subtasks(
+                parent_key=request.parent_key,
+                max_results=request.max_results
+            )
         return {"success": True, "data": data}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

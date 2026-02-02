@@ -1,4 +1,5 @@
 import { loadCommonComponents, loadThemeFromConfig, applyTheme, generateAnalysisOptionsHTML, getAnalysisPlaceholder } from './main.js';
+import { JiraAuth, getInstanceNameFromBaseUrl } from './jira-auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
@@ -111,6 +112,9 @@ function setupLeaveWarning() {
   const links = document.querySelectorAll('a,button');
   links.forEach(link => {
     if (link.id === 'saveBtn') return;
+    // Testar conexão Jira e Testar conexão com IA não saem da página; não exibir aviso
+    const onclick = link.getAttribute('onclick') || '';
+    if (onclick.includes('testJiraConnection') || onclick.includes('testApiConfig')) return;
     link.addEventListener('click', function(e) {
       if (isDirty) {
         const confirmLeave = confirm('Existem configurações não salvas. Deseja descartar as alterações e sair?');
@@ -135,6 +139,8 @@ async function loadConfig() {
       applyConfigToFields(localConfig);
     }
     await loadApiConfig();
+    // Preencher seção Jira e pessoal a partir de JiraAuth (sessionStorage) quando disponível
+    applyJiraAuthToFields(localConfig);
     // Aplicar estado final dos campos após carregar todas as configurações
     applyFieldStates();
     checkDefaultAIEnabled();
@@ -146,13 +152,57 @@ async function loadConfig() {
     const localConfig = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
     applyConfigToFields(localConfig);
     await loadApiConfig();
-    // Aplicar estado final dos campos após carregar todas as configurações
+    applyJiraAuthToFields(localConfig);
     applyFieldStates();
     checkDefaultAIEnabled();
     initialConfigSnapshot = getCurrentConfigSnapshot();
     markClean();
     setupDirtyTracking();
     setupLeaveWarning();
+  }
+}
+
+/**
+ * Preenche seção Jira a partir de JiraAuth.get() quando autenticado;
+ * preenche Informações Pessoais (userName, userEmail, userCompany) quando vazios.
+ */
+function applyJiraAuthToFields(localConfig) {
+  if (!JiraAuth.isAuthenticated()) return;
+  const creds = JiraAuth.get();
+  if (!creds) return;
+
+  document.getElementById('jiraEnabled').checked = true;
+  if (creds.baseUrl) {
+    document.getElementById('jiraBaseUrl').value = creds.baseUrl;
+    originalJiraConfig.jiraBaseUrl = creds.baseUrl;
+  }
+  if (creds.email) {
+    document.getElementById('jiraUserEmail').value = creds.email;
+    originalJiraConfig.jiraUserEmail = creds.email;
+  }
+  if (creds.token) {
+    document.getElementById('jiraApiToken').value = creds.token;
+    originalJiraConfig.jiraApiToken = creds.token;
+  }
+  const jiraConf = (localConfig.integrations || {}).jira || {};
+  const subtaskId = jiraConf.subtaskIssueTypeId || '10003';
+  const timeout = jiraConf.requestTimeout != null ? String(jiraConf.requestTimeout) : '30';
+  document.getElementById('jiraSubtaskIssueTypeId').value = subtaskId;
+  document.getElementById('jiraRequestTimeout').value = timeout;
+  originalJiraConfig.jiraSubtaskIssueTypeId = subtaskId;
+  originalJiraConfig.jiraRequestTimeout = timeout;
+
+  const userNameEl = document.getElementById('userName');
+  const userEmailEl = document.getElementById('userEmail');
+  const userCompanyEl = document.getElementById('userCompany');
+  if (!userNameEl.value?.trim() && (creds.userDisplayName || creds.displayName)) {
+    userNameEl.value = creds.userDisplayName || creds.displayName || '';
+  }
+  if (!userEmailEl.value?.trim() && (creds.userEmail || creds.email)) {
+    userEmailEl.value = creds.userEmail || creds.email || '';
+  }
+  if (!userCompanyEl.value?.trim() && creds.baseUrl) {
+    userCompanyEl.value = getInstanceNameFromBaseUrl(creds.baseUrl) || '';
   }
 }
 
@@ -167,35 +217,10 @@ async function loadApiConfig() {
 }
 
 function applyApiConfigToFields(apiConfig) {
-  // Configurações Jira
-  const jiraEnabled = document.getElementById('jiraEnabled');
-  const hasJiraConfig = apiConfig.JIRA_BASE_URL && apiConfig.JIRA_USER_EMAIL && apiConfig.JIRA_API_TOKEN;
-  if (hasJiraConfig) {
-    jiraEnabled.checked = true;
-    if (apiConfig.JIRA_BASE_URL) {
-      document.getElementById('jiraBaseUrl').value = apiConfig.JIRA_BASE_URL;
-      originalJiraConfig.jiraBaseUrl = apiConfig.JIRA_BASE_URL;
-    }
-    if (apiConfig.JIRA_USER_EMAIL) {
-      document.getElementById('jiraUserEmail').value = apiConfig.JIRA_USER_EMAIL;
-      originalJiraConfig.jiraUserEmail = apiConfig.JIRA_USER_EMAIL;
-    }
-    if (apiConfig.JIRA_API_TOKEN) {
-      document.getElementById('jiraApiToken').value = apiConfig.JIRA_API_TOKEN;
-      originalJiraConfig.jiraApiToken = apiConfig.JIRA_API_TOKEN;
-    }
-    if (apiConfig.JIRA_SUBTASK_ISSUE_TYPE_ID) {
-      document.getElementById('jiraSubtaskIssueTypeId').value = apiConfig.JIRA_SUBTASK_ISSUE_TYPE_ID;
-      originalJiraConfig.jiraSubtaskIssueTypeId = apiConfig.JIRA_SUBTASK_ISSUE_TYPE_ID;
-    }
-    if (apiConfig.JIRA_REQUEST_TIMEOUT) {
-      document.getElementById('jiraRequestTimeout').value = apiConfig.JIRA_REQUEST_TIMEOUT;
-      originalJiraConfig.jiraRequestTimeout = apiConfig.JIRA_REQUEST_TIMEOUT;
-    }
-  } else {
-    jiraEnabled.checked = false;
-  }
-  
+  // Jira: NÃO preencher a partir do .env (GET /api-config). Fonte única é JiraAuth (sessionStorage).
+  // Campos Jira na Config são preenchidos apenas por applyJiraAuthToFields() quando o usuário
+  // está autenticado via Dashboard/Card/Bug (sessionStorage).
+
   // Configurações OpenAI
   const openaiEnabled = document.getElementById('openaiEnabled');
   const openaiApiKey = document.getElementById('openaiApiKey');
@@ -235,14 +260,12 @@ function applyApiConfigToFields(apiConfig) {
 }
 
 function applyConfigToFields(config) {
-  const user = config.user || {};
   const preferences = config.preferences || {};
   const ia = config.ia || {};
   const openai = ia.openai || {};
   const stackspot = ia.stackspot || {};
-  if (user.name) document.getElementById('userName').value = user.name;
-  if (user.email) document.getElementById('userEmail').value = user.email;
-  if (user.company) document.getElementById('userCompany').value = user.company;
+  // Nome, email e empresa NÃO são preenchidos a partir de user_config nem .env;
+  // apenas a partir de JiraAuth (sessionStorage), import ou teste de conexão Jira.
   if (preferences.defaultAI) document.getElementById('defaultAI').value = preferences.defaultAI;
   if (preferences.defaultAnalyseType) document.getElementById('defaultAnalyseType').value = preferences.defaultAnalyseType;
   if (preferences.autoCopy !== undefined) document.getElementById('autoCopy').checked = preferences.autoCopy;
@@ -284,17 +307,15 @@ function applyFieldStates() {
   const jiraFields = ['jiraBaseUrl', 'jiraUserEmail', 'jiraApiToken', 'jiraSubtaskIssueTypeId', 'jiraRequestTimeout'];
   jiraFields.forEach(fieldId => {
     const field = document.getElementById(fieldId);
+    if (!field) return;
     field.disabled = !jiraEnabled;
     if (!jiraEnabled) {
-      // Salvar valor atual antes de limpar
-      if (field.value) {
-        originalJiraConfig[fieldId] = field.value;
-      }
+      if (field.value) originalJiraConfig[fieldId] = field.value;
       field.value = fieldId === 'jiraRequestTimeout' ? '30' : '';
     } else {
-      // Restaurar valor original se existir
-      if (originalJiraConfig[fieldId]) {
-        field.value = originalJiraConfig[fieldId];
+      const val = originalJiraConfig[fieldId];
+      if (val !== undefined && val !== null && val !== '') {
+        field.value = String(val);
       }
     }
   });
@@ -391,6 +412,109 @@ function bindConfigEvents() {
   document.querySelector('button[onclick*="testApiConfig"]').onclick = testApiConfig;
   window.saveConfig = saveConfig;
   window.testJiraConnection = testJiraConnection;
+
+  const exportBtn = document.getElementById('configExportBtn');
+  const importBtn = document.getElementById('configImportBtn');
+  const importFile = document.getElementById('configImportFile');
+  if (exportBtn) exportBtn.addEventListener('click', exportConfig);
+  if (importBtn) importBtn.addEventListener('click', () => importFile?.click());
+  if (importFile) importFile.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          importConfigFromJson(ev.target?.result);
+        } finally {
+          e.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    }
+  });
+}
+
+function exportConfig() {
+  const baseUrl = document.getElementById('jiraBaseUrl').value?.trim();
+  const email = document.getElementById('jiraUserEmail').value?.trim();
+  const token = document.getElementById('jiraApiToken').value?.trim();
+  const fromAuth = JiraAuth.get();
+  const payload = {
+    user: {
+      name: document.getElementById('userName').value?.trim() || '',
+      email: document.getElementById('userEmail').value?.trim() || '',
+      company: document.getElementById('userCompany').value?.trim() || ''
+    },
+    integrations: {
+      jira: {
+        enabled: document.getElementById('jiraEnabled').checked,
+        baseUrl: baseUrl || fromAuth?.baseUrl || '',
+        email: email || fromAuth?.email || '',
+        token: token || fromAuth?.token || '',
+        subtaskIssueTypeId: document.getElementById('jiraSubtaskIssueTypeId').value || '10003',
+        requestTimeout: parseInt(document.getElementById('jiraRequestTimeout').value) || 30
+      }
+    },
+    _exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'bsqa-credentials.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function importConfigFromJson(jsonStr) {
+  if (!jsonStr || typeof jsonStr !== 'string') return;
+  let data;
+  try {
+    data = JSON.parse(jsonStr);
+  } catch {
+    alert('Arquivo JSON inválido.');
+    return;
+  }
+  // Aceitar: data.integrations.jira, data.jira ou objeto no topo { baseUrl, email, token } (export do modal)
+  const jira = data.integrations?.jira || data.jira || (
+    (data.baseUrl != null || data.email != null || data.token != null)
+      ? { baseUrl: data.baseUrl, email: data.email, token: data.token }
+      : {}
+  );
+  const user = data.user || {};
+  const baseUrl = (jira.baseUrl ?? data.baseUrl ?? '').toString().trim();
+  const email = (jira.email ?? data.email ?? '').toString().trim();
+  const token = (jira.token ?? data.token ?? '').toString().trim();
+  const hasJira = baseUrl && email && token;
+  if (hasJira) {
+    const jiraEnabledEl = document.getElementById('jiraEnabled');
+    const jiraBaseUrlEl = document.getElementById('jiraBaseUrl');
+    const jiraUserEmailEl = document.getElementById('jiraUserEmail');
+    const jiraApiTokenEl = document.getElementById('jiraApiToken');
+    const jiraSubtaskIssueTypeIdEl = document.getElementById('jiraSubtaskIssueTypeId');
+    const jiraRequestTimeoutEl = document.getElementById('jiraRequestTimeout');
+    const subtaskId = (jira.subtaskIssueTypeId ?? '10003').toString();
+    const timeout = String(jira.requestTimeout != null ? Number(jira.requestTimeout) : 30);
+
+    jiraEnabledEl.checked = true;
+    jiraBaseUrlEl.value = baseUrl;
+    jiraUserEmailEl.value = email;
+    jiraApiTokenEl.value = token;
+    jiraSubtaskIssueTypeIdEl.value = subtaskId;
+    jiraRequestTimeoutEl.value = timeout;
+
+    originalJiraConfig.jiraBaseUrl = baseUrl;
+    originalJiraConfig.jiraUserEmail = email;
+    originalJiraConfig.jiraApiToken = token;
+    originalJiraConfig.jiraSubtaskIssueTypeId = subtaskId;
+    originalJiraConfig.jiraRequestTimeout = timeout;
+
+    JiraAuth.save(baseUrl, email, token);
+  }
+  if (user.name != null) document.getElementById('userName').value = String(user.name);
+  if (user.email != null) document.getElementById('userEmail').value = String(user.email);
+  if (user.company != null) document.getElementById('userCompany').value = String(user.company);
+  applyFieldStates();
+  markDirty();
 }
 
 async function saveConfig() {
@@ -421,7 +545,9 @@ async function saveConfig() {
       },
       integrations: {
         jira: {
-          enabled: document.getElementById('jiraEnabled').checked
+          enabled: document.getElementById('jiraEnabled').checked,
+          subtaskIssueTypeId: document.getElementById('jiraSubtaskIssueTypeId').value || '10003',
+          requestTimeout: parseInt(document.getElementById('jiraRequestTimeout').value) || 30
         }
       },
       ia: {
@@ -441,14 +567,15 @@ async function saveConfig() {
         }
       }
     };
+    const jiraEnabled = document.getElementById('jiraEnabled').checked;
+    if (jiraEnabled) {
+      JiraAuth.save(
+        document.getElementById('jiraBaseUrl').value,
+        document.getElementById('jiraUserEmail').value,
+        document.getElementById('jiraApiToken').value
+      );
+    }
     const apiConfig = {
-      ...(document.getElementById('jiraEnabled').checked && {
-        JIRA_BASE_URL: document.getElementById('jiraBaseUrl').value,
-        JIRA_USER_EMAIL: document.getElementById('jiraUserEmail').value,
-        JIRA_API_TOKEN: document.getElementById('jiraApiToken').value,
-        JIRA_SUBTASK_ISSUE_TYPE_ID: document.getElementById('jiraSubtaskIssueTypeId').value,
-        JIRA_REQUEST_TIMEOUT: parseInt(document.getElementById('jiraRequestTimeout').value) || 30
-      }),
       ...(document.getElementById('openaiEnabled').checked && {
         OPENAI_API_KEY: document.getElementById('openaiApiKey').value
       }),
@@ -474,8 +601,6 @@ async function saveConfig() {
       // Sinalizar para outras abas/páginas que o tema foi alterado
       localStorage.setItem('bsqaThemeChanged', Date.now().toString());
       
-      // Limpar dados originais se integração foi desabilitada
-      const jiraEnabled = document.getElementById('jiraEnabled').checked;
       if (!jiraEnabled) {
         originalJiraConfig = {};
       }
@@ -666,7 +791,7 @@ function checkUrlAnchor() {
   }
 }
 
-// Função para testar conexão com Jira
+// Função para testar conexão com Jira (usa credenciais do form via headers; não grava no backend)
 async function testJiraConnection() {
   const testResult = document.getElementById('testJiraResult');
   testResult.style.display = 'block';
@@ -674,50 +799,48 @@ async function testJiraConnection() {
   testResult.style.background = 'rgba(255, 193, 7, 0.2)';
   testResult.style.color = '#ffc107';
   testResult.style.border = '1px solid #ffc107';
-  
+
+  const baseUrl = (document.getElementById('jiraBaseUrl').value || '').trim();
+  const email = (document.getElementById('jiraUserEmail').value || '').trim();
+  const token = (document.getElementById('jiraApiToken').value || '').trim();
+  if (!baseUrl || !email || !token) {
+    testResult.innerHTML = '<div data-testid="config-test-jira-error">❌ Preencha URL, email e token do Jira.</div>';
+    testResult.style.background = 'rgba(244, 67, 54, 0.2)';
+    testResult.style.color = '#f44336';
+    testResult.style.border = '1px solid #f44336';
+    return;
+  }
+
+  const authHeader = btoa(`${email}:${token}`);
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Jira-Auth': authHeader,
+    'X-Jira-Base-Url': baseUrl
+  };
+
   try {
-    // Primeiro salvar as configurações do Jira no backend
-    const apiConfig = {
-      ...(document.getElementById('jiraEnabled').checked && {
-        JIRA_BASE_URL: document.getElementById('jiraBaseUrl').value,
-        JIRA_USER_EMAIL: document.getElementById('jiraUserEmail').value,
-        JIRA_API_TOKEN: document.getElementById('jiraApiToken').value,
-        JIRA_SUBTASK_ISSUE_TYPE_ID: document.getElementById('jiraSubtaskIssueTypeId').value,
-        JIRA_REQUEST_TIMEOUT: parseInt(document.getElementById('jiraRequestTimeout').value) || 30
-      })
-    };
-    
-    const saveResponse = await fetch(window.ApiConfig.buildUrl('/api-config'), {
+    const testResponse = await fetch(window.ApiConfig.buildUrl('/jira/test-connection'), {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(apiConfig)
+      headers
     });
-    
-    if (!saveResponse.ok) {
-      throw new Error('Erro ao salvar configurações do Jira');
-    }
-    
-    // Agora testar a conexão
-    const testResponse = await fetch(window.ApiConfig.buildUrl('/jira/test-connection'), { 
-      method: 'POST' 
-    });
-    
-    if (testResponse.ok) {
-      const testData = await testResponse.json();
-      if (testData.success) {
-        testResult.innerHTML = `<div data-testid="config-test-jira-success">✅ ${testData.message}</div>`;
-        testResult.style.background = 'rgba(76, 175, 80, 0.2)';
-        testResult.style.color = '#4caf50';
-        testResult.style.border = '1px solid #4caf50';
-      } else {
-        testResult.innerHTML = `<div data-testid="config-test-jira-error">❌ ${testData.message || 'Falha ao conectar com Jira'}</div>`;
-        testResult.style.background = 'rgba(244, 67, 54, 0.2)';
-        testResult.style.color = '#f44336';
-        testResult.style.border = '1px solid #f44336';
-      }
+
+    const testData = await testResponse.json().catch(() => ({}));
+    if (testResponse.ok && testData.success) {
+      const user = testData.user || {};
+      JiraAuth.save(baseUrl, email, token, user.displayName, user.emailAddress);
+      const userNameEl = document.getElementById('userName');
+      const userEmailEl = document.getElementById('userEmail');
+      const userCompanyEl = document.getElementById('userCompany');
+      if (user.displayName && !userNameEl.value?.trim()) userNameEl.value = user.displayName;
+      if (user.emailAddress && !userEmailEl.value?.trim()) userEmailEl.value = user.emailAddress;
+      if (!userCompanyEl.value?.trim()) userCompanyEl.value = getInstanceNameFromBaseUrl(baseUrl) || '';
+      testResult.innerHTML = `<div data-testid="config-test-jira-success">✅ ${testData.message}</div>`;
+      testResult.style.background = 'rgba(76, 175, 80, 0.2)';
+      testResult.style.color = '#4caf50';
+      testResult.style.border = '1px solid #4caf50';
     } else {
-      const errorData = await testResponse.json().catch(() => ({ detail: 'Erro desconhecido' }));
-      testResult.innerHTML = `<div data-testid="config-test-jira-error-api">❌ Erro ao testar conexão: ${errorData.detail}</div>`;
+      const msg = testData.error || testData.detail || testData.message || 'Falha ao conectar com Jira';
+      testResult.innerHTML = `<div data-testid="config-test-jira-error">❌ ${msg}</div>`;
       testResult.style.background = 'rgba(244, 67, 54, 0.2)';
       testResult.style.color = '#f44336';
       testResult.style.border = '1px solid #f44336';

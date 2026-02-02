@@ -24,6 +24,7 @@
     <h1 data-testid="config-title">⚙️ Configurações do Usuário</h1>
     <div class="config-section" data-testid="config-section-personal-info">
       <h2 data-testid="config-section-personal-info-title">👤 Informações Pessoais</h2>
+      <p class="config-hint" style="font-size: 0.85em; color: var(--muted-text); margin-bottom: 0.75rem;">Nome e email podem ser preenchidos automaticamente após testar a conexão com o Jira.</p>
       <div class="config-item" data-testid="config-item-user-name">
         <label for="userName" data-testid="config-label-user-name">Nome do Usuário <span title="Seu nome completo para identificação nos documentos gerados" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
         <input type="text" id="userName" placeholder="Seu nome completo" data-testid="config-input-user-name">
@@ -75,33 +76,41 @@
             <label for="jiraEnabled" style="margin: 0; font-size: 0.9em;">Habilitar Jira</label>
           </div>
         </div>
+        <p class="config-hint" style="font-size: 0.85em; color: var(--muted-text); margin-bottom: 0.75rem;">As credenciais Jira ficam apenas no seu navegador (sessão) e não são enviadas ao servidor.</p>
         <div class="config-item">
           <label for="jiraBaseUrl">URL Base do Jira <span title="URL da sua instância Jira Cloud (ex: https://empresa.atlassian.net)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-          <input type="text" id="jiraBaseUrl" placeholder="https://sua-empresa.atlassian.net" disabled data-testid="config-input-jira-base-url">
+          <input type="text" id="jiraBaseUrl" placeholder="https://sua-empresa.atlassian.net" data-testid="config-input-jira-base-url">
         </div>
         <div class="config-item">
           <label for="jiraUserEmail">Email do Usuário <span title="Email da conta Jira que será usada para autenticação" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-          <input type="email" id="jiraUserEmail" placeholder="seu@email.com" disabled data-testid="config-input-jira-user-email">
+          <input type="email" id="jiraUserEmail" placeholder="seu@email.com" data-testid="config-input-jira-user-email">
         </div>
         <div class="config-item">
           <label for="jiraApiToken">API Token <span title="Token de API do Jira (gere em: Configurações → Segurança → API tokens)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-          <input type="password" id="jiraApiToken" placeholder="Seu API Token do Jira" disabled data-testid="config-input-jira-api-token">
+          <input type="password" id="jiraApiToken" placeholder="Seu API Token do Jira" data-testid="config-input-jira-api-token">
         </div>
         <div class="config-item">
           <label for="jiraSubtaskIssueTypeId">ID do Tipo de Issue Subtask <span title="ID do tipo de issue para subtasks (geralmente 10003 ou 10004)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-          <input type="text" id="jiraSubtaskIssueTypeId" placeholder="10003" disabled data-testid="config-input-jira-subtask-issue-type-id">
+          <input type="text" id="jiraSubtaskIssueTypeId" placeholder="10003" data-testid="config-input-jira-subtask-issue-type-id">
         </div>
         <div class="config-item">
           <label for="jiraRequestTimeout">Timeout de Requisição (segundos) <span title="Tempo máximo de espera para requisições ao Jira (padrão: 30 segundos)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
-          <input type="number" id="jiraRequestTimeout" placeholder="30" value="30" disabled data-testid="config-input-jira-request-timeout">
+          <input type="number" id="jiraRequestTimeout" placeholder="30" value="30" data-testid="config-input-jira-request-timeout">
         </div>
       </fieldset>
-      <!-- Botão de teste Jira -->
+      <!-- Botões Jira: teste, importar, exportar -->
       <div class="config-item" style="margin-top: 1rem;">
-        <div style="display: flex; gap: 1rem; justify-content: center;">
-          <button onclick="testJiraConnection()" class="primary-btn" style="width: 200px; font-size: 0.9em;" data-testid="config-button-test-jira-connection">
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+          <button onclick="testJiraConnection()" class="primary-btn config-jira-action-btn" data-testid="config-button-test-jira-connection">
             🧪 Testar conexão Jira
           </button>
+          <button type="button" id="configExportBtn" class="primary-btn config-jira-action-btn" data-testid="config-button-export-credentials">
+            📤 Exportar credenciais
+          </button>
+          <button type="button" id="configImportBtn" class="primary-btn config-jira-action-btn" data-testid="config-button-import-credentials">
+            📥 Importar credenciais
+          </button>
+          <input type="file" id="configImportFile" accept=".json,application/json" hidden data-testid="config-input-import-file">
         </div>
         <div id="testJiraResult" style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 4px; display: none;" data-testid="config-test-jira-result-container"></div>
       </div>
@@ -184,10 +193,10 @@
       <!-- Botões de ação -->
       <div class="config-item" style="margin-top: 1rem;">
         <div style="display: flex; gap: 1rem; justify-content: center;">
-          <button onclick="testApiConfig()" class="primary-btn" style="width: 200px; font-size: 0.9em;" data-testid="config-button-test-connection">
+          <button onclick="testApiConfig()" class="primary-btn config-save-action-btn" data-testid="config-button-test-connection">
             🧪 Testar conexão com IA
           </button>
-          <button class="save-btn" id="saveBtn" style="width: 200px;" data-testid="config-button-save-settings">💾 Salvar Configurações</button>
+          <button class="save-btn config-save-action-btn" id="saveBtn" data-testid="config-button-save-settings">💾 Salvar Configurações</button>
         </div>
         <div id="testResult" style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 4px; display: none;" data-testid="config-test-result-container"></div>
       </div>

@@ -1,5 +1,6 @@
 // card.js - Lógica da página de integração Jira
 import { loadCommonComponents, loadThemeFromConfig, generateBreadcrumbs } from './main.js';
+import { JiraAuth, showLoginModal, initJiraAuth } from './jira-auth.js';
 
 // Flag para controlar se a página foi recarregada
 window.pageReloaded = true;
@@ -7,6 +8,10 @@ window.pageReloaded = true;
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
   loadThemeFromConfig();
+  initJiraAuth();
+  if (!JiraAuth.isAuthenticated()) {
+    showLoginModal();
+  }
   await loadEnabledAIs();
   bindFormEvents();
   updateSelectAllState(); // Inicializar estado do "Selecionar todos"
@@ -213,6 +218,11 @@ async function handleFormSubmit() {
   // Limpar output anterior
   output.innerHTML = '';
 
+  if (!JiraAuth.isAuthenticated()) {
+    showLoginModal();
+    return;
+  }
+
   // Validar formato do card
   if (!validateCardNumber(cardNumber)) {
     showError('Formato inválido. Use: PROJETO-NUMERO (ex: PKGS-1104)');
@@ -252,9 +262,7 @@ async function handleFormSubmit() {
     // Fazer request
     const response = await fetch(window.ApiConfig.buildUrl(endpoint), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { ...JiraAuth.getHeaders() },
       body: JSON.stringify(payload)
     });
 
@@ -1126,20 +1134,22 @@ function escapeHtml(text) {
  * Handler para busca de subtasks
  */
 async function handleSearchSubtasks(parentKey) {
+  if (!JiraAuth.isAuthenticated()) {
+    showLoginModal();
+    return;
+  }
   disableForm(true);
-  
+
   const output = document.getElementById('output');
   output.innerHTML = '<div class="loading" data-testid="card-loading-subtasks">Buscando card pai e subtasks...</div>';
-  
+
   try {
     // Primeiro, buscar o card pai para obter o summary
     let parentSummary = null;
     try {
       const parentResponse = await fetch(window.ApiConfig.buildUrl('/jira/card'), {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { ...JiraAuth.getHeaders() },
         body: JSON.stringify({
           card_number: parentKey,
           fields: ['summary']
@@ -1171,10 +1181,14 @@ async function handleSearchSubtasks(parentKey) {
     
     const data = await response.json();
     
+    if (response.status === 401) {
+      showLoginModal();
+      throw new Error('Sessão expirada. Faça login novamente.');
+    }
     if (!response.ok) {
       throw new Error(data.detail || 'Erro ao buscar subtasks');
     }
-    
+
     if (data.success) {
       displaySubtasksTable(data.data, parentKey, parentSummary);
       showNewQueryButton();

@@ -1,6 +1,7 @@
 # backend/api/routes_bug.py
 
-from fastapi import APIRouter, HTTPException, File, UploadFile, Form
+from base64 import b64decode
+from fastapi import APIRouter, HTTPException, File, UploadFile, Form, Header
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List
@@ -12,6 +13,25 @@ from backend.utils.prompt_loader import load_prompt_template
 from backend.utils.jira_utils import validate_card_number
 
 router = APIRouter(prefix="/bug", tags=["Bug Creation"])
+
+
+def decode_jira_auth(auth_header: Optional[str], base_url_header: Optional[str] = None) -> Optional[dict]:
+    """Decodifica o header X-Jira-Auth (Base64 de email:token) e retorna dict de credenciais."""
+    if not auth_header:
+        return None
+    try:
+        decoded = b64decode(auth_header).decode("utf-8")
+        if ":" not in decoded:
+            return None
+        email, api_token = decoded.split(":", 1)
+        return {
+            "base_url": base_url_header.rstrip("/") if base_url_header else None,
+            "email": email,
+            "api_token": api_token,
+        }
+    except Exception:
+        return None
+
 
 # ============================================
 # SCHEMAS
@@ -55,10 +75,13 @@ async def create_bug(
     description: str = Form(...),
     parent_key: Optional[str] = Form(None),
     ai_service: str = Form(...),
-    files: Optional[List[UploadFile]] = File(None)
+    files: Optional[List[UploadFile]] = File(None),
+    x_jira_auth: Optional[str] = Header(None, alias="X-Jira-Auth"),
+    x_jira_base_url: Optional[str] = Header(None, alias="X-Jira-Base-Url"),
 ):
     """
     Cria um Bug ou Sub-Bug no Jira com descrição organizada por IA.
+    Credenciais via headers X-Jira-Auth e X-Jira-Base-Url ou .env.
     Processo em 4 etapas:
     1. Validar parent_key (se Sub-Bug) - verificar se existe
     2. Enviar descrição para IA organizar
@@ -74,7 +97,7 @@ async def create_bug(
             "attachments_uploaded": {"success": False}
         }
     }
-    
+
     # Validar dados usando o schema
     try:
         request = BugCreationRequest(
@@ -86,14 +109,15 @@ async def create_bug(
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
-    jira = get_issue_tracker("jira")
-    
+
+    credentials = decode_jira_auth(x_jira_auth, x_jira_base_url)
+    jira = get_issue_tracker("jira", skip_env_validation=True) if credentials else get_issue_tracker("jira")
+
     # Step 1: Validar parent_key se for Sub-Bug
     if request.issue_type == "sub_bug":
         try:
             # Validar se a issue pai existe
-            parent_issue = jira.get_issue(request.parent_key, ["summary"])
+            parent_issue = jira.get_issue(request.parent_key, ["summary"], credentials=credentials) if credentials else jira.get_issue(request.parent_key, ["summary"])
             result["steps"]["parent_validation"] = {
                 "success": True,
                 "data": {
@@ -148,7 +172,8 @@ async def create_bug(
             summary=organized_data["summary"],
             description=organized_data["description"],
             issue_type=request.issue_type,
-            parent_key=request.parent_key
+            parent_key=request.parent_key,
+            credentials=credentials,
         )
         
         result["steps"]["issue_created"] = {
@@ -180,7 +205,8 @@ async def create_bug(
             
             attachments = jira.upload_attachments(
                 issue_key=issue_data["key"],
-                files=files_data
+                files=files_data,
+                credentials=credentials,
             )
             
             result["steps"]["attachments_uploaded"] = {

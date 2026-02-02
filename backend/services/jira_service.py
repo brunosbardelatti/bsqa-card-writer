@@ -245,17 +245,19 @@ class JiraService(IssueTrackerBase):
         return extract_text(adf).strip()
     
     def create_subtask(
-        self, 
-        parent_key: str, 
-        summary: str, 
-        description: str
+        self,
+        parent_key: str,
+        summary: str,
+        description: str,
+        credentials: Optional[dict] = None,
     ) -> dict:
         """Cria uma subtask no Jira."""
         project_key = self.extract_project_key(parent_key)
-        
+        base_url = self._get_base_url(credentials)
+
         # Converter descrição para Atlassian Document Format
         adf_description = self._text_to_adf(description)
-        
+
         payload = {
             "fields": {
                 "project": {"key": project_key},
@@ -265,16 +267,16 @@ class JiraService(IssueTrackerBase):
                 "description": adf_description
             }
         }
-        
-        url = f"{self.base_url}/rest/api/3/issue"
-        
+
+        url = f"{base_url}/rest/api/3/issue"
+
         response = requests.post(
             url,
-            headers=self._get_headers(),
+            headers=self._get_headers(credentials),
             json=payload,
             timeout=self.timeout
         )
-        
+
         if response.status_code == 400:
             error_data = response.json()
             errors = error_data.get("errors", {})
@@ -284,15 +286,15 @@ class JiraService(IssueTrackerBase):
             raise PermissionError("Token de API do Jira inválido ou expirado.")
         if response.status_code == 403:
             raise PermissionError("Sem permissão para criar issues neste projeto.")
-        
+
         response.raise_for_status()
-        
+
         data = response.json()
         return {
             "key": data["key"],
             "id": data["id"],
             "self": data["self"],
-            "url": f"{self.base_url}/browse/{data['key']}"
+            "url": f"{base_url}/browse/{data['key']}"
         }
     
     def create_bug(
@@ -301,21 +303,25 @@ class JiraService(IssueTrackerBase):
         summary: str,
         description: str,
         issue_type: str = "bug",  # "bug" ou "sub_bug"
-        parent_key: Optional[str] = None
+        parent_key: Optional[str] = None,
+        credentials: Optional[dict] = None,
     ) -> dict:
         """
         Cria um Bug ou Sub-Bug no Jira com estrutura mínima.
-        
+
         Args:
             project_key: Chave do projeto (ex: "PKGS")
             summary: Título do bug (extraído da IA)
             description: Descrição completa em formato ADF (formatada pela IA)
             issue_type: "bug" ou "sub_bug"
             parent_key: Chave da issue pai (obrigatório se issue_type="sub_bug")
-        
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
+
         Returns:
             dict com dados da issue criada (key, id, self, url)
         """
+        base_url = self._get_base_url(credentials)
+
         # Determinar Issue Type ID
         if issue_type == "sub_bug":
             if not parent_key:
@@ -323,7 +329,7 @@ class JiraService(IssueTrackerBase):
             # Para Sub-Bug, tentar buscar o Issue Type ID do parent primeiro
             # Isso garante compatibilidade, pois Sub-Bug geralmente usa o mesmo tipo do parent
             try:
-                parent_issue = self.get_issue(parent_key, ["issuetype"])
+                parent_issue = self.get_issue(parent_key, ["issuetype"], credentials=credentials)
                 parent_issuetype = parent_issue["fields"].get("issuetype", {})
                 # Usar o mesmo Issue Type ID do parent (geralmente funciona para subtasks)
                 issuetype_id = parent_issuetype.get("id")
@@ -335,13 +341,13 @@ class JiraService(IssueTrackerBase):
                 issuetype_id = self.sub_bug_type_id
         else:
             issuetype_id = self.bug_type_id
-        
+
         # Converter descrição para ADF se for string
         if isinstance(description, str):
             adf_description = self._text_to_adf(description)
         else:
             adf_description = description
-        
+
         # Montar payload mínimo (sem campos opcionais)
         payload = {
             "fields": {
@@ -351,16 +357,16 @@ class JiraService(IssueTrackerBase):
                 "description": adf_description
             }
         }
-        
+
         # Adicionar parent se for Sub-Bug
         if issue_type == "sub_bug" and parent_key:
             payload["fields"]["parent"] = {"key": parent_key}
-        
-        url = f"{self.base_url}/rest/api/3/issue"
-        
+
+        url = f"{base_url}/rest/api/3/issue"
+
         response = requests.post(
             url,
-            headers=self._get_headers(),
+            headers=self._get_headers(credentials),
             json=payload,
             timeout=self.timeout
         )
@@ -407,34 +413,40 @@ class JiraService(IssueTrackerBase):
             "key": data["key"],
             "id": data["id"],
             "self": data["self"],
-            "url": f"{self.base_url}/browse/{data['key']}"
+            "url": f"{base_url}/browse/{data['key']}"
         }
-    
+
     def upload_attachments(
         self,
         issue_key: str,
-        files: list[tuple[str, bytes, str]]
+        files: list[tuple[str, bytes, str]],
+        credentials: Optional[dict] = None,
     ) -> list[dict]:
         """
         Faz upload de anexos para uma issue do Jira.
-        
+
         Args:
             issue_key: Chave da issue (ex: "PKGS-1234")
             files: Lista de tuplas (filename, file_content, content_type)
-        
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
+
         Returns:
             Lista de dicts com informações dos anexos enviados
         """
         if not files:
             return []
-        
-        url = f"{self.base_url}/rest/api/3/issue/{issue_key}/attachments"
-        
+
+        base_url = self._get_base_url(credentials)
+        req_headers = self._get_headers(credentials)
+        auth_value = req_headers.get("Authorization", "")
+
+        url = f"{base_url}/rest/api/3/issue/{issue_key}/attachments"
+
         # Headers específicos para upload de anexos
         headers = {
             "Accept": "application/json",
             "X-Atlassian-Token": "no-check",  # Obrigatório para bypass XSRF
-            "Authorization": f"Basic {self.auth_header}"
+            "Authorization": auth_value
         }
         
         # Preparar FormData
@@ -469,16 +481,18 @@ class JiraService(IssueTrackerBase):
         self,
         parent_key: str,
         fields: Optional[list[str]] = None,
-        max_results: int = 100
+        max_results: int = 100,
+        credentials: Optional[dict] = None,
     ) -> dict:
         """
         Busca todas as subtasks de uma issue pai usando JQL.
-        
+
         Args:
             parent_key: Chave da issue pai (ex: "PKGS-1160")
             fields: Lista de campos a retornar (default: ["issuetype", "summary", "assignee", "status"])
             max_results: Número máximo de resultados (default: 100)
-        
+            credentials: Dict opcional com {base_url, email, api_token} para autenticação dinâmica
+
         Returns:
             dict com:
             - issues: Lista de subtasks encontradas
@@ -487,20 +501,22 @@ class JiraService(IssueTrackerBase):
         """
         if fields is None:
             fields = ["issuetype", "summary", "assignee", "status"]
-        
+
+        base_url = self._get_base_url(credentials)
+
         # Montar JQL query
         jql = f"parent = {parent_key} ORDER BY created ASC"
-        
+
         # Usar enhanced POST /rest/api/3/search/jql (nextPageToken). O clássico /rest/api/3/search retorna 410 Gone.
         payload = {
             "jql": jql,
             "fields": fields,
             "maxResults": max_results
         }
-        url = f"{self.base_url}/rest/api/3/search/jql"
+        url = f"{base_url}/rest/api/3/search/jql"
         response = requests.post(
             url,
-            headers=self._get_headers(),
+            headers=self._get_headers(credentials),
             json=payload,
             timeout=self.timeout
         )
@@ -523,7 +539,7 @@ class JiraService(IssueTrackerBase):
             processed_issue = {
                 "key": issue.get("key"),
                 "self": issue.get("self"),
-                "url": f"{self.base_url}/browse/{issue.get('key')}",
+                "url": f"{base_url}/browse/{issue.get('key')}",
                 "fields": self._parse_subtask_fields(issue.get("fields", {}))
             }
             processed_issues.append(processed_issue)

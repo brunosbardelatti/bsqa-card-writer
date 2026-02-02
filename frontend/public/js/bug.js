@@ -1,5 +1,6 @@
 // bug.js - Lógica da página de criação de Bug/Sub-Bug
 import { loadCommonComponents, loadThemeFromConfig, generateBreadcrumbs } from './main.js';
+import { JiraAuth, showLoginModal, initJiraAuth } from './jira-auth.js';
 
 // Flag para controlar se a página foi recarregada
 window.pageReloaded = true;
@@ -7,6 +8,10 @@ window.pageReloaded = true;
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
   loadThemeFromConfig();
+  initJiraAuth();
+  if (!JiraAuth.isAuthenticated()) {
+    showLoginModal();
+  }
   await loadEnabledAIs();
   bindFormEvents();
   generateBreadcrumbs([
@@ -213,7 +218,12 @@ function formatFileSize(bytes) {
  */
 async function handleFormSubmit(e) {
   e.preventDefault();
-  
+
+  if (!JiraAuth.isAuthenticated()) {
+    showLoginModal();
+    return;
+  }
+
   const formData = new FormData();
   const issueType = document.getElementById('issue_type').value;
   const projectKey = document.getElementById('project_key').value.toUpperCase();
@@ -265,11 +275,17 @@ async function handleFormSubmit(e) {
   try {
     const response = await fetch(window.ApiConfig.buildUrl('/bug/create'), {
       method: 'POST',
+      headers: JiraAuth.getAuthOnlyHeaders(),
       body: formData
     });
-    
+
     const data = await response.json();
-    
+
+    if (response.status === 401) {
+      showLoginModal();
+      showError('Sessão expirada. Faça login novamente.');
+      return;
+    }
     if (data.success) {
       displaySuccessResult(data);
     } else {

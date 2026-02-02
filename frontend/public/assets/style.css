@@ -1000,6 +1000,26 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
 .config-item {
   margin-bottom: 1rem;
 }
+/* Botões da seção Jira na Config: mesma altura e largura */
+.config-jira-action-btn {
+  min-width: 200px;
+  height: 2.75rem;
+  font-size: 0.9em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+/* Botões da seção IA (Testar conexão + Salvar): mesma altura para evitar desalinhamento ao mudar texto */
+.config-save-action-btn {
+  min-width: 200px;
+  height: 2.75rem;
+  font-size: 0.9em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
 .config-item label {
   display: block;
   margin-bottom: 0.5rem;

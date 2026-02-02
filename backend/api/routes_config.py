@@ -17,15 +17,21 @@ async def update_config(config: dict):
     else:
         raise HTTPException(status_code=500, detail="Erro ao salvar configurações")
 
+# Chaves Jira não são mais expostas nem gravadas via api-config; credenciais ficam no navegador (sessionStorage).
+JIRA_KEYS = {"JIRA_BASE_URL", "JIRA_USER_EMAIL", "JIRA_API_TOKEN", "JIRA_SUBTASK_ISSUE_TYPE_ID", "JIRA_REQUEST_TIMEOUT", "JIRA_BUG_ISSUE_TYPE_ID", "JIRA_SUB_BUG_ISSUE_TYPE_ID"}
+
+
 @router.get("/api-config")
 async def get_api_config():
-    return load_env_config()
+    env = load_env_config()
+    return {k: v for k, v in env.items() if k not in JIRA_KEYS}
+
 
 @router.post("/api-config")
 async def update_api_config(api_config: dict):
-    # Fazer merge com configurações existentes para não sobrescrever outras configurações
-    # As novas configurações são mescladas com as existentes no .env
-    if save_env_config(api_config):
+    # Não gravar Jira no .env; credenciais Jira ficam apenas no navegador (sessionStorage).
+    filtered = {k: v for k, v in api_config.items() if k not in JIRA_KEYS}
+    if save_env_config(filtered):
         return {"success": True, "message": "Configurações de API salvas com sucesso"}
     else:
         raise HTTPException(status_code=500, detail="Erro ao salvar configurações de API")
