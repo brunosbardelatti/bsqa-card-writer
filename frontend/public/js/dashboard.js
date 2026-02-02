@@ -260,10 +260,13 @@ function renderDashboard() {
         <h2>${escapeHtml(project.name || project.key)}</h2>
         <span class="project-key">${escapeHtml(project.key)}</span>
       </div>
-      <div class="period-info">
-        <span class="period-label">${getPeriodLabel(period.type)}</span>
-        <span class="period-dates">${formatDateBR(period.startDate)} a ${formatDateBR(period.endDate)}</span>
-        ${period.sprint ? `<span class="sprint-info">Sprint: ${escapeHtml(period.sprint.name)}</span>` : ''}
+      <div class="header-right">
+        ${renderOverallStatusBadge(metrics)}
+        <div class="period-info">
+          <span class="period-label">${getPeriodLabel(period.type)}</span>
+          <span class="period-dates">${formatDateBR(period.startDate)} a ${formatDateBR(period.endDate)}</span>
+          ${period.sprint ? `<span class="sprint-info">Sprint: ${escapeHtml(period.sprint.name)}</span>` : ''}
+        </div>
       </div>
     </div>
     
@@ -276,6 +279,15 @@ function renderDashboard() {
         `${metrics.defectValidRate.validDefects} / ${metrics.defectValidRate.totalReported} total`,
         'Taxa de Acerto', 'valid-rate')}
       ${renderDefectsRatioCard(metrics.defectsRatio)}
+    </div>
+    
+    <!-- Cards Secundários (Breakdown) -->
+    <div class="secondary-cards" data-testid="dashboard-secondary-cards">
+      ${renderBreakdownCard('Defects (Desenvolvimento)', 'warning', 
+        metrics.defectsBreakdown?.closed || 0, metrics.defectsBreakdown?.open || 0, 'sub-bug')}
+      ${renderBreakdownCard('Bugs (Produção)', 'danger',
+        metrics.bugsBreakdown?.closed || 0, metrics.bugsBreakdown?.open || 0, 'bug')}
+      ${renderMTTRCard(currentStatusTimeData)}
     </div>
     
     <!-- Gráficos de Pizza -->
@@ -306,6 +318,9 @@ function renderDashboard() {
     <div class="status-time-section" id="statusTimeSection" data-testid="dashboard-status-time-section">
       ${currentStatusTimeData ? renderStatusTimeTable() : renderStatusTimeButton()}
     </div>
+    
+    <!-- Resumo Executivo -->
+    ${renderExecutiveSummary(metrics, currentStatusTimeData)}
     
     <!-- Botão PDF -->
     <div class="pdf-section" data-testid="dashboard-pdf-section">
@@ -385,6 +400,198 @@ function renderDefectsRatioCard(defectsRatio) {
       <div class="metric-value">${escapeHtml(displayValue)}</div>
       <div class="metric-detail">${subBugsValid} Sub-Bug : ${bugsValid} Bug</div>
       <div class="metric-description">${escapeHtml(description)}</div>
+    </div>
+  `;
+}
+
+function renderBreakdownCard(title, colorType, closed, open, iconType) {
+  const total = closed + open;
+  const icon = iconType === 'bug' ? '🐛' : '🔧';
+  const typeLabel = iconType === 'bug' ? 'bugs' : 'defeitos';
+  
+  const tooltipFechados = `Issues com status final (Applied in production, Concluído, Done)`;
+  const tooltipAbertos = `Issues ainda em andamento (In Test, Ready to test, etc.)`;
+  const tooltipTotal = `Total de ${typeLabel} válidos no período (exclui cancelados)`;
+  
+  return `
+    <div class="breakdown-card breakdown-${colorType}" data-testid="dashboard-breakdown-${iconType}">
+      <div class="breakdown-header">
+        <span class="breakdown-icon">${icon}</span>
+        <span class="breakdown-title">${escapeHtml(title)}</span>
+        <span class="breakdown-help" title="Contagem por status atual dos ${typeLabel}">ⓘ</span>
+      </div>
+      <div class="breakdown-body">
+        <div class="breakdown-item" title="${tooltipFechados}">
+          <span class="breakdown-value success">${closed}</span>
+          <span class="breakdown-label">Fechados ⓘ</span>
+        </div>
+        <div class="breakdown-item" title="${tooltipAbertos}">
+          <span class="breakdown-value ${colorType}">${open}</span>
+          <span class="breakdown-label">Abertos ⓘ</span>
+        </div>
+      </div>
+      <div class="breakdown-footer" title="${tooltipTotal}">
+        <small>Total válidos: ${total}</small>
+      </div>
+    </div>
+  `;
+}
+
+function renderMTTRCard(statusTimeData) {
+  const tooltipMTTR = 'Mean Time To Resolution: tempo médio que uma issue leva desde "Ready to test" até ser concluída';
+  const tooltipMeta = 'Meta recomendada para ciclo de testes ágeis';
+  
+  if (!statusTimeData || !statusTimeData.summary) {
+    return `
+      <div class="breakdown-card breakdown-info" data-testid="dashboard-mttr">
+        <div class="breakdown-header">
+          <span class="breakdown-icon">⏱️</span>
+          <span class="breakdown-title">MTTR (Tempo Médio)</span>
+          <span class="breakdown-help" title="${tooltipMTTR}">ⓘ</span>
+        </div>
+        <div class="breakdown-body mttr-body">
+          <div class="mttr-value">-</div>
+          <div class="mttr-label">Carregue Status Time para ver</div>
+        </div>
+      </div>
+    `;
+  }
+  
+  const { avgReadyToTestHours, avgInTestHours } = statusTimeData.summary;
+  const mttr = (avgReadyToTestHours + avgInTestHours).toFixed(1);
+  // Meta: 8h por status (Ready to Test + In Test) = 16h total
+  const mttrStatus = mttr <= 16 ? 'success' : mttr <= 32 ? 'warning' : 'danger';
+  
+  return `
+    <div class="breakdown-card breakdown-${mttrStatus}" data-testid="dashboard-mttr">
+      <div class="breakdown-header">
+        <span class="breakdown-icon">⏱️</span>
+        <span class="breakdown-title">MTTR (Tempo Médio)</span>
+        <span class="breakdown-help" title="${tooltipMTTR}">ⓘ</span>
+      </div>
+      <div class="breakdown-body mttr-body">
+        <div class="mttr-value ${mttrStatus}">${mttr}h</div>
+        <div class="mttr-label">
+          Ready to Test + In Test 
+          <span class="breakdown-help" title="Média: ${avgReadyToTestHours.toFixed(1)}h aguardando + ${avgInTestHours.toFixed(1)}h em teste">ⓘ</span>
+        </div>
+      </div>
+      <div class="breakdown-footer" title="${tooltipMeta}">
+        <small>Meta: &lt; 16h (8h por status)</small>
+      </div>
+    </div>
+  `;
+}
+
+function calculateOverallStatus(metrics) {
+  const leakage = metrics.defectLeakage?.ratePercent || 0;
+  const validRate = metrics.defectValidRate?.ratePercent || 0;
+  const bugsOpen = metrics.bugsBreakdown?.open || 0;
+  
+  // Critérios de avaliação
+  if (leakage > 20 || validRate < 70 || bugsOpen > 5) {
+    return { status: 'CRÍTICO', statusClass: 'danger' };
+  }
+  if (leakage > 10 || validRate < 85 || bugsOpen > 2) {
+    return { status: 'ATENÇÃO', statusClass: 'warning' };
+  }
+  return { status: 'BOM', statusClass: 'success' };
+}
+
+function renderOverallStatusBadge(metrics) {
+  const { status, statusClass } = calculateOverallStatus(metrics);
+  return `
+    <div class="overall-status">
+      <span class="status-badge status-${statusClass}" data-testid="dashboard-status-badge">${status}</span>
+    </div>
+  `;
+}
+
+function renderExecutiveSummary(metrics, statusTimeData) {
+  const positives = [];
+  const concerns = [];
+  
+  // Análise de Valid Rate
+  const validRate = metrics.defectValidRate?.ratePercent || 0;
+  if (validRate >= 95) {
+    positives.push('Excelente taxa de acerto (>95%)');
+  } else if (validRate >= 90) {
+    positives.push('Boa taxa de acerto (>90%)');
+  } else if (validRate < 80) {
+    concerns.push(`Taxa de acerto abaixo do esperado (${validRate.toFixed(1)}%)`);
+  }
+  
+  // Análise de Leakage
+  const leakage = metrics.defectLeakage?.ratePercent || 0;
+  if (leakage <= 5) {
+    positives.push('Taxa de escape dentro da meta (<5%)');
+  } else if (leakage > 15) {
+    concerns.push(`Taxa de escape crítica (${leakage.toFixed(1)}%)`);
+  } else if (leakage > 10) {
+    concerns.push(`Taxa de escape acima da meta (${leakage.toFixed(1)}%)`);
+  }
+  
+  // Análise de Bugs em aberto
+  const bugsOpen = metrics.bugsBreakdown?.open || 0;
+  const bugsClosed = metrics.bugsBreakdown?.closed || 0;
+  if (bugsOpen === 0 && bugsClosed > 0) {
+    positives.push('Todos os bugs de produção foram fechados');
+  } else if (bugsOpen > 3) {
+    concerns.push(`${bugsOpen} bugs de produção ainda em aberto`);
+  } else if (bugsOpen > 0) {
+    concerns.push(`${bugsOpen} bug(s) de produção em aberto`);
+  }
+  
+  // Análise de Defects em aberto
+  const defectsOpen = metrics.defectsBreakdown?.open || 0;
+  if (defectsOpen > 5) {
+    concerns.push(`${defectsOpen} defeitos de desenvolvimento em aberto`);
+  }
+  
+  // Análise de Defects Ratio
+  const ratio = metrics.defectsRatio?.ratio;
+  if (ratio !== null && ratio >= 10) {
+    positives.push('Ratio Sub-Bug:Bug excelente (≥10:1)');
+  } else if (ratio !== null && ratio < 3) {
+    concerns.push('Ratio Sub-Bug:Bug abaixo do ideal (<3:1)');
+  }
+  
+  // Análise de MTTR (se disponível)
+  if (statusTimeData?.summary) {
+    const mttr = statusTimeData.summary.avgReadyToTestHours + statusTimeData.summary.avgInTestHours;
+    if (mttr <= 16) {
+      positives.push('MTTR dentro da meta (<16h)');
+    } else if (mttr > 32) {
+      concerns.push(`MTTR muito alto (${mttr.toFixed(1)}h)`);
+    }
+  }
+  
+  // Se não há pontos positivos, adicionar um genérico
+  if (positives.length === 0) {
+    positives.push('Dados coletados para análise');
+  }
+  
+  return `
+    <div class="executive-summary" data-testid="dashboard-executive-summary">
+      <div class="summary-header">
+        <h3>📋 Resumo Executivo</h3>
+      </div>
+      <div class="summary-body">
+        <div class="summary-column positives">
+          <h4>✅ Pontos Positivos</h4>
+          <ul>
+            ${positives.map(p => `<li><span class="icon success">✓</span> ${escapeHtml(p)}</li>`).join('')}
+          </ul>
+        </div>
+        <div class="summary-column concerns">
+          <h4>⚠️ Pontos de Atenção</h4>
+          <ul>
+            ${concerns.length > 0 
+              ? concerns.map(c => `<li><span class="icon warning">!</span> ${escapeHtml(c)}</li>`).join('')
+              : '<li><span class="icon success">✓</span> Nenhum ponto de atenção identificado</li>'}
+          </ul>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -638,6 +845,10 @@ async function loadStatusTime() {
     currentStatusTimeData = data.data;
     statusTimeSection.innerHTML = renderStatusTimeTable();
     
+    // Atualizar o card MTTR e o Resumo Executivo com os novos dados
+    updateMTTRCard();
+    updateExecutiveSummary();
+    
   } catch (error) {
     console.error('Erro ao carregar Status Time:', error);
     statusTimeSection.innerHTML = `
@@ -648,6 +859,22 @@ async function loadStatusTime() {
         </button>
       </div>
     `;
+  }
+}
+
+function updateMTTRCard() {
+  const mttrCard = document.querySelector('[data-testid="dashboard-mttr"]');
+  if (mttrCard) {
+    mttrCard.outerHTML = renderMTTRCard(currentStatusTimeData);
+  }
+}
+
+function updateExecutiveSummary() {
+  if (!currentDashboardData) return;
+  
+  const summarySection = document.querySelector('[data-testid="dashboard-executive-summary"]');
+  if (summarySection) {
+    summarySection.outerHTML = renderExecutiveSummary(currentDashboardData.metrics, currentStatusTimeData);
   }
 }
 
@@ -762,6 +989,42 @@ async function generatePDF() {
   doc.text(`  - Bugs (Producao): ${bugsValid}`, margin, yPos);
   yPos += lineHeight * 2;
   
+  // Breakdown - Defects (Desenvolvimento)
+  if (metrics.defectsBreakdown) {
+    doc.setFont('helvetica', 'bold');
+    doc.text('Defects (Desenvolvimento):', margin, yPos);
+    doc.setFont('helvetica', 'normal');
+    yPos += lineHeight;
+    doc.text(`  - Fechados: ${metrics.defectsBreakdown.closed}`, margin, yPos);
+    yPos += lineHeight;
+    doc.text(`  - Abertos: ${metrics.defectsBreakdown.open}`, margin, yPos);
+    yPos += lineHeight;
+    doc.text(`  - Total: ${metrics.defectsBreakdown.total}`, margin, yPos);
+    yPos += lineHeight * 1.5;
+  }
+  
+  // Breakdown - Bugs (Produção)
+  if (metrics.bugsBreakdown) {
+    doc.setFont('helvetica', 'bold');
+    doc.text('Bugs (Producao):', margin, yPos);
+    doc.setFont('helvetica', 'normal');
+    yPos += lineHeight;
+    doc.text(`  - Fechados: ${metrics.bugsBreakdown.closed}`, margin, yPos);
+    yPos += lineHeight;
+    doc.text(`  - Abertos: ${metrics.bugsBreakdown.open}`, margin, yPos);
+    yPos += lineHeight;
+    doc.text(`  - Total: ${metrics.bugsBreakdown.total}`, margin, yPos);
+    yPos += lineHeight * 2;
+  }
+  
+  // Status Geral
+  const overallStatus = calculateOverallStatus(metrics);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Status Geral:', margin, yPos);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`[${overallStatus.status}]`, margin + 30, yPos);
+  yPos += lineHeight * 2;
+  
   // Capturar gráficos
   const chartsContainer = document.getElementById('chartsContainer');
   if (chartsContainer) {
@@ -817,6 +1080,14 @@ async function generatePDF() {
     doc.text(`Média Ready to test: ${summary.avgReadyToTestHours.toFixed(2)}h`, margin, yPos);
     yPos += lineHeight;
     doc.text(`Média In Test: ${summary.avgInTestHours.toFixed(2)}h`, margin, yPos);
+    yPos += lineHeight * 1.5;
+    
+    // MTTR
+    const mttr = (summary.avgReadyToTestHours + summary.avgInTestHours).toFixed(2);
+    doc.setFont('helvetica', 'bold');
+    doc.text('MTTR (Tempo Medio de Resolucao):', margin, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`${mttr}h (Meta: <16h)`, margin + 70, yPos);
     yPos += lineHeight * 2;
     
     // Top 10 issues

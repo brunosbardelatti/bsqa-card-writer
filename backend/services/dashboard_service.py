@@ -19,6 +19,15 @@ ISSUE_TYPE_BUG = "Bug"
 ISSUE_TYPE_SUB_BUG = "Sub-Bug"
 STATUS_CANCELED = "Cancelado"  # Status em português no Jira
 
+# Status considerados "fechados" para contagem de breakdown
+STATUS_CLOSED = [
+    "Applied in production",
+    "Concluído",
+    "Done",
+    "Resolved",
+    "Closed",
+]
+
 # Status Time: statuses em que acumulamos tempo (Ready to test, In Test)
 STATUS_TIME_TARGET = ["Ready to test", "In Test"]
 MAX_ISSUES_STATUS_TIME = 100
@@ -208,6 +217,12 @@ class DashboardService:
         total_reported = 0
         sub_bugs_valid = 0
         bugs_valid = 0
+        
+        # Contadores para breakdown (fechados/abertos)
+        sub_bugs_closed = 0
+        sub_bugs_open = 0
+        bugs_closed = 0
+        bugs_open = 0
 
         daily_prod_bugs: dict[str, int] = defaultdict(int)
         daily_total_valid: dict[str, int] = defaultdict(int)
@@ -225,6 +240,7 @@ class DashboardService:
             if not (is_bug or is_sub_bug):
                 continue
             is_valid = st != STATUS_CANCELED
+            is_closed = st in STATUS_CLOSED
             total_reported += 1
             if day and day in days_set:
                 daily_reported[day] += 1
@@ -236,10 +252,18 @@ class DashboardService:
             if is_bug and is_valid:
                 production_bugs_valid += 1
                 bugs_valid += 1
+                if is_closed:
+                    bugs_closed += 1
+                else:
+                    bugs_open += 1
                 if day and day in days_set:
                     daily_prod_bugs[day] += 1
             if is_sub_bug and is_valid:
                 sub_bugs_valid += 1
+                if is_closed:
+                    sub_bugs_closed += 1
+                else:
+                    sub_bugs_open += 1
 
         rate_leakage = (production_bugs_valid / total_defects_valid * 100) if total_defects_valid else 0.0
         rate_valid = (total_defects_valid / total_reported * 100) if total_reported else 0.0
@@ -260,6 +284,16 @@ class DashboardService:
                 "subBugsValid": sub_bugs_valid,
                 "bugsValid": bugs_valid,
                 "ratio": round(ratio, 2) if ratio is not None else None,
+            },
+            "defectsBreakdown": {
+                "closed": sub_bugs_closed,
+                "open": sub_bugs_open,
+                "total": sub_bugs_valid,
+            },
+            "bugsBreakdown": {
+                "closed": bugs_closed,
+                "open": bugs_open,
+                "total": bugs_valid,
             },
         }
 
@@ -391,6 +425,11 @@ class DashboardService:
             summary = (fields.get("summary") or "").strip() or "-"
             status_obj = fields.get("status")
             current_status = status_obj.get("name", "-") if isinstance(status_obj, dict) else "-"
+            
+            # Ignorar issues canceladas - não passaram pelo fluxo de testes
+            if current_status == STATUS_CANCELED:
+                continue
+            
             created_iso = fields.get("created") or ""
             changelog = fields.get("changelog") or []
 
@@ -451,6 +490,7 @@ class DashboardService:
                 "generatedAt": generated_at,
                 "notes": [
                     "Tempo em 'Ready to test' e 'In Test' calculado a partir do changelog.",
+                    "Issues com status 'Cancelado' são excluídas do cálculo.",
                     f"Máximo de {MAX_ISSUES_STATUS_TIME} issues processadas.",
                 ],
             },
