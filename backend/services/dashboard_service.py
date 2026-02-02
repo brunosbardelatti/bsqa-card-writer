@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 # Nomes exatos do Jira para classificação
 ISSUE_TYPE_BUG = "Bug"
 ISSUE_TYPE_SUB_BUG = "Sub-Bug"
-STATUS_CANCELED = "Canceled"
+STATUS_CANCELED = "Cancelado"  # Status em português no Jira
 
 # Status Time: statuses em que acumulamos tempo (Ready to test, In Test)
 STATUS_TIME_TARGET = ["Ready to test", "In Test"]
@@ -129,12 +129,16 @@ class DashboardService:
         def get_sprint_dates(pk: str):
             return jira.get_sprint_current_dates(pk)
 
+        def get_sprint_previous_dates(pk: str):
+            return jira.get_sprint_previous_dates(pk)
+
         start_date, end_date, meta = resolve_period(
             period_type=period_type,
             custom_start=custom_start,
             custom_end=custom_end,
             project_key=project_key,
             get_sprint_dates=get_sprint_dates,
+            get_sprint_previous_dates=get_sprint_previous_dates,
         )
 
         period_payload = {
@@ -170,12 +174,16 @@ class DashboardService:
         def get_sprint_dates(pk: str):
             return jira.get_sprint_current_dates(pk)
 
+        def get_sprint_previous_dates(pk: str):
+            return jira.get_sprint_previous_dates(pk)
+
         start_date_str, end_date_str, meta = resolve_period(
             period_type=period_type,
             custom_start=custom_start,
             custom_end=custom_end,
             project_key=project_key,
             get_sprint_dates=get_sprint_dates,
+            get_sprint_previous_dates=get_sprint_previous_dates,
         )
 
         period_payload = {
@@ -296,7 +304,7 @@ class DashboardService:
             "source": "jira",
             "notes": [
                 "IssueType Bug = Produção; Sub-Bug (sub-task) = Desenvolvimento",
-                "Status inválido removido: Canceled",
+                "Status inválido removido: Cancelado",
                 "Cálculos realizados no backend; front apenas renderiza",
             ],
         }
@@ -334,12 +342,16 @@ class DashboardService:
         def get_sprint_dates(pk: str):
             return jira.get_sprint_current_dates(pk)
 
+        def get_sprint_previous_dates(pk: str):
+            return jira.get_sprint_previous_dates(pk)
+
         start_date_str, end_date_str, meta = resolve_period(
             period_type=period_type,
             custom_start=custom_start,
             custom_end=custom_end,
             project_key=project_key,
             get_sprint_dates=get_sprint_dates,
+            get_sprint_previous_dates=get_sprint_previous_dates,
         )
 
         period_payload = {

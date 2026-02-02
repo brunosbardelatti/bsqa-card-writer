@@ -393,6 +393,7 @@ function getPeriodLabel(type) {
   switch (type) {
     case 'month_current': return 'Mês Atual';
     case 'sprint_current': return 'Sprint Atual';
+    case 'sprint_previous': return 'Sprint Passada';
     case 'custom': return 'Período Personalizado';
     default: return type;
   }

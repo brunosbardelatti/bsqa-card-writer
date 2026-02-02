@@ -101,18 +101,33 @@ def resolve_sprint_current(
     return (start_str, end_str, meta)
 
 
+def resolve_sprint_previous(
+    project_key: str,
+    get_sprint_previous_dates: Callable[[str], Tuple[str, str, Any]]
+) -> Tuple[str, str, dict]:
+    """
+    Obtém (start_date, end_date, meta) para última sprint fechada do projeto.
+    get_sprint_previous_dates(project_key) deve retornar (start_str, end_str, sprint_info) ou levantar exceção.
+    """
+    start_str, end_str, sprint_info = get_sprint_previous_dates(project_key)
+    meta = {"source": "jira_sprint_closed", "timezone": "America/Sao_Paulo", "sprint": sprint_info}
+    return (start_str, end_str, meta)
+
+
 def resolve_period(
     period_type: str,
     custom_start: Optional[str] = None,
     custom_end: Optional[str] = None,
     project_key: Optional[str] = None,
-    get_sprint_dates: Optional[Callable[[str], Tuple[str, str, Any]]] = None
+    get_sprint_dates: Optional[Callable[[str], Tuple[str, str, Any]]] = None,
+    get_sprint_previous_dates: Optional[Callable[[str], Tuple[str, str, Any]]] = None
 ) -> Tuple[str, str, dict]:
     """
     Resolve período conforme type.
     - month_current: ignora custom e project_key.
     - custom: exige custom_start e custom_end; valida até 3 meses.
     - sprint_current: exige project_key e get_sprint_dates; chama get_sprint_dates(project_key).
+    - sprint_previous: exige project_key e get_sprint_previous_dates; última sprint fechada.
 
     Returns:
         (start_date_str, end_date_str, meta_dict).
@@ -130,4 +145,8 @@ def resolve_period(
         if not project_key or not get_sprint_dates:
             raise ValueError("projectKey e get_sprint_dates são necessários para sprint_current.")
         return resolve_sprint_current(project_key, get_sprint_dates)
-    raise ValueError(f"Tipo de período inválido: {period_type}. Use month_current, custom ou sprint_current.")
+    if period_type == "sprint_previous":
+        if not project_key or not get_sprint_previous_dates:
+            raise ValueError("projectKey e get_sprint_previous_dates são necessários para sprint_previous.")
+        return resolve_sprint_previous(project_key, get_sprint_previous_dates)
+    raise ValueError(f"Tipo de período inválido: {period_type}. Use month_current, custom, sprint_current ou sprint_previous.")

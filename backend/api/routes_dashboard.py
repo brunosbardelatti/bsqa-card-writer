@@ -17,7 +17,7 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard QA"])
 
 class PeriodPayload(BaseModel):
     """Período para filtro do dashboard."""
-    type: Literal["month_current", "sprint_current", "custom"] = Field(
+    type: Literal["month_current", "sprint_current", "sprint_previous", "custom"] = Field(
         ..., description="Tipo de período"
     )
     startDate: Optional[str] = Field(None, description="Data inicial (obrigatório se type=custom)")
@@ -157,7 +157,7 @@ async def dashboard_post(request: DashboardRequest):
 class StatusTimeRequest(BaseModel):
     """Request do endpoint POST /dashboard/status-time."""
     projectKey: str = Field(..., description="Chave do projeto")
-    period: PeriodPayload = Field(..., description="Período (month_current, sprint_current ou custom)")
+    period: PeriodPayload = Field(..., description="Período (month_current, sprint_current, sprint_previous ou custom)")
 
 
 @router.post("/status-time")

@@ -20,6 +20,20 @@ STATUS_TIME_EXCLUDED = [
     "PRIORITIZED",
 ]
 
+# Tipos de issue excluídos do Status Time
+# - Sub-task: não passam pelo fluxo de testes independente
+# - Spike: investigação técnica, não requer testes
+# - Epic: container de issues, não testável
+# - Tarefa: tarefas operacionais que não passam por QA
+# - Sub-Bug: defeitos encontrados durante desenvolvimento, já corrigidos inline
+ISSUE_TYPE_EXCLUDED = [
+    "Sub-task",
+    "Spike", 
+    "Epic",
+    "Tarefa",
+    "Sub-Bug",
+]
+
 
 def build_defects_base_jql(project_key: str, start_date: str, end_date: str) -> str:
     """
@@ -42,17 +56,19 @@ def build_defects_base_jql(project_key: str, start_date: str, end_date: str) -> 
 
 def build_status_time_jql(project_key: str, start_date: str, end_date: str) -> str:
     """
-    JQL para Status Time: issues que já passaram por QA (exclui Sub-task e
-    status de backlog/dev). Datas no formato YYYY-MM-DD.
+    JQL para Status Time: issues que passam pelo fluxo de testes QA.
+    Exclui tipos que não passam por testes (Sub-task, Spike, Epic, Tarefa, Sub-Bug)
+    e status de backlog/dev. Datas no formato YYYY-MM-DD.
     """
     pk = str(project_key).strip().upper()
     start = start_date.strip()[:10]
     end = end_date.strip()[:10]
-    not_in = ", ".join(f'"{s}"' for s in STATUS_TIME_EXCLUDED)
+    status_not_in = ", ".join(f'"{s}"' for s in STATUS_TIME_EXCLUDED)
+    type_not_in = ", ".join(f'"{t}"' for t in ISSUE_TYPE_EXCLUDED)
     return (
         f'project = {pk} '
-        f'AND issuetype != Sub-task '
-        f'AND status NOT IN ({not_in}) '
+        f'AND issuetype NOT IN ({type_not_in}) '
+        f'AND status NOT IN ({status_not_in}) '
         f'AND created >= "{start}" '
         f'AND created <= "{end}" '
         f'ORDER BY created ASC'

@@ -769,13 +769,14 @@ class JiraService(IssueTrackerBase):
         data = response.json()
         return data.get("values", [])
 
-    def agile_get_active_sprints(self, board_id: int, max_results: int = 50) -> list[dict]:
+    def agile_get_sprints_by_state(self, board_id: int, state: str = "active", max_results: int = 50) -> list[dict]:
         """
-        Lista sprints ativas do board (Jira Agile API).
+        Lista sprints do board por estado (Jira Agile API).
+        state: 'active', 'closed', 'future'
         Returns list of sprints com id, name, state, startDate, endDate, etc.
         """
         url = self._agile_url(f"/board/{board_id}/sprint")
-        params = {"state": "active", "maxResults": max_results}
+        params = {"state": state, "maxResults": max_results}
         response = requests.get(
             url,
             headers=self._get_headers(),
@@ -789,6 +790,13 @@ class JiraService(IssueTrackerBase):
         response.raise_for_status()
         data = response.json()
         return data.get("values", [])
+
+    def agile_get_active_sprints(self, board_id: int, max_results: int = 50) -> list[dict]:
+        """
+        Lista sprints ativas do board (Jira Agile API).
+        Returns list of sprints com id, name, state, startDate, endDate, etc.
+        """
+        return self.agile_get_sprints_by_state(board_id, state="active", max_results=max_results)
 
     def get_sprint_current_dates(self, project_key: str) -> tuple[str, str, dict]:
         """
@@ -831,6 +839,55 @@ class JiraService(IssueTrackerBase):
                     }
         if best_sprint is None or best_start is None:
             raise ValueError("Sprint atual indisponível para o projeto informado.")
+        return (
+            best_sprint["startDate"],
+            best_sprint["endDate"],
+            best_sprint,
+        )
+
+    def get_sprint_previous_dates(self, project_key: str) -> tuple[str, str, dict]:
+        """
+        Obtém start_date e end_date da última sprint fechada do projeto (board scrum "Downstream").
+        Returns (start_date_YYYY_MM_DD, end_date_YYYY_MM_DD, sprint_info_dict).
+        Raises ValueError se não houver board downstream ou sprint fechada.
+        """
+        boards = self.agile_get_boards(project_key)
+        scrum_downstream = [
+            b for b in boards
+            if (b.get("type") or "").lower() == "scrum"
+            and "downstream" in (b.get("name") or "").lower()
+        ]
+        if not scrum_downstream:
+            raise ValueError("Sprint passada indisponível para o projeto informado.")
+
+        best_sprint = None
+        best_end = None
+
+        for board in scrum_downstream:
+            board_id = board.get("id")
+            if board_id is None:
+                continue
+            # Buscar sprints fechadas
+            sprints = self.agile_get_sprints_by_state(board_id, state="closed", max_results=20)
+            for sp in sprints:
+                end_str = sp.get("endDate") or ""
+                if not end_str:
+                    continue
+                end_date_only = end_str[:10]
+                # Pegar a sprint fechada mais recente (maior endDate)
+                if best_end is None or end_date_only > best_end:
+                    best_end = end_date_only
+                    start_str = sp.get("startDate") or ""
+                    start_date_only = start_str[:10] if len(start_str) >= 10 else start_str
+                    best_sprint = {
+                        "id": sp.get("id"),
+                        "name": sp.get("name"),
+                        "startDate": start_date_only,
+                        "endDate": end_date_only,
+                        "state": sp.get("state"),
+                    }
+        if best_sprint is None or best_end is None:
+            raise ValueError("Sprint passada indisponível para o projeto informado.")
         return (
             best_sprint["startDate"],
             best_sprint["endDate"],
