@@ -72,6 +72,39 @@ def resolve_month_current() -> Tuple[str, str, dict]:
     )
 
 
+def resolve_month_previous() -> Tuple[str, str, dict]:
+    """
+    Retorna (start_date, end_date, meta) para o mês anterior.
+    startDate = dia 4 do mês anterior, endDate = último dia do mês anterior.
+    """
+    today = _today()
+    # Primeiro dia do mês atual
+    first_of_current = today.replace(day=1)
+    # Último dia do mês anterior
+    last_of_previous = first_of_current - relativedelta(days=1)
+    # Dia 4 do mês anterior
+    start = last_of_previous.replace(day=4)
+    return (
+        start.isoformat(),
+        last_of_previous.isoformat(),
+        {"source": "month_previous", "timezone": "America/Sao_Paulo"}
+    )
+
+
+def resolve_last_3_months() -> Tuple[str, str, dict]:
+    """
+    Retorna (start_date, end_date, meta) para os últimos 3 meses (90 dias).
+    startDate = 90 dias atrás, endDate = hoje (America/Sao_Paulo).
+    """
+    today = _today()
+    start = today - relativedelta(days=90)
+    return (
+        start.isoformat(),
+        today.isoformat(),
+        {"source": "last_3_months", "timezone": "America/Sao_Paulo"}
+    )
+
+
 def resolve_custom(start_date_str: str, end_date_str: str) -> Tuple[str, str, dict]:
     """
     Valida e retorna (start_date, end_date, meta) para período custom.
@@ -124,9 +157,11 @@ def resolve_period(
 ) -> Tuple[str, str, dict]:
     """
     Resolve período conforme type.
-    - month_current: ignora custom e project_key.
+    - month_current: mês atual (dia 1 até hoje).
+    - month_previous: mês anterior (dia 4 até último dia).
+    - last_3_months: últimos 90 dias (90 dias atrás até hoje).
     - custom: exige custom_start e custom_end; valida até 3 meses.
-    - sprint_current: exige project_key e get_sprint_dates; chama get_sprint_dates(project_key).
+    - sprint_current: exige project_key e get_sprint_dates; sprint ativa.
     - sprint_previous: exige project_key e get_sprint_previous_dates; última sprint fechada.
 
     Returns:
@@ -137,6 +172,10 @@ def resolve_period(
     """
     if period_type == "month_current":
         return resolve_month_current()
+    if period_type == "month_previous":
+        return resolve_month_previous()
+    if period_type == "last_3_months":
+        return resolve_last_3_months()
     if period_type == "custom":
         if not custom_start or not custom_end:
             raise ValueError("startDate e endDate são obrigatórios para período custom.")
@@ -149,4 +188,4 @@ def resolve_period(
         if not project_key or not get_sprint_previous_dates:
             raise ValueError("projectKey e get_sprint_previous_dates são necessários para sprint_previous.")
         return resolve_sprint_previous(project_key, get_sprint_previous_dates)
-    raise ValueError(f"Tipo de período inválido: {period_type}. Use month_current, custom, sprint_current ou sprint_previous.")
+    raise ValueError(f"Tipo de período inválido: {period_type}. Use month_current, month_previous, last_3_months, custom, sprint_current ou sprint_previous.")

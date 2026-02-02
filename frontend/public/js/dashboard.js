@@ -9,6 +9,12 @@ let currentFilters = {
   period: null
 };
 
+// Estado de ordenação da tabela Status Time
+let statusTimeSort = {
+  column: 'totalHours',
+  direction: 'desc'
+};
+
 // Instâncias dos gráficos (para destruir ao recarregar)
 let chartInstances = {
   leakagePie: null,
@@ -36,13 +42,19 @@ document.addEventListener('DOMContentLoaded', async () => {
 // CARREGAMENTO DE PROJETOS
 // ============================================
 
+let allProjects = [];
+
 async function loadProjects() {
-  const projectSelect = document.getElementById('projectSelect');
-  if (!projectSelect) return;
+  const projectSearch = document.getElementById('projectSearch');
+  const projectDropdown = document.getElementById('projectDropdown');
+  const projectKey = document.getElementById('projectKey');
+  
+  if (!projectSearch || !projectDropdown) return;
 
   try {
-    projectSelect.innerHTML = '<option value="">Carregando projetos...</option>';
-    projectSelect.disabled = true;
+    projectSearch.disabled = true;
+    projectSearch.placeholder = 'Carregando projetos...';
+    projectDropdown.innerHTML = '<div class="select-option loading">Carregando projetos...</div>';
 
     const response = await fetch(window.ApiConfig.buildUrl('/dashboard'), {
       method: 'POST',
@@ -56,21 +68,131 @@ async function loadProjects() {
       throw new Error(data.error?.message || 'Erro ao carregar projetos');
     }
 
-    const projects = data.data?.projects || [];
+    allProjects = data.data?.projects || [];
     
-    if (projects.length === 0) {
-      projectSelect.innerHTML = '<option value="">Nenhum projeto disponível</option>';
+    if (allProjects.length === 0) {
+      projectDropdown.innerHTML = '<div class="select-option disabled">Nenhum projeto disponível</div>';
       return;
     }
 
-    projectSelect.innerHTML = '<option value="">Selecione um projeto...</option>' +
-      projects.map(p => `<option value="${escapeHtml(p.key)}">${escapeHtml(p.name)} (${escapeHtml(p.key)})</option>`).join('');
-    
-    projectSelect.disabled = false;
+    projectSearch.disabled = false;
+    projectSearch.placeholder = 'Digite para buscar projeto...';
+    renderProjectOptions(allProjects);
+    initSearchableSelect();
 
   } catch (error) {
     console.error('Erro ao carregar projetos:', error);
-    projectSelect.innerHTML = `<option value="">Erro: ${escapeHtml(error.message)}</option>`;
+    projectDropdown.innerHTML = `<div class="select-option error">Erro: ${escapeHtml(error.message)}</div>`;
+  }
+}
+
+function renderProjectOptions(projects) {
+  const projectDropdown = document.getElementById('projectDropdown');
+  if (!projectDropdown) return;
+  
+  if (projects.length === 0) {
+    projectDropdown.innerHTML = '<div class="select-option disabled">Nenhum projeto encontrado</div>';
+    return;
+  }
+  
+  projectDropdown.innerHTML = projects.map(p => `
+    <div class="select-option" data-value="${escapeHtml(p.key)}" data-name="${escapeHtml(p.name)}">
+      <span class="option-name">${escapeHtml(p.name)}</span>
+      <span class="option-key">${escapeHtml(p.key)}</span>
+    </div>
+  `).join('');
+}
+
+function initSearchableSelect() {
+  const projectSearch = document.getElementById('projectSearch');
+  const projectDropdown = document.getElementById('projectDropdown');
+  const projectKey = document.getElementById('projectKey');
+  const container = projectSearch?.closest('.searchable-select');
+  
+  if (!projectSearch || !projectDropdown || !container) return;
+  
+  // Mostrar dropdown ao focar
+  projectSearch.addEventListener('focus', () => {
+    container.classList.add('open');
+    renderProjectOptions(filterProjects(projectSearch.value));
+  });
+  
+  // Filtrar ao digitar
+  projectSearch.addEventListener('input', (e) => {
+    const filtered = filterProjects(e.target.value);
+    renderProjectOptions(filtered);
+    container.classList.add('open');
+  });
+  
+  // Selecionar opção ao clicar
+  projectDropdown.addEventListener('click', (e) => {
+    const option = e.target.closest('.select-option');
+    if (option && !option.classList.contains('disabled') && !option.classList.contains('loading')) {
+      selectProject(option.dataset.value, option.dataset.name);
+    }
+  });
+  
+  // Fechar dropdown ao clicar fora
+  document.addEventListener('click', (e) => {
+    if (!container.contains(e.target)) {
+      container.classList.remove('open');
+    }
+  });
+  
+  // Navegação por teclado
+  projectSearch.addEventListener('keydown', (e) => {
+    const options = projectDropdown.querySelectorAll('.select-option:not(.disabled):not(.loading)');
+    const currentIndex = Array.from(options).findIndex(opt => opt.classList.contains('highlighted'));
+    
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const nextIndex = currentIndex < options.length - 1 ? currentIndex + 1 : 0;
+      highlightOption(options, nextIndex);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prevIndex = currentIndex > 0 ? currentIndex - 1 : options.length - 1;
+      highlightOption(options, prevIndex);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      const highlighted = projectDropdown.querySelector('.select-option.highlighted');
+      if (highlighted) {
+        selectProject(highlighted.dataset.value, highlighted.dataset.name);
+      }
+    } else if (e.key === 'Escape') {
+      container.classList.remove('open');
+      projectSearch.blur();
+    }
+  });
+}
+
+function filterProjects(searchTerm) {
+  if (!searchTerm) return allProjects;
+  const term = searchTerm.toLowerCase();
+  return allProjects.filter(p => 
+    p.name.toLowerCase().includes(term) || 
+    p.key.toLowerCase().includes(term)
+  );
+}
+
+function highlightOption(options, index) {
+  options.forEach(opt => opt.classList.remove('highlighted'));
+  if (options[index]) {
+    options[index].classList.add('highlighted');
+    options[index].scrollIntoView({ block: 'nearest' });
+  }
+}
+
+function selectProject(key, name) {
+  const projectSearch = document.getElementById('projectSearch');
+  const projectKeyInput = document.getElementById('projectKey');
+  const container = projectSearch?.closest('.searchable-select');
+  
+  if (projectSearch && projectKeyInput) {
+    projectSearch.value = `${name} (${key})`;
+    projectKeyInput.value = key;
+    container?.classList.remove('open');
+    container?.classList.add('selected');
+    validateGenerateButton();
   }
 }
 
@@ -81,16 +203,12 @@ async function loadProjects() {
 function bindFilterEvents() {
   const form = document.getElementById('dashboardFilters');
   const periodSelect = document.getElementById('periodType');
-  const projectSelect = document.getElementById('projectSelect');
   const generateBtn = document.getElementById('generateBtn');
 
   if (!form) return;
 
   // Toggle campos de data customizada
   periodSelect?.addEventListener('change', handlePeriodChange);
-
-  // Validar botão gerar
-  projectSelect?.addEventListener('change', validateGenerateButton);
   periodSelect?.addEventListener('change', validateGenerateButton);
 
   // Submit do formulário
@@ -134,11 +252,11 @@ function handlePeriodChange() {
 }
 
 function validateGenerateButton() {
-  const projectSelect = document.getElementById('projectSelect');
+  const projectKeyInput = document.getElementById('projectKey');
   const periodType = document.getElementById('periodType');
   const generateBtn = document.getElementById('generateBtn');
   
-  const projectSelected = projectSelect?.value;
+  const projectSelected = projectKeyInput?.value;
   const periodSelected = periodType?.value;
   
   let isValid = projectSelected && periodSelected;
@@ -161,7 +279,7 @@ function validateGenerateButton() {
 async function handleGenerateDashboard(e) {
   e.preventDefault();
   
-  const projectKey = document.getElementById('projectSelect').value;
+  const projectKey = document.getElementById('projectKey').value;
   const periodType = document.getElementById('periodType').value;
   const includeStatusTime = document.getElementById('includeStatusTime').checked;
   const startDate = document.getElementById('startDate')?.value;
@@ -234,6 +352,14 @@ async function handleGenerateDashboard(e) {
     
     // Renderizar dashboard
     renderDashboard();
+    
+    // Scroll para o cabeçalho do dashboard
+    setTimeout(() => {
+      const dashboardHeader = document.querySelector('[data-testid="dashboard-info"]');
+      if (dashboardHeader) {
+        dashboardHeader.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
     
   } catch (error) {
     console.error('Erro ao gerar dashboard:', error);
@@ -599,6 +725,8 @@ function renderExecutiveSummary(metrics, statusTimeData) {
 function getPeriodLabel(type) {
   switch (type) {
     case 'month_current': return 'Mês Atual';
+    case 'month_previous': return 'Mês Passado';
+    case 'last_3_months': return 'Últimos 3 Meses';
     case 'sprint_current': return 'Sprint Atual';
     case 'sprint_previous': return 'Sprint Passada';
     case 'custom': return 'Período Personalizado';
@@ -761,8 +889,16 @@ function renderStatusTimeTable() {
   
   const { issues, summary } = currentStatusTimeData;
   
-  // Ordenar por totalHours desc
-  const sortedIssues = [...issues].sort((a, b) => b.totalHours - a.totalHours);
+  // Ordenar conforme estado atual
+  const sortedIssues = sortStatusTimeIssues([...issues]);
+  
+  // Helper para gerar ícone de ordenação
+  const sortIcon = (col) => {
+    if (statusTimeSort.column !== col) return '<span class="sort-icon">⇅</span>';
+    return statusTimeSort.direction === 'asc' 
+      ? '<span class="sort-icon active">▲</span>' 
+      : '<span class="sort-icon active">▼</span>';
+  };
   
   return `
     <div class="status-time-content">
@@ -778,16 +914,16 @@ function renderStatusTimeTable() {
       </div>
       
       <div class="table-wrapper">
-        <table class="status-time-table" data-testid="dashboard-statustime-table">
+        <table class="status-time-table sortable" data-testid="dashboard-statustime-table">
           <thead>
             <tr>
-              <th>Key</th>
-              <th>Tipo</th>
-              <th>Summary</th>
-              <th>Status</th>
-              <th>Ready (h)</th>
-              <th>Test (h)</th>
-              <th>Total (h)</th>
+              <th class="sortable-header" data-sort="key" onclick="window.sortStatusTimeBy('key')">Key ${sortIcon('key')}</th>
+              <th class="sortable-header" data-sort="issueType" onclick="window.sortStatusTimeBy('issueType')">Tipo ${sortIcon('issueType')}</th>
+              <th class="sortable-header" data-sort="summary" onclick="window.sortStatusTimeBy('summary')">Summary ${sortIcon('summary')}</th>
+              <th class="sortable-header" data-sort="currentStatus" onclick="window.sortStatusTimeBy('currentStatus')">Status ${sortIcon('currentStatus')}</th>
+              <th class="sortable-header" data-sort="readyToTestHours" onclick="window.sortStatusTimeBy('readyToTestHours')">Ready (h) ${sortIcon('readyToTestHours')}</th>
+              <th class="sortable-header" data-sort="inTestHours" onclick="window.sortStatusTimeBy('inTestHours')">Test (h) ${sortIcon('inTestHours')}</th>
+              <th class="sortable-header" data-sort="totalHours" onclick="window.sortStatusTimeBy('totalHours')">Total (h) ${sortIcon('totalHours')}</th>
             </tr>
           </thead>
           <tbody>
@@ -808,6 +944,49 @@ function renderStatusTimeTable() {
     </div>
   `;
 }
+
+function sortStatusTimeIssues(issues) {
+  const { column, direction } = statusTimeSort;
+  const multiplier = direction === 'asc' ? 1 : -1;
+  
+  return issues.sort((a, b) => {
+    let valA = a[column];
+    let valB = b[column];
+    
+    // Tratar valores nulos
+    if (valA == null) valA = '';
+    if (valB == null) valB = '';
+    
+    // Comparação numérica para colunas de horas
+    if (typeof valA === 'number' && typeof valB === 'number') {
+      return (valA - valB) * multiplier;
+    }
+    
+    // Comparação de strings
+    return String(valA).localeCompare(String(valB), 'pt-BR', { sensitivity: 'base' }) * multiplier;
+  });
+}
+
+function sortStatusTimeBy(column) {
+  // Se já está ordenando por esta coluna, inverte a direção
+  if (statusTimeSort.column === column) {
+    statusTimeSort.direction = statusTimeSort.direction === 'asc' ? 'desc' : 'asc';
+  } else {
+    // Nova coluna: ordenar desc por padrão para números, asc para texto
+    statusTimeSort.column = column;
+    const numericColumns = ['readyToTestHours', 'inTestHours', 'totalHours'];
+    statusTimeSort.direction = numericColumns.includes(column) ? 'desc' : 'asc';
+  }
+  
+  // Re-renderizar a tabela
+  const statusTimeSection = document.getElementById('statusTimeSection');
+  if (statusTimeSection) {
+    statusTimeSection.innerHTML = renderStatusTimeTable();
+  }
+}
+
+// Expor função globalmente
+window.sortStatusTimeBy = sortStatusTimeBy;
 
 async function loadStatusTime() {
   if (!currentFilters.projectKey || !currentFilters.period) {
@@ -892,240 +1071,366 @@ async function generatePDF() {
   const doc = new jsPDF();
   const { project, period, metrics, meta } = currentDashboardData;
   
-  let yPos = 20;
-  const lineHeight = 7;
-  const margin = 20;
   const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 15;
+  const contentWidth = pageWidth - (margin * 2);
+  let yPos = 15;
   
-  // Título
+  // Cores
+  const colors = {
+    primary: [59, 130, 246],      // Azul
+    success: [34, 197, 94],       // Verde
+    warning: [245, 158, 11],      // Amarelo
+    danger: [239, 68, 68],        // Vermelho
+    gray: [100, 116, 139],        // Cinza
+    lightGray: [226, 232, 240],   // Cinza claro
+    dark: [30, 41, 59]            // Escuro
+  };
+  
+  // Helper para desenhar box com título
+  function drawSection(title, startY, height) {
+    doc.setFillColor(...colors.primary);
+    doc.rect(margin, startY, contentWidth, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(title, margin + 3, startY + 5.5);
+    doc.setTextColor(...colors.dark);
+    doc.setDrawColor(...colors.lightGray);
+    doc.rect(margin, startY + 8, contentWidth, height - 8);
+    return startY + 12;
+  }
+  
+  // Helper para nova página se necessário
+  function checkNewPage(requiredHeight) {
+    if (yPos + requiredHeight > pageHeight - 20) {
+      doc.addPage();
+      yPos = 15;
+      return true;
+    }
+    return false;
+  }
+  
+  // Helper para status color
+  function getStatusColor(status) {
+    switch(status) {
+      case 'BOM': return colors.success;
+      case 'ATENÇÃO': return colors.warning;
+      case 'CRÍTICO': return colors.danger;
+      default: return colors.gray;
+    }
+  }
+  
+  // ========== HEADER ==========
+  doc.setFillColor(...colors.dark);
+  doc.rect(0, 0, pageWidth, 35, 'F');
+  
+  doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text('Relatório de Métricas QA', pageWidth / 2, yPos, { align: 'center' });
-  yPos += lineHeight * 2;
-  
-  // Info do projeto
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Projeto: ${project.name || project.key} (${project.key})`, margin, yPos);
-  yPos += lineHeight;
-  doc.text(`Período: ${formatDateBR(period.startDate)} a ${formatDateBR(period.endDate)}`, margin, yPos);
-  yPos += lineHeight;
-  doc.text(`Tipo: ${getPeriodLabel(period.type)}`, margin, yPos);
-  yPos += lineHeight;
-  if (period.sprint) {
-    doc.text(`Sprint: ${period.sprint.name}`, margin, yPos);
-    yPos += lineHeight;
-  }
-  doc.text(`Gerado em: ${meta?.generatedAt || new Date().toISOString()}`, margin, yPos);
-  yPos += lineHeight * 2;
-  
-  // Linha separadora
-  doc.setDrawColor(200);
-  doc.line(margin, yPos, pageWidth - margin, yPos);
-  yPos += lineHeight;
-  
-  // Métricas
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('1. Métricas Consolidadas', margin, yPos);
-  yPos += lineHeight * 1.5;
+  doc.text('Relatório de Métricas QA', pageWidth / 2, 15, { align: 'center' });
   
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
+  doc.text(`${project.name || project.key}`, pageWidth / 2, 24, { align: 'center' });
+  
+  doc.setFontSize(9);
+  doc.text(`${formatDateBR(period.startDate)} a ${formatDateBR(period.endDate)} | ${getPeriodLabel(period.type)}${period.sprint ? ' - ' + period.sprint.name : ''}`, pageWidth / 2, 31, { align: 'center' });
+  
+  yPos = 45;
+  
+  // ========== STATUS GERAL ==========
+  const overallStatus = calculateOverallStatus(metrics);
+  const statusColor = getStatusColor(overallStatus.status);
+  
+  doc.setFillColor(...statusColor);
+  doc.roundedRect(margin, yPos, 50, 12, 2, 2, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`STATUS: ${overallStatus.status}`, margin + 25, yPos + 7.5, { align: 'center' });
+  
+  doc.setTextColor(...colors.gray);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Gerado em: ${meta?.generatedAt || new Date().toISOString()}`, pageWidth - margin, yPos + 7, { align: 'right' });
+  
+  yPos += 20;
+  
+  // ========== MÉTRICAS PRINCIPAIS ==========
+  const metricsHeight = 45;
+  yPos = drawSection('MÉTRICAS PRINCIPAIS', yPos, metricsHeight);
+  
+  const colWidth = contentWidth / 3;
+  const metricStartY = yPos;
   
   // Defect Leakage
+  doc.setFontSize(8);
+  doc.setTextColor(...colors.gray);
+  doc.text('Defect Leakage', margin + 5, metricStartY);
+  doc.setFontSize(16);
+  doc.setTextColor(...colors.dark);
   doc.setFont('helvetica', 'bold');
-  doc.text('Defect Leakage (Taxa de Escape):', margin, yPos);
+  doc.text(`${metrics.defectLeakage.ratePercent.toFixed(1)}%`, margin + 5, metricStartY + 10);
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${metrics.defectLeakage.ratePercent.toFixed(2)}%`, margin + 80, yPos);
-  yPos += lineHeight;
-  doc.text(`  - Bugs de Produção: ${metrics.defectLeakage.productionBugs}`, margin, yPos);
-  yPos += lineHeight;
-  doc.text(`  - Total Defeitos Válidos: ${metrics.defectLeakage.totalDefectsValid}`, margin, yPos);
-  yPos += lineHeight * 1.5;
+  doc.setTextColor(...colors.gray);
+  doc.text(`${metrics.defectLeakage.productionBugs} bugs / ${metrics.defectLeakage.totalDefectsValid} válidos`, margin + 5, metricStartY + 16);
   
   // Defect Valid Rate
+  doc.setFontSize(8);
+  doc.setTextColor(...colors.gray);
+  doc.text('Valid Rate', margin + colWidth + 5, metricStartY);
+  doc.setFontSize(16);
+  doc.setTextColor(...colors.dark);
   doc.setFont('helvetica', 'bold');
-  doc.text('Defect Valid Rate (Taxa de Acerto):', margin, yPos);
+  doc.text(`${metrics.defectValidRate.ratePercent.toFixed(1)}%`, margin + colWidth + 5, metricStartY + 10);
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${metrics.defectValidRate.ratePercent.toFixed(2)}%`, margin + 80, yPos);
-  yPos += lineHeight;
-  doc.text(`  - Defeitos Válidos: ${metrics.defectValidRate.validDefects}`, margin, yPos);
-  yPos += lineHeight;
-  doc.text(`  - Total Reportados: ${metrics.defectValidRate.totalReported}`, margin, yPos);
-  yPos += lineHeight * 1.5;
+  doc.setTextColor(...colors.gray);
+  doc.text(`${metrics.defectValidRate.validDefects} válidos / ${metrics.defectValidRate.totalReported} total`, margin + colWidth + 5, metricStartY + 16);
   
   // Defects Ratio
-  doc.setFont('helvetica', 'bold');
-  doc.text('Defects Ratio (objetivo: >10:1):', margin, yPos);
-  doc.setFont('helvetica', 'normal');
   const { ratio, subBugsValid, bugsValid } = metrics.defectsRatio;
-  let ratioValue, ratioStatus;
+  let ratioDisplay = 'N/A';
   if (bugsValid === 0 && subBugsValid > 0) {
-    ratioValue = 'Infinito:1';
-    ratioStatus = '[EXCELENTE] Nenhum bug de producao';
-  } else if (bugsValid === 0 && subBugsValid === 0) {
-    ratioValue = '-';
-    ratioStatus = 'Sem defeitos no periodo';
+    ratioDisplay = '∞:1';
   } else if (ratio !== null) {
-    ratioValue = `${ratio.toFixed(1)}:1`;
-    if (ratio >= 10) {
-      ratioStatus = '[META ATINGIDA] Excelente deteccao no desenvolvimento';
-    } else if (ratio >= 5) {
-      ratioStatus = '[ATENCAO] Proximo da meta';
-    } else {
-      ratioStatus = '[CRITICO] Abaixo da meta';
-    }
-  } else {
-    ratioValue = 'N/A';
-    ratioStatus = 'Dados insuficientes';
+    ratioDisplay = `${ratio.toFixed(1)}:1`;
   }
-  doc.text(ratioValue, margin + 70, yPos);
-  yPos += lineHeight;
-  doc.text(`  Status: ${ratioStatus}`, margin, yPos);
-  yPos += lineHeight;
-  doc.text(`  - Sub-Bugs (Desenvolvimento): ${subBugsValid}`, margin, yPos);
-  yPos += lineHeight;
-  doc.text(`  - Bugs (Producao): ${bugsValid}`, margin, yPos);
-  yPos += lineHeight * 2;
-  
-  // Breakdown - Defects (Desenvolvimento)
-  if (metrics.defectsBreakdown) {
-    doc.setFont('helvetica', 'bold');
-    doc.text('Defects (Desenvolvimento):', margin, yPos);
-    doc.setFont('helvetica', 'normal');
-    yPos += lineHeight;
-    doc.text(`  - Fechados: ${metrics.defectsBreakdown.closed}`, margin, yPos);
-    yPos += lineHeight;
-    doc.text(`  - Abertos: ${metrics.defectsBreakdown.open}`, margin, yPos);
-    yPos += lineHeight;
-    doc.text(`  - Total: ${metrics.defectsBreakdown.total}`, margin, yPos);
-    yPos += lineHeight * 1.5;
-  }
-  
-  // Breakdown - Bugs (Produção)
-  if (metrics.bugsBreakdown) {
-    doc.setFont('helvetica', 'bold');
-    doc.text('Bugs (Producao):', margin, yPos);
-    doc.setFont('helvetica', 'normal');
-    yPos += lineHeight;
-    doc.text(`  - Fechados: ${metrics.bugsBreakdown.closed}`, margin, yPos);
-    yPos += lineHeight;
-    doc.text(`  - Abertos: ${metrics.bugsBreakdown.open}`, margin, yPos);
-    yPos += lineHeight;
-    doc.text(`  - Total: ${metrics.bugsBreakdown.total}`, margin, yPos);
-    yPos += lineHeight * 2;
-  }
-  
-  // Status Geral
-  const overallStatus = calculateOverallStatus(metrics);
+  doc.setFontSize(8);
+  doc.setTextColor(...colors.gray);
+  doc.text('Defects Ratio', margin + colWidth * 2 + 5, metricStartY);
+  doc.setFontSize(16);
+  doc.setTextColor(...colors.dark);
   doc.setFont('helvetica', 'bold');
-  doc.text('Status Geral:', margin, yPos);
+  doc.text(ratioDisplay, margin + colWidth * 2 + 5, metricStartY + 10);
+  doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
-  doc.text(`[${overallStatus.status}]`, margin + 30, yPos);
-  yPos += lineHeight * 2;
+  doc.setTextColor(...colors.gray);
+  doc.text(`${subBugsValid} sub-bugs : ${bugsValid} bugs`, margin + colWidth * 2 + 5, metricStartY + 16);
   
-  // Capturar gráficos
+  // Linha separadora vertical
+  doc.setDrawColor(...colors.lightGray);
+  doc.line(margin + colWidth, yPos - 4, margin + colWidth, yPos + 22);
+  doc.line(margin + colWidth * 2, yPos - 4, margin + colWidth * 2, yPos + 22);
+  
+  yPos += metricsHeight - 8;
+  
+  // ========== BREAKDOWN ==========
+  if (metrics.defectsBreakdown && metrics.bugsBreakdown) {
+    yPos += 5;
+    const breakdownHeight = 35;
+    yPos = drawSection('DETALHAMENTO', yPos, breakdownHeight);
+    
+    const halfWidth = contentWidth / 2;
+    
+    // Defects (Desenvolvimento)
+    doc.setFontSize(9);
+    doc.setTextColor(...colors.dark);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Defects (Desenvolvimento)', margin + 5, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...colors.success);
+    doc.text(`Fechados: ${metrics.defectsBreakdown.closed}`, margin + 5, yPos + 7);
+    doc.setTextColor(...colors.warning);
+    doc.text(`Abertos: ${metrics.defectsBreakdown.open}`, margin + 35, yPos + 7);
+    doc.setTextColor(...colors.gray);
+    doc.text(`Total: ${metrics.defectsBreakdown.total}`, margin + 60, yPos + 7);
+    
+    // Bugs (Produção)
+    doc.setFontSize(9);
+    doc.setTextColor(...colors.dark);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Bugs (Produção)', margin + halfWidth + 5, yPos);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(...colors.success);
+    doc.text(`Fechados: ${metrics.bugsBreakdown.closed}`, margin + halfWidth + 5, yPos + 7);
+    doc.setTextColor(...colors.danger);
+    doc.text(`Abertos: ${metrics.bugsBreakdown.open}`, margin + halfWidth + 35, yPos + 7);
+    doc.setTextColor(...colors.gray);
+    doc.text(`Total: ${metrics.bugsBreakdown.total}`, margin + halfWidth + 60, yPos + 7);
+    
+    // Linha separadora vertical
+    doc.setDrawColor(...colors.lightGray);
+    doc.line(margin + halfWidth, yPos - 4, margin + halfWidth, yPos + 15);
+    
+    yPos += breakdownHeight - 8;
+  }
+  
+  // ========== GRÁFICOS ==========
   const chartsContainer = document.getElementById('chartsContainer');
   if (chartsContainer) {
     try {
-      doc.setFontSize(14);
+      yPos += 5;
+      checkNewPage(80);
+      
+      doc.setFillColor(...colors.primary);
+      doc.rect(margin, yPos, contentWidth, 8, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text('2. Gráficos de Evolução', margin, yPos);
-      yPos += lineHeight;
+      doc.text('EVOLUÇÃO DAS MÉTRICAS', margin + 3, yPos + 5.5);
+      yPos += 10;
       
       const canvas = await html2canvas(chartsContainer, { 
-        backgroundColor: null,
+        backgroundColor: '#ffffff',
         scale: 2
       });
       const imgData = canvas.toDataURL('image/png');
-      const imgWidth = pageWidth - (margin * 2);
+      const imgWidth = contentWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      // Verificar se cabe na página
-      if (yPos + imgHeight > doc.internal.pageSize.getHeight() - 20) {
+      if (yPos + imgHeight > pageHeight - 20) {
         doc.addPage();
-        yPos = 20;
+        yPos = 15;
       }
       
       doc.addImage(imgData, 'PNG', margin, yPos, imgWidth, imgHeight);
-      yPos += imgHeight + lineHeight;
+      yPos += imgHeight + 5;
     } catch (e) {
       console.error('Erro ao capturar gráficos:', e);
     }
   }
   
-  // Status Time
+  // ========== STATUS TIME ==========
   if (currentStatusTimeData) {
     doc.addPage();
-    yPos = 20;
-    
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('3. Status Time', margin, yPos);
-    yPos += lineHeight * 1.5;
+    yPos = 15;
     
     const { summary, issues } = currentStatusTimeData;
+    const mttr = (summary.avgReadyToTestHours + summary.avgInTestHours);
     
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Issues analisadas: ${summary.count}`, margin, yPos);
-    yPos += lineHeight;
-    doc.text(`Total Ready to test: ${summary.totalReadyToTestHours.toFixed(2)}h`, margin, yPos);
-    yPos += lineHeight;
-    doc.text(`Total In Test: ${summary.totalInTestHours.toFixed(2)}h`, margin, yPos);
-    yPos += lineHeight;
-    doc.text(`Total Geral: ${summary.totalHours.toFixed(2)}h`, margin, yPos);
-    yPos += lineHeight;
-    doc.text(`Média Ready to test: ${summary.avgReadyToTestHours.toFixed(2)}h`, margin, yPos);
-    yPos += lineHeight;
-    doc.text(`Média In Test: ${summary.avgInTestHours.toFixed(2)}h`, margin, yPos);
-    yPos += lineHeight * 1.5;
-    
-    // MTTR
-    const mttr = (summary.avgReadyToTestHours + summary.avgInTestHours).toFixed(2);
+    // Header da página
+    doc.setFillColor(...colors.dark);
+    doc.rect(0, 0, pageWidth, 25, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('MTTR (Tempo Medio de Resolucao):', margin, yPos);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${mttr}h (Meta: <16h)`, margin + 70, yPos);
-    yPos += lineHeight * 2;
+    doc.text('Status Time - Tempo em QA', pageWidth / 2, 16, { align: 'center' });
     
-    // Top 10 issues
-    doc.setFont('helvetica', 'bold');
-    doc.text('Top 10 Issues por Tempo Total:', margin, yPos);
-    yPos += lineHeight * 1.5;
+    yPos = 35;
     
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'normal');
+    // Resumo em boxes
+    const boxWidth = contentWidth / 4;
+    const boxHeight = 25;
     
-    const sortedIssues = [...issues].sort((a, b) => b.totalHours - a.totalHours).slice(0, 10);
+    const summaryData = [
+      { label: 'Issues', value: summary.count, color: colors.primary },
+      { label: 'Ready to Test', value: `${summary.totalReadyToTestHours.toFixed(1)}h`, color: colors.warning },
+      { label: 'In Test', value: `${summary.totalInTestHours.toFixed(1)}h`, color: colors.success },
+      { label: 'MTTR', value: `${mttr.toFixed(1)}h`, color: mttr <= 16 ? colors.success : colors.danger }
+    ];
+    
+    summaryData.forEach((item, i) => {
+      const x = margin + (boxWidth * i);
+      doc.setFillColor(...item.color);
+      doc.roundedRect(x + 2, yPos, boxWidth - 4, boxHeight, 2, 2, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(7);
+      doc.text(item.label, x + (boxWidth / 2), yPos + 7, { align: 'center' });
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(item.value), x + (boxWidth / 2), yPos + 18, { align: 'center' });
+      doc.setFont('helvetica', 'normal');
+    });
+    
+    yPos += boxHeight + 10;
+    
+    // Tabela de issues
+    const tableHeaders = ['Key', 'Tipo', 'Ready (h)', 'Test (h)', 'Total (h)', 'Status'];
+    const colWidths = [25, 30, 22, 22, 22, 50];
     
     // Header da tabela
+    doc.setFillColor(...colors.lightGray);
+    doc.rect(margin, yPos, contentWidth, 8, 'F');
+    doc.setTextColor(...colors.dark);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('Key', margin, yPos);
-    doc.text('Ready (h)', margin + 30, yPos);
-    doc.text('Test (h)', margin + 55, yPos);
-    doc.text('Total (h)', margin + 80, yPos);
-    doc.text('Status', margin + 105, yPos);
-    yPos += lineHeight;
     
+    let xPos = margin + 2;
+    tableHeaders.forEach((header, i) => {
+      doc.text(header, xPos, yPos + 5.5);
+      xPos += colWidths[i];
+    });
+    yPos += 10;
+    
+    // Linhas da tabela
     doc.setFont('helvetica', 'normal');
-    sortedIssues.forEach(issue => {
-      if (yPos > doc.internal.pageSize.getHeight() - 20) {
+    doc.setFontSize(7);
+    
+    const sortedIssues = [...issues].sort((a, b) => b.totalHours - a.totalHours);
+    
+    sortedIssues.forEach((issue, index) => {
+      if (yPos > pageHeight - 15) {
         doc.addPage();
-        yPos = 20;
+        yPos = 15;
+        // Re-desenhar header
+        doc.setFillColor(...colors.lightGray);
+        doc.rect(margin, yPos, contentWidth, 8, 'F');
+        doc.setTextColor(...colors.dark);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'bold');
+        xPos = margin + 2;
+        tableHeaders.forEach((header, i) => {
+          doc.text(header, xPos, yPos + 5.5);
+          xPos += colWidths[i];
+        });
+        yPos += 10;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
       }
-      doc.text(issue.key, margin, yPos);
-      doc.text(issue.readyToTestHours.toFixed(2), margin + 30, yPos);
-      doc.text(issue.inTestHours.toFixed(2), margin + 55, yPos);
-      doc.text(issue.totalHours.toFixed(2), margin + 80, yPos);
-      doc.text(truncate(issue.currentStatus, 20), margin + 105, yPos);
-      yPos += lineHeight;
+      
+      // Linha alternada
+      if (index % 2 === 1) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(margin, yPos - 3, contentWidth, 7, 'F');
+      }
+      
+      doc.setTextColor(...colors.dark);
+      xPos = margin + 2;
+      
+      doc.setTextColor(...colors.primary);
+      doc.text(issue.key, xPos, yPos);
+      xPos += colWidths[0];
+      
+      doc.setTextColor(...colors.gray);
+      doc.text(truncate(issue.issueType || '-', 12), xPos, yPos);
+      xPos += colWidths[1];
+      
+      doc.setTextColor(...colors.dark);
+      doc.text(issue.readyToTestHours.toFixed(2), xPos, yPos);
+      xPos += colWidths[2];
+      
+      doc.text(issue.inTestHours.toFixed(2), xPos, yPos);
+      xPos += colWidths[3];
+      
+      doc.setFont('helvetica', 'bold');
+      doc.text(issue.totalHours.toFixed(2), xPos, yPos);
+      doc.setFont('helvetica', 'normal');
+      xPos += colWidths[4];
+      
+      doc.setTextColor(...colors.gray);
+      doc.text(truncate(issue.currentStatus, 22), xPos, yPos);
+      
+      yPos += 7;
     });
   }
   
+  // ========== FOOTER em todas as páginas ==========
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(...colors.gray);
+    doc.text(`BSQA Card Writer - Página ${i} de ${totalPages}`, pageWidth / 2, pageHeight - 8, { align: 'center' });
+  }
+  
   // Download
-  const filename = `relatorio-qa-${project.key}-${new Date().toISOString().slice(0, 10)}.pdf`;
+  const filename = `relatorio-qa-${project.key}-${formatDateBR(new Date().toISOString().slice(0, 10)).replace(/\//g, '-')}.pdf`;
   doc.save(filename);
 }
 

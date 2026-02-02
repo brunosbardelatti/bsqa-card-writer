@@ -38,10 +38,14 @@
         <div class="filters-row">
           <!-- Projeto -->
           <div class="form-group">
-            <label for="projectSelect" data-testid="dashboard-label-project">Projeto *</label>
-            <select id="projectSelect" name="projectKey" required data-testid="dashboard-select-project">
-              <option value="">Carregando projetos...</option>
-            </select>
+            <label for="projectSearch" data-testid="dashboard-label-project">Projeto *</label>
+            <div class="searchable-select" data-testid="dashboard-select-project">
+              <input type="text" id="projectSearch" placeholder="Digite para buscar..." autocomplete="off" />
+              <input type="hidden" id="projectKey" name="projectKey" required />
+              <div class="select-dropdown" id="projectDropdown">
+                <div class="select-option loading">Carregando projetos...</div>
+              </div>
+            </div>
           </div>
           
           <!-- Período -->
@@ -49,6 +53,8 @@
             <label for="periodType" data-testid="dashboard-label-period">Período *</label>
             <select id="periodType" name="periodType" required data-testid="dashboard-select-period">
               <option value="month_current">Mês Atual</option>
+              <option value="month_previous">Mês Passado</option>
+              <option value="last_3_months">Últimos 3 Meses</option>
               <option value="sprint_current">Sprint Atual</option>
               <option value="sprint_previous">Sprint Passada</option>
               <option value="custom">Período Personalizado</option>

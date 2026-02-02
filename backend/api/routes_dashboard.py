@@ -17,7 +17,7 @@ router = APIRouter(prefix="/dashboard", tags=["Dashboard QA"])
 
 class PeriodPayload(BaseModel):
     """Período para filtro do dashboard."""
-    type: Literal["month_current", "sprint_current", "sprint_previous", "custom"] = Field(
+    type: Literal["month_current", "month_previous", "last_3_months", "sprint_current", "sprint_previous", "custom"] = Field(
         ..., description="Tipo de período"
     )
     startDate: Optional[str] = Field(None, description="Data inicial (obrigatório se type=custom)")
