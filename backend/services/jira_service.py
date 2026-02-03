@@ -1,10 +1,13 @@
 # backend/services/jira_service.py
 
+import logging
 import os
 import requests
 from base64 import b64encode
 from typing import Optional
 from backend.services.issue_tracker_base import IssueTrackerBase
+
+logger = logging.getLogger(__name__)
 
 class JiraService(IssueTrackerBase):
     """Implementação do Issue Tracker para Jira Cloud."""
@@ -79,7 +82,36 @@ class JiraService(IssueTrackerBase):
         if credentials and credentials.get("base_url"):
             return credentials["base_url"].rstrip("/")
         return self.base_url.rstrip("/") if self.base_url else ""
-    
+
+    def _sanitize_jira_error(
+        self, errors: dict, error_messages: list, context: str = ""
+    ) -> str:
+        """
+        Gera uma mensagem segura para o usuário a partir do payload de erro do Jira.
+        Nunca expõe errors/error_messages na resposta; loga o bruto no servidor.
+        """
+        logger.warning(
+            "Jira API error [context=%s]: errors=%s errorMessages=%s",
+            context,
+            errors,
+            error_messages,
+        )
+        safe_messages = {
+            "create_subtask": "Não foi possível criar a subtask. Verifique os dados e as permissões no Jira.",
+            "create_bug": "Não foi possível criar a issue. Verifique o tipo de issue e as permissões no Jira.",
+            "upload_attachments": "Não foi possível enviar os anexos. Verifique o tamanho e o formato dos arquivos.",
+            "search_jql": "Erro na busca no Jira. Verifique a consulta e as permissões.",
+        }
+        if isinstance(errors, dict) and "issuetype" in errors and context == "create_bug":
+            return (
+                "O projeto não aceita este tipo de issue. "
+                "Verifique a configuração de Issue Type (IDs) na página de configurações."
+            )
+        return safe_messages.get(
+            context,
+            "Erro na requisição ao Jira. Verifique os dados e as permissões.",
+        )
+
     def get_issue(self, issue_key: str, fields: Optional[list[str]] = None, credentials: Optional[dict] = None) -> dict:
         """
         Busca uma issue no Jira.
@@ -281,7 +313,8 @@ class JiraService(IssueTrackerBase):
             error_data = response.json()
             errors = error_data.get("errors", {})
             error_messages = error_data.get("errorMessages", [])
-            raise ValueError(f"Erro ao criar subtask: {errors or error_messages}")
+            msg = self._sanitize_jira_error(errors, error_messages, "create_subtask")
+            raise ValueError(msg)
         if response.status_code == 401:
             raise PermissionError("Token de API do Jira inválido ou expirado.")
         if response.status_code == 403:
@@ -375,32 +408,8 @@ class JiraService(IssueTrackerBase):
             error_data = response.json()
             errors = error_data.get("errors", {})
             error_messages = error_data.get("errorMessages", [])
-            
-            # Melhorar mensagem de erro se for problema com Issue Type
-            error_detail = errors or error_messages
-            
-            if isinstance(errors, dict) and "issuetype" in errors:
-                issuetype_error = errors.get("issuetype", "")
-                if isinstance(issuetype_error, str):
-                    # Mensagem mais amigável para erro de Issue Type
-                    if issue_type == "sub_bug":
-                        error_detail = (
-                            f"O projeto '{project_key}' não aceita criar Sub-Bug com o Issue Type ID '{issuetype_id}'. "
-                            f"Este projeto pode aceitar apenas o tipo padrão de 'Subtarefa'. "
-                            f"Erro do Jira: {issuetype_error}. "
-                            f"Verifique se o Issue Type está configurado corretamente no .env (JIRA_SUB_BUG_ISSUE_TYPE_ID) "
-                            f"ou se o projeto aceita esse tipo de issue."
-                        )
-                    else:
-                        error_detail = (
-                            f"O projeto '{project_key}' não aceita criar Bug com o Issue Type ID '{issuetype_id}'. "
-                            f"Erro do Jira: {issuetype_error}. "
-                            f"Verifique se o Issue Type está configurado corretamente no .env (JIRA_BUG_ISSUE_TYPE_ID)."
-                        )
-                else:
-                    error_detail = f"Issue Type ID '{issuetype_id}' inválido para o projeto '{project_key}'. Erro: {issuetype_error}"
-            
-            raise ValueError(f"Erro ao criar {issue_type}: {error_detail}")
+            msg = self._sanitize_jira_error(errors, error_messages, "create_bug")
+            raise ValueError(msg)
         if response.status_code == 401:
             raise PermissionError("Token de API do Jira inválido ou expirado.")
         if response.status_code == 403:
@@ -467,7 +476,8 @@ class JiraService(IssueTrackerBase):
             error_data = response.json()
             errors = error_data.get("errors", {})
             error_messages = error_data.get("errorMessages", [])
-            raise ValueError(f"Erro ao fazer upload de anexos: {errors or error_messages}")
+            msg = self._sanitize_jira_error(errors, error_messages, "upload_attachments")
+            raise ValueError(msg)
         if response.status_code == 401:
             raise PermissionError("Token de API do Jira inválido ou expirado.")
         if response.status_code == 403:
@@ -524,7 +534,8 @@ class JiraService(IssueTrackerBase):
             error_data = response.json()
             errors = error_data.get("errors", {})
             error_messages = error_data.get("errorMessages", [])
-            raise ValueError(f"Erro na busca JQL: {errors or error_messages}")
+            msg = self._sanitize_jira_error(errors, error_messages, "search_jql")
+            raise ValueError(msg)
         if response.status_code == 401:
             raise PermissionError("Token de API do Jira inválido ou expirado.")
         if response.status_code == 403:
@@ -595,7 +606,8 @@ class JiraService(IssueTrackerBase):
                 error_data = response.json()
                 errors = error_data.get("errors", {})
                 error_messages = error_data.get("errorMessages", [])
-                raise ValueError(f"Erro na busca JQL: {errors or error_messages}")
+                msg = self._sanitize_jira_error(errors, error_messages, "search_jql")
+                raise ValueError(msg)
             if response.status_code == 401:
                 raise PermissionError("Token de API do Jira inválido ou expirado.")
             if response.status_code == 403:
