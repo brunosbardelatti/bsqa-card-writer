@@ -1,38 +1,18 @@
 # backend/api/routes_jira.py
 
+import re
+from typing import Optional, List
+
 from fastapi import APIRouter, HTTPException, Header
 from pydantic import BaseModel, Field, validator
-from typing import Optional, List
-from base64 import b64decode
-import re
 
 from backend.services.issue_tracker_factory import get_issue_tracker
 from backend.services.ia_factory import get_ia_service
 from backend.utils.prompt_loader import load_prompt_template
-from backend.utils.jira_utils import validate_card_number, parse_ia_response
+from backend.utils.jira_utils import validate_card_number, parse_ia_response, decode_jira_auth
 
 router = APIRouter(prefix="/jira", tags=["Jira Integration"])
 
-
-def decode_jira_auth(auth_header: Optional[str], base_url_header: Optional[str] = None) -> Optional[dict]:
-    """
-    Decodifica o header X-Jira-Auth (Base64 de email:token) e retorna dict de credenciais.
-    """
-    if not auth_header:
-        return None
-    
-    try:
-        decoded = b64decode(auth_header).decode('utf-8')
-        if ':' not in decoded:
-            return None
-        email, api_token = decoded.split(':', 1)
-        return {
-            "base_url": base_url_header.rstrip('/') if base_url_header else None,
-            "email": email,
-            "api_token": api_token
-        }
-    except Exception:
-        return None
 
 # ============================================
 # SCHEMAS

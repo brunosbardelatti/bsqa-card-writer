@@ -1,37 +1,18 @@
 # backend/api/routes_bug.py
 
 import json
-from base64 import b64decode
+import re
 from fastapi import APIRouter, HTTPException, File, UploadFile, Form, Header
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List
-import re
 
 from backend.services.issue_tracker_factory import get_issue_tracker
 from backend.services.ia_factory import get_ia_service
 from backend.utils.prompt_loader import load_prompt_template
-from backend.utils.jira_utils import validate_card_number
+from backend.utils.jira_utils import validate_card_number, decode_jira_auth
 
 router = APIRouter(prefix="/bug", tags=["Bug Creation"])
-
-
-def decode_jira_auth(auth_header: Optional[str], base_url_header: Optional[str] = None) -> Optional[dict]:
-    """Decodifica o header X-Jira-Auth (Base64 de email:token) e retorna dict de credenciais."""
-    if not auth_header:
-        return None
-    try:
-        decoded = b64decode(auth_header).decode("utf-8")
-        if ":" not in decoded:
-            return None
-        email, api_token = decoded.split(":", 1)
-        return {
-            "base_url": base_url_header.rstrip("/") if base_url_header else None,
-            "email": email,
-            "api_token": api_token,
-        }
-    except Exception:
-        return None
 
 
 # ============================================
@@ -115,7 +96,7 @@ async def create_bug(
     credentials = decode_jira_auth(x_jira_auth, x_jira_base_url)
     jira = get_issue_tracker("jira", skip_env_validation=True) if credentials else get_issue_tracker("jira")
 
-    # Step 1: Validar parent_key se for Sub-Bug
+    # Step 1: Validar parent_key se for Sub-Bug (senão marcar como skipped)
     if request.issue_type == "sub_bug":
         try:
             # Validar se a issue pai existe
@@ -135,7 +116,13 @@ async def create_bug(
                 "detail": str(e)
             }
             return JSONResponse(status_code=400, content=result)
-    
+    else:
+        result["steps"]["parent_validation"] = {
+            "success": True,
+            "skipped": True,
+            "message": "N/A for regular bug"
+        }
+
     credentials_ia = None
     if ia_credentials and ia_credentials.strip():
         try:

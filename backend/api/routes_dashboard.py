@@ -1,43 +1,16 @@
 # backend/api/routes_dashboard.py
 
 from typing import Optional, Literal
-from base64 import b64decode
 
 from fastapi import APIRouter, Header
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, validator
 
 from backend.services.dashboard_service import DashboardService
+from backend.utils.jira_utils import decode_jira_auth
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard QA"])
 
-
-def decode_jira_auth(auth_header: Optional[str], base_url_header: Optional[str] = None) -> Optional[dict]:
-    """
-    Decodifica o header X-Jira-Auth (Base64 de email:token) e retorna dict de credenciais.
-    
-    Args:
-        auth_header: Header X-Jira-Auth em Base64
-        base_url_header: Header X-Jira-Base-Url (opcional)
-    
-    Returns:
-        Dict com {base_url, email, api_token} ou None se não fornecido
-    """
-    if not auth_header:
-        return None
-    
-    try:
-        decoded = b64decode(auth_header).decode('utf-8')
-        if ':' not in decoded:
-            return None
-        email, api_token = decoded.split(':', 1)
-        return {
-            "base_url": base_url_header.rstrip('/') if base_url_header else None,
-            "email": email,
-            "api_token": api_token
-        }
-    except Exception:
-        return None
 
 # ============================================
 # SCHEMAS

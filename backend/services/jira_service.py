@@ -203,7 +203,8 @@ class JiraService(IssueTrackerBase):
             elif field_id == "reporter" and value:
                 parsed[field_id] = value.get("displayName", "")
             elif field_id == "issuetype" and value:
-                parsed[field_id] = value.get("name", "")
+                # Manter objeto completo (id, name, etc.) para compatibilidade com create_bug e exibição
+                parsed[field_id] = value
             elif field_id == "project" and value:
                 # Manter objeto completo do projeto (tem name, key, etc)
                 parsed[field_id] = value
@@ -363,11 +364,13 @@ class JiraService(IssueTrackerBase):
             # Isso garante compatibilidade, pois Sub-Bug geralmente usa o mesmo tipo do parent
             try:
                 parent_issue = self.get_issue(parent_key, ["issuetype"], credentials=credentials)
-                parent_issuetype = parent_issue["fields"].get("issuetype", {})
-                # Usar o mesmo Issue Type ID do parent (geralmente funciona para subtasks)
-                issuetype_id = parent_issuetype.get("id")
+                parent_issuetype = parent_issue["fields"].get("issuetype")
+                # _parse_fields mantém o objeto completo (id, name); usar o mesmo tipo do parent
+                if isinstance(parent_issuetype, dict):
+                    issuetype_id = parent_issuetype.get("id")
+                else:
+                    issuetype_id = None
                 if not issuetype_id:
-                    # Fallback para o ID configurado se não conseguir do parent
                     issuetype_id = self.sub_bug_type_id
             except Exception:
                 # Se falhar ao buscar parent, usar ID configurado
