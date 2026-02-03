@@ -1,13 +1,13 @@
 import { loadCommonComponents, loadThemeFromConfig, applyTheme, generateAnalysisOptionsHTML, getAnalysisPlaceholder } from './main.js';
+import { JiraAuth, getInstanceNameFromBaseUrl, initJiraAuth, refreshAccountButton, exportFullConfig, clearAllConfig, CLEAR_CONFIG_CONFIRM_MSG } from './jira-auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
   loadThemeFromConfig();
+  initJiraAuth(); // Botão de conta no header (config não redireciona)
   loadConfig();
   await loadAnalysisTypes(); // Carregar tipos de análise disponíveis
   bindConfigEvents();
-  
-  // Verificar se há âncora na URL para focar em seções específicas
   checkUrlAnchor();
 });
 
@@ -27,6 +27,18 @@ function getCurrentConfigSnapshot() {
       autoCopy: document.getElementById('autoCopy').checked,
       clearAfterSuccess: document.getElementById('clearAfterSuccess').checked,
       theme: document.getElementById('theme').value
+    },
+    integrations: {
+      jira: {
+        enabled: document.getElementById('jiraEnabled').checked,
+        baseUrl: document.getElementById('jiraBaseUrl').value,
+        userEmail: document.getElementById('jiraUserEmail').value,
+        apiToken: document.getElementById('jiraApiToken').value,
+        subtaskIssueTypeId: document.getElementById('jiraSubtaskIssueTypeId').value,
+        bugIssueTypeId: document.getElementById('jiraBugIssueTypeId')?.value || '10004',
+        subBugIssueTypeId: document.getElementById('jiraSubBugIssueTypeId')?.value || '10271',
+        requestTimeout: parseInt(document.getElementById('jiraRequestTimeout').value) || 30
+      }
     },
     ia: {
       openai: {
@@ -66,6 +78,7 @@ function setupDirtyTracking() {
   const fields = [
     'userName', 'userEmail', 'userCompany',
     'defaultAI', 'defaultAnalyseType', 'autoCopy', 'clearAfterSuccess', 'theme',
+    'jiraEnabled', 'jiraBaseUrl', 'jiraUserEmail', 'jiraApiToken', 'jiraSubtaskIssueTypeId', 'jiraBugIssueTypeId', 'jiraSubBugIssueTypeId', 'jiraRequestTimeout',
     'openaiEnabled', 'maxTokens',
     'stackspotEnabled', 'streaming', 'stackspotKnowledge', 'returnKsInResponse',
     'openaiApiKey', 'stackspotClientId', 'stackspotClientSecret', 'stackspotRealm', 'stackspotAgentId'
@@ -99,7 +112,10 @@ window.addEventListener('beforeunload', function(e) {
 function setupLeaveWarning() {
   const links = document.querySelectorAll('a,button');
   links.forEach(link => {
-    if (link.id === 'saveBtn') return;
+    if (link.id === 'saveBtn' || link.id === 'configSairBtn') return;
+    // Testar conexão Jira e Testar conexão com IA não saem da página; não exibir aviso
+    const onclick = link.getAttribute('onclick') || '';
+    if (onclick.includes('testJiraConnection') || onclick.includes('testApiConfig')) return;
     link.addEventListener('click', function(e) {
       if (isDirty) {
         const confirmLeave = confirm('Existem configurações não salvas. Deseja descartar as alterações e sair?');
@@ -114,17 +130,8 @@ function setupLeaveWarning() {
 async function loadConfig() {
   try {
     const localConfig = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
-    const response = await fetch(window.ApiConfig.buildUrl('/config'));
-    if (response.ok) {
-      const serverConfig = await response.json();
-      const mergedConfig = { ...localConfig, ...serverConfig };
-      applyConfigToFields(mergedConfig);
-      localStorage.setItem('bsqaConfig', JSON.stringify(mergedConfig));
-    } else {
-      applyConfigToFields(localConfig);
-    }
-    await loadApiConfig();
-    // Aplicar estado final dos campos após carregar todas as configurações
+    applyConfigToFields(localConfig);
+    applyJiraAuthToFields(localConfig);
     applyFieldStates();
     checkDefaultAIEnabled();
     initialConfigSnapshot = getCurrentConfigSnapshot();
@@ -134,8 +141,7 @@ async function loadConfig() {
   } catch (error) {
     const localConfig = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
     applyConfigToFields(localConfig);
-    await loadApiConfig();
-    // Aplicar estado final dos campos após carregar todas as configurações
+    applyJiraAuthToFields(localConfig);
     applyFieldStates();
     checkDefaultAIEnabled();
     initialConfigSnapshot = getCurrentConfigSnapshot();
@@ -145,62 +151,62 @@ async function loadConfig() {
   }
 }
 
-async function loadApiConfig() {
-  try {
-    const response = await fetch(window.ApiConfig.buildUrl('/api-config'));
-    if (response.ok) {
-      const apiConfig = await response.json();
-      applyApiConfigToFields(apiConfig);
-    }
-  } catch (error) {}
-}
+/**
+ * Preenche seção Jira a partir de JiraAuth.get() quando autenticado;
+ * preenche Informações Pessoais (userName, userEmail, userCompany) quando vazios.
+ */
+function applyJiraAuthToFields(localConfig) {
+  if (!JiraAuth.isAuthenticated()) return;
+  const creds = JiraAuth.get();
+  if (!creds) return;
 
-function applyApiConfigToFields(apiConfig) {
-  const openaiEnabled = document.getElementById('openaiEnabled');
-  const openaiApiKey = document.getElementById('openaiApiKey');
-  if (apiConfig.OPENAI_API_KEY) {
-    openaiEnabled.checked = true;
-    openaiApiKey.value = apiConfig.OPENAI_API_KEY;
-    // Inicializar dados originais OpenAI
-    originalOpenAIConfig.openaiApiKey = apiConfig.OPENAI_API_KEY;
-  } else {
-    openaiEnabled.checked = false;
+  document.getElementById('jiraEnabled').checked = true;
+  if (creds.baseUrl) {
+    document.getElementById('jiraBaseUrl').value = creds.baseUrl;
+    originalJiraConfig.jiraBaseUrl = creds.baseUrl;
   }
-  
-  const stackspotEnabled = document.getElementById('stackspotEnabled');
-  const hasStackspotConfig = apiConfig.Client_ID_stackspot && apiConfig.Client_Key_stackspot && apiConfig.Realm_stackspot && apiConfig.STACKSPOT_AGENT_ID;
-  if (hasStackspotConfig) {
-    stackspotEnabled.checked = true;
-    if (apiConfig.Client_ID_stackspot) {
-      document.getElementById('stackspotClientId').value = apiConfig.Client_ID_stackspot;
-      originalStackSpotConfig.stackspotClientId = apiConfig.Client_ID_stackspot;
-    }
-    if (apiConfig.Client_Key_stackspot) {
-      document.getElementById('stackspotClientSecret').value = apiConfig.Client_Key_stackspot;
-      originalStackSpotConfig.stackspotClientSecret = apiConfig.Client_Key_stackspot;
-    }
-    if (apiConfig.Realm_stackspot) {
-      document.getElementById('stackspotRealm').value = apiConfig.Realm_stackspot;
-      originalStackSpotConfig.stackspotRealm = apiConfig.Realm_stackspot;
-    }
-    if (apiConfig.STACKSPOT_AGENT_ID) {
-      document.getElementById('stackspotAgentId').value = apiConfig.STACKSPOT_AGENT_ID;
-      originalStackSpotConfig.stackspotAgentId = apiConfig.STACKSPOT_AGENT_ID;
-    }
-  } else {
-    stackspotEnabled.checked = false;
+  if (creds.email) {
+    document.getElementById('jiraUserEmail').value = creds.email;
+    originalJiraConfig.jiraUserEmail = creds.email;
+  }
+  if (creds.token) {
+    document.getElementById('jiraApiToken').value = creds.token;
+    originalJiraConfig.jiraApiToken = creds.token;
+  }
+  const jiraConf = (localConfig.integrations || {}).jira || {};
+  const subtaskId = jiraConf.subtaskIssueTypeId || '10003';
+  const bugId = jiraConf.bugIssueTypeId || '10004';
+  const subBugId = jiraConf.subBugIssueTypeId || '10271';
+  const timeout = jiraConf.requestTimeout != null ? String(jiraConf.requestTimeout) : '30';
+  document.getElementById('jiraSubtaskIssueTypeId').value = subtaskId;
+  const bugEl = document.getElementById('jiraBugIssueTypeId');
+  const subBugEl = document.getElementById('jiraSubBugIssueTypeId');
+  if (bugEl) { bugEl.value = bugId; originalJiraConfig.jiraBugIssueTypeId = bugId; }
+  if (subBugEl) { subBugEl.value = subBugId; originalJiraConfig.jiraSubBugIssueTypeId = subBugId; }
+  document.getElementById('jiraRequestTimeout').value = timeout;
+  originalJiraConfig.jiraSubtaskIssueTypeId = subtaskId;
+  originalJiraConfig.jiraRequestTimeout = timeout;
+
+  const userNameEl = document.getElementById('userName');
+  const userEmailEl = document.getElementById('userEmail');
+  const userCompanyEl = document.getElementById('userCompany');
+  if (!userNameEl.value?.trim() && (creds.userDisplayName || creds.displayName)) {
+    userNameEl.value = creds.userDisplayName || creds.displayName || '';
+  }
+  if (!userEmailEl.value?.trim() && (creds.userEmail || creds.email)) {
+    userEmailEl.value = creds.userEmail || creds.email || '';
+  }
+  if (!userCompanyEl.value?.trim() && creds.baseUrl) {
+    userCompanyEl.value = getInstanceNameFromBaseUrl(creds.baseUrl) || '';
   }
 }
 
 function applyConfigToFields(config) {
-  const user = config.user || {};
   const preferences = config.preferences || {};
   const ia = config.ia || {};
   const openai = ia.openai || {};
   const stackspot = ia.stackspot || {};
-  if (user.name) document.getElementById('userName').value = user.name;
-  if (user.email) document.getElementById('userEmail').value = user.email;
-  if (user.company) document.getElementById('userCompany').value = user.company;
+  const jiraConf = (config.integrations || {}).jira || {};
   if (preferences.defaultAI) document.getElementById('defaultAI').value = preferences.defaultAI;
   if (preferences.defaultAnalyseType) document.getElementById('defaultAnalyseType').value = preferences.defaultAnalyseType;
   if (preferences.autoCopy !== undefined) document.getElementById('autoCopy').checked = preferences.autoCopy;
@@ -210,6 +216,17 @@ function applyConfigToFields(config) {
     document.getElementById('theme').value = preferences.theme;
     applyTheme(preferences.theme);
   }
+  document.getElementById('jiraEnabled').checked = !!jiraConf.enabled;
+  document.getElementById('jiraSubtaskIssueTypeId').value = (jiraConf.subtaskIssueTypeId ?? '10003').toString();
+  const bugEl = document.getElementById('jiraBugIssueTypeId');
+  const subBugEl = document.getElementById('jiraSubBugIssueTypeId');
+  if (bugEl) bugEl.value = (jiraConf.bugIssueTypeId ?? '10004').toString();
+  if (subBugEl) subBugEl.value = (jiraConf.subBugIssueTypeId ?? '10271').toString();
+  document.getElementById('jiraRequestTimeout').value = String(jiraConf.requestTimeout != null ? jiraConf.requestTimeout : 30);
+  originalJiraConfig.jiraSubtaskIssueTypeId = (jiraConf.subtaskIssueTypeId ?? '10003').toString();
+  originalJiraConfig.jiraBugIssueTypeId = (jiraConf.bugIssueTypeId ?? '10004').toString();
+  originalJiraConfig.jiraSubBugIssueTypeId = (jiraConf.subBugIssueTypeId ?? '10271').toString();
+  originalJiraConfig.jiraRequestTimeout = String(jiraConf.requestTimeout != null ? jiraConf.requestTimeout : 30);
   document.getElementById('openaiEnabled').checked = openai.enabled === true;
   if (openai.maxTokens !== undefined) {
     document.getElementById('maxTokens').value = openai.maxTokens;
@@ -218,6 +235,10 @@ function applyConfigToFields(config) {
     document.getElementById('maxTokens').value = 1000;
     originalOpenAIConfig.maxTokens = 1000;
   }
+  if (openai.apiKey != null) {
+    document.getElementById('openaiApiKey').value = openai.apiKey;
+    originalOpenAIConfig.openaiApiKey = openai.apiKey;
+  }
   document.getElementById('stackspotEnabled').checked = stackspot.enabled === true;
   document.getElementById('streaming').checked = stackspot.streaming === true;
   originalStackSpotConfig.streaming = stackspot.streaming === true;
@@ -225,16 +246,57 @@ function applyConfigToFields(config) {
   originalStackSpotConfig.stackspotKnowledge = stackspot.stackspotKnowledge === true;
   document.getElementById('returnKsInResponse').checked = stackspot.returnKsInResponse === true;
   originalStackSpotConfig.returnKsInResponse = stackspot.returnKsInResponse === true;
+  if (stackspot.clientId != null) { document.getElementById('stackspotClientId').value = stackspot.clientId; originalStackSpotConfig.stackspotClientId = stackspot.clientId; }
+  if (stackspot.clientSecret != null) { document.getElementById('stackspotClientSecret').value = stackspot.clientSecret; originalStackSpotConfig.stackspotClientSecret = stackspot.clientSecret; }
+  if (stackspot.realm != null) { document.getElementById('stackspotRealm').value = stackspot.realm; originalStackSpotConfig.stackspotRealm = stackspot.realm; }
+  if (stackspot.agentId != null) { document.getElementById('stackspotAgentId').value = stackspot.agentId; originalStackSpotConfig.stackspotAgentId = stackspot.agentId; }
 }
 
 // Variáveis para armazenar dados originais
+let originalJiraConfig = {};
 let originalOpenAIConfig = {};
 let originalStackSpotConfig = {};
 
-// Função para aplicar o estado dos campos baseado nos checkboxes habilitados
-function applyFieldStates() {
+// Aplica collapse/expand das seções Jira, OpenAI e StackSpot conforme as flags "Habilitar"
+function applySectionCollapse() {
+  const jiraEnabled = document.getElementById('jiraEnabled').checked;
   const openaiEnabled = document.getElementById('openaiEnabled').checked;
   const stackspotEnabled = document.getElementById('stackspotEnabled').checked;
+
+  const jiraBody = document.getElementById('jiraConfigBody');
+  const openaiBody = document.getElementById('openaiConfigBody');
+  const stackspotBody = document.getElementById('stackspotConfigBody');
+
+  if (jiraBody) jiraBody.classList.toggle('collapsed', !jiraEnabled);
+  if (openaiBody) openaiBody.classList.toggle('collapsed', !openaiEnabled);
+  if (stackspotBody) stackspotBody.classList.toggle('collapsed', !stackspotEnabled);
+}
+
+// Função para aplicar o estado dos campos baseado nos checkboxes habilitados
+function applyFieldStates() {
+  applySectionCollapse();
+
+  const jiraEnabled = document.getElementById('jiraEnabled').checked;
+  const openaiEnabled = document.getElementById('openaiEnabled').checked;
+  const stackspotEnabled = document.getElementById('stackspotEnabled').checked;
+
+  // Aplicar estado dos campos Jira
+  const jiraFields = ['jiraBaseUrl', 'jiraUserEmail', 'jiraApiToken', 'jiraSubtaskIssueTypeId', 'jiraBugIssueTypeId', 'jiraSubBugIssueTypeId', 'jiraRequestTimeout'];
+  const jiraDefaults = { jiraRequestTimeout: '30', jiraBugIssueTypeId: '10004', jiraSubBugIssueTypeId: '10271' };
+  jiraFields.forEach(fieldId => {
+    const field = document.getElementById(fieldId);
+    if (!field) return;
+    field.disabled = !jiraEnabled;
+    if (!jiraEnabled) {
+      if (field.value) originalJiraConfig[fieldId] = field.value;
+      field.value = jiraDefaults[fieldId] || '';
+    } else {
+      const val = originalJiraConfig[fieldId];
+      if (val !== undefined && val !== null && val !== '') {
+        field.value = String(val);
+      }
+    }
+  });
   
   // Aplicar estado dos campos OpenAI
   const openaiFields = ['openaiApiKey', 'maxTokens'];
@@ -303,6 +365,9 @@ function bindConfigEvents() {
     const selectedTheme = this.value;
     applyTheme(selectedTheme);
   });
+  document.getElementById('jiraEnabled').addEventListener('change', function() {
+    applyFieldStates();
+  });
   document.getElementById('openaiEnabled').addEventListener('change', function() {
     applyFieldStates();
     // Se desabilitou OpenAI, limpar dados originais APENAS se salvou
@@ -324,6 +389,249 @@ function bindConfigEvents() {
     });
   document.querySelector('button[onclick*="testApiConfig"]').onclick = testApiConfig;
   window.saveConfig = saveConfig;
+  window.testJiraConnection = testJiraConnection;
+
+  const exportBtn = document.getElementById('configExportBtn');
+  const importBtn = document.getElementById('configImportBtn');
+  const importFile = document.getElementById('configImportFile');
+  if (exportBtn) exportBtn.addEventListener('click', exportConfig);
+  if (importBtn) importBtn.addEventListener('click', () => importFile?.click());
+  if (importFile) importFile.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          importConfigFromJson(ev.target?.result);
+        } finally {
+          e.target.value = '';
+        }
+      };
+      reader.readAsText(file);
+    }
+  });
+  const sairBtn = document.getElementById('configSairBtn');
+  if (sairBtn) sairBtn.addEventListener('click', clearConfig);
+}
+
+function clearConfig() {
+  if (!confirm(CLEAR_CONFIG_CONFIRM_MSG)) return;
+  clearAllConfig();
+  originalJiraConfig = {};
+  originalOpenAIConfig = {};
+  originalStackSpotConfig = {};
+  document.getElementById('theme').value = 'dark';
+  applyTheme('dark');
+  window.location.reload();
+}
+
+function exportConfig() {
+  const baseUrl = document.getElementById('jiraBaseUrl').value?.trim();
+  const email = document.getElementById('jiraUserEmail').value?.trim();
+  const token = document.getElementById('jiraApiToken').value?.trim();
+  const fromAuth = JiraAuth.get();
+  const payload = {
+    user: {
+      name: document.getElementById('userName').value?.trim() || '',
+      email: document.getElementById('userEmail').value?.trim() || '',
+      company: document.getElementById('userCompany').value?.trim() || ''
+    },
+    preferences: {
+      defaultAI: document.getElementById('defaultAI').value || 'openai',
+      defaultAnalyseType: document.getElementById('defaultAnalyseType').value || 'card_QA_writer',
+      autoCopy: document.getElementById('autoCopy').checked,
+      clearAfterSuccess: document.getElementById('clearAfterSuccess').checked,
+      theme: document.getElementById('theme').value || 'dark'
+    },
+    integrations: {
+      jira: {
+        enabled: document.getElementById('jiraEnabled').checked,
+        baseUrl: baseUrl || fromAuth?.baseUrl || '',
+        email: email || fromAuth?.email || '',
+        token: token || fromAuth?.token || '',
+        subtaskIssueTypeId: document.getElementById('jiraSubtaskIssueTypeId').value || '10003',
+        bugIssueTypeId: document.getElementById('jiraBugIssueTypeId')?.value || '10004',
+        subBugIssueTypeId: document.getElementById('jiraSubBugIssueTypeId')?.value || '10271',
+        requestTimeout: parseInt(document.getElementById('jiraRequestTimeout').value) || 30
+      }
+    },
+    ia: {
+      openai: {
+        enabled: document.getElementById('openaiEnabled').checked,
+        maxTokens: parseInt(document.getElementById('maxTokens').value) || 1000,
+        apiKey: document.getElementById('openaiApiKey').value || ''
+      },
+      stackspot: {
+        enabled: document.getElementById('stackspotEnabled').checked,
+        streaming: document.getElementById('streaming').checked,
+        stackspotKnowledge: document.getElementById('stackspotKnowledge').checked,
+        returnKsInResponse: document.getElementById('returnKsInResponse').checked,
+        clientId: document.getElementById('stackspotClientId').value || '',
+        clientSecret: document.getElementById('stackspotClientSecret').value || '',
+        realm: document.getElementById('stackspotRealm').value || '',
+        agentId: document.getElementById('stackspotAgentId').value || ''
+      }
+    }
+  };
+  exportFullConfig(payload);
+}
+
+function validateBsqaConfigSchema(data) {
+  return data && typeof data === 'object' &&
+    data.user != null && typeof data.user === 'object' &&
+    data.preferences != null && typeof data.preferences === 'object' &&
+    data.integrations != null && typeof data.integrations === 'object' &&
+    data.ia != null && typeof data.ia === 'object';
+}
+
+function importConfigFromJson(jsonStr) {
+  if (!jsonStr || typeof jsonStr !== 'string') return;
+  let data;
+  try {
+    data = JSON.parse(jsonStr);
+  } catch {
+    alert('Arquivo JSON inválido.');
+    return;
+  }
+  if (!validateBsqaConfigSchema(data)) {
+    alert('Formato inválido. Renove seu arquivo de configuração (use o padrão bsqa-config com user, preferences, integrations e ia).');
+    return;
+  }
+  const user = data.user || {};
+  const preferences = data.preferences || {};
+  const jira = data.integrations?.jira || {};
+  const ia = data.ia || {};
+  const openai = ia.openai || {};
+  const stackspot = ia.stackspot || {};
+
+  document.getElementById('userName').value = user.name != null ? String(user.name) : '';
+  document.getElementById('userEmail').value = user.email != null ? String(user.email) : '';
+  document.getElementById('userCompany').value = user.company != null ? String(user.company) : '';
+
+  if (preferences.defaultAI) document.getElementById('defaultAI').value = preferences.defaultAI;
+  if (preferences.defaultAnalyseType) document.getElementById('defaultAnalyseType').value = preferences.defaultAnalyseType;
+  if (preferences.autoCopy !== undefined) document.getElementById('autoCopy').checked = preferences.autoCopy;
+  if (preferences.clearAfterSuccess !== undefined) document.getElementById('clearAfterSuccess').checked = preferences.clearAfterSuccess;
+  if (preferences.theme) {
+    document.getElementById('theme').value = preferences.theme;
+    applyTheme(preferences.theme);
+  }
+
+  const baseUrl = (jira.baseUrl ?? '').toString().trim();
+  const email = (jira.email ?? '').toString().trim();
+  const token = (jira.token ?? '').toString().trim();
+  const hasJira = baseUrl && email && token;
+  document.getElementById('jiraEnabled').checked = !!jira.enabled;
+  document.getElementById('jiraBaseUrl').value = baseUrl;
+  document.getElementById('jiraUserEmail').value = email;
+  document.getElementById('jiraApiToken').value = token;
+  document.getElementById('jiraSubtaskIssueTypeId').value = (jira.subtaskIssueTypeId ?? '10003').toString();
+  const bugEl = document.getElementById('jiraBugIssueTypeId');
+  const subBugEl = document.getElementById('jiraSubBugIssueTypeId');
+  if (bugEl) bugEl.value = (jira.bugIssueTypeId ?? '10004').toString();
+  if (subBugEl) subBugEl.value = (jira.subBugIssueTypeId ?? '10271').toString();
+  document.getElementById('jiraRequestTimeout').value = String(jira.requestTimeout != null ? Number(jira.requestTimeout) : 30);
+
+  originalJiraConfig.jiraBaseUrl = baseUrl;
+  originalJiraConfig.jiraUserEmail = email;
+  originalJiraConfig.jiraApiToken = token;
+  originalJiraConfig.jiraSubtaskIssueTypeId = (jira.subtaskIssueTypeId ?? '10003').toString();
+  originalJiraConfig.jiraBugIssueTypeId = (jira.bugIssueTypeId ?? '10004').toString();
+  originalJiraConfig.jiraSubBugIssueTypeId = (jira.subBugIssueTypeId ?? '10271').toString();
+  originalJiraConfig.jiraRequestTimeout = String(jira.requestTimeout != null ? Number(jira.requestTimeout) : 30);
+  if (hasJira) JiraAuth.save(baseUrl, email, token);
+
+  document.getElementById('openaiEnabled').checked = !!openai.enabled;
+  document.getElementById('maxTokens').value = String(openai.maxTokens != null ? openai.maxTokens : 1000);
+  document.getElementById('openaiApiKey').value = openai.apiKey != null ? String(openai.apiKey) : '';
+  originalOpenAIConfig.maxTokens = document.getElementById('maxTokens').value;
+  originalOpenAIConfig.openaiApiKey = document.getElementById('openaiApiKey').value;
+
+  document.getElementById('stackspotEnabled').checked = !!stackspot.enabled;
+  document.getElementById('streaming').checked = !!stackspot.streaming;
+  document.getElementById('stackspotKnowledge').checked = !!stackspot.stackspotKnowledge;
+  document.getElementById('returnKsInResponse').checked = !!stackspot.returnKsInResponse;
+  document.getElementById('stackspotClientId').value = stackspot.clientId != null ? String(stackspot.clientId) : '';
+  document.getElementById('stackspotClientSecret').value = stackspot.clientSecret != null ? String(stackspot.clientSecret) : '';
+  document.getElementById('stackspotRealm').value = stackspot.realm != null ? String(stackspot.realm) : '';
+  document.getElementById('stackspotAgentId').value = stackspot.agentId != null ? String(stackspot.agentId) : '';
+  originalStackSpotConfig.stackspotClientId = document.getElementById('stackspotClientId').value;
+  originalStackSpotConfig.stackspotClientSecret = document.getElementById('stackspotClientSecret').value;
+  originalStackSpotConfig.stackspotRealm = document.getElementById('stackspotRealm').value;
+  originalStackSpotConfig.stackspotAgentId = document.getElementById('stackspotAgentId').value;
+  originalStackSpotConfig.streaming = document.getElementById('streaming').checked;
+  originalStackSpotConfig.stackspotKnowledge = document.getElementById('stackspotKnowledge').checked;
+  originalStackSpotConfig.returnKsInResponse = document.getElementById('returnKsInResponse').checked;
+
+  applyFieldStates();
+  // Salvar imediatamente para evitar necessidade de clicar em Salvar e risco de sair sem salvar
+  persistConfigFromForm();
+  checkDefaultAIEnabled();
+}
+
+function buildConfigFromForm() {
+  return {
+    user: {
+      name: document.getElementById('userName').value,
+      email: document.getElementById('userEmail').value,
+      company: document.getElementById('userCompany').value
+    },
+    preferences: {
+      defaultAI: document.getElementById('defaultAI').value,
+      defaultAnalyseType: document.getElementById('defaultAnalyseType').value,
+      autoCopy: document.getElementById('autoCopy').checked,
+      clearAfterSuccess: document.getElementById('clearAfterSuccess').checked,
+      theme: document.getElementById('theme').value
+    },
+    integrations: {
+      jira: {
+        enabled: document.getElementById('jiraEnabled').checked,
+        subtaskIssueTypeId: document.getElementById('jiraSubtaskIssueTypeId').value || '10003',
+        bugIssueTypeId: document.getElementById('jiraBugIssueTypeId')?.value || '10004',
+        subBugIssueTypeId: document.getElementById('jiraSubBugIssueTypeId')?.value || '10271',
+        requestTimeout: parseInt(document.getElementById('jiraRequestTimeout').value) || 30
+      }
+    },
+    ia: {
+      openai: {
+        enabled: document.getElementById('openaiEnabled').checked,
+        maxTokens: parseInt(document.getElementById('maxTokens').value) || 1000,
+        apiKey: document.getElementById('openaiApiKey').value || ''
+      },
+      stackspot: {
+        enabled: document.getElementById('stackspotEnabled').checked,
+        streaming: document.getElementById('streaming').checked,
+        stackspotKnowledge: document.getElementById('stackspotKnowledge').checked,
+        returnKsInResponse: document.getElementById('returnKsInResponse').checked,
+        clientId: document.getElementById('stackspotClientId').value || '',
+        clientSecret: document.getElementById('stackspotClientSecret').value || '',
+        realm: document.getElementById('stackspotRealm').value || '',
+        agentId: document.getElementById('stackspotAgentId').value || ''
+      }
+    }
+  };
+}
+
+function persistConfigFromForm() {
+  const config = buildConfigFromForm();
+  const jiraEnabled = document.getElementById('jiraEnabled').checked;
+  const openaiEnabled = document.getElementById('openaiEnabled').checked;
+  const stackspotEnabled = document.getElementById('stackspotEnabled').checked;
+  if (jiraEnabled) {
+    JiraAuth.save(
+      document.getElementById('jiraBaseUrl').value,
+      document.getElementById('jiraUserEmail').value,
+      document.getElementById('jiraApiToken').value
+    );
+  }
+  localStorage.setItem('bsqaConfig', JSON.stringify(config));
+  localStorage.setItem('bsqaThemeChanged', Date.now().toString());
+  if (!jiraEnabled) originalJiraConfig = {};
+  if (!openaiEnabled) originalOpenAIConfig = {};
+  if (!stackspotEnabled) originalStackSpotConfig = {};
+  markClean();
+  initialConfigSnapshot = getCurrentConfigSnapshot();
+  refreshAccountButton();
 }
 
 async function saveConfig() {
@@ -339,87 +647,14 @@ async function saveConfig() {
   try {
     saveBtn.disabled = true;
     saveBtn.textContent = 'Salvando...';
-    const config = {
-      user: {
-        name: document.getElementById('userName').value,
-        email: document.getElementById('userEmail').value,
-        company: document.getElementById('userCompany').value
-      },
-      preferences: {
-        defaultAI: document.getElementById('defaultAI').value,
-        defaultAnalyseType: document.getElementById('defaultAnalyseType').value,
-        autoCopy: document.getElementById('autoCopy').checked,
-        clearAfterSuccess: document.getElementById('clearAfterSuccess').checked,
-        theme: document.getElementById('theme').value
-      },
-      ia: {
-        openai: {
-          enabled: document.getElementById('openaiEnabled').checked,
-          ...(document.getElementById('openaiEnabled').checked && {
-            maxTokens: parseInt(document.getElementById('maxTokens').value) || 1000
-          })
-        },
-        stackspot: {
-          enabled: document.getElementById('stackspotEnabled').checked,
-          ...(document.getElementById('stackspotEnabled').checked && {
-            streaming: document.getElementById('streaming').checked,
-            stackspotKnowledge: document.getElementById('stackspotKnowledge').checked,
-            returnKsInResponse: document.getElementById('returnKsInResponse').checked
-          })
-        }
-      }
-    };
-    const apiConfig = {
-      ...(document.getElementById('openaiEnabled').checked && {
-        OPENAI_API_KEY: document.getElementById('openaiApiKey').value
-      }),
-      ...(document.getElementById('stackspotEnabled').checked && {
-        Client_ID_stackspot: document.getElementById('stackspotClientId').value,
-        Client_Key_stackspot: document.getElementById('stackspotClientSecret').value,
-        Realm_stackspot: document.getElementById('stackspotRealm').value,
-        STACKSPOT_AGENT_ID: document.getElementById('stackspotAgentId').value
-      })
-    };
-    const response = await fetch(window.ApiConfig.buildUrl('/config'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(config)
-    });
-    const apiResponse = await fetch(window.ApiConfig.buildUrl('/api-config'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(apiConfig)
-    });
-    if (response.ok && apiResponse.ok) {
-      localStorage.setItem('bsqaConfig', JSON.stringify(config));
-      // Sinalizar para outras abas/páginas que o tema foi alterado
-      localStorage.setItem('bsqaThemeChanged', Date.now().toString());
-      
-      // Limpar dados originais se IA foi desabilitada
-      if (!openaiEnabled) {
-        originalOpenAIConfig = {};
-      }
-      if (!stackspotEnabled) {
-        originalStackSpotConfig = {};
-      }
-      saveBtn.textContent = 'Salvo! ✅';
-      setTimeout(() => {
-        saveBtn.textContent = originalText;
-      }, 3000);
-      markClean();
-      initialConfigSnapshot = getCurrentConfigSnapshot();
-    } else {
-      throw new Error('Erro ao salvar no servidor');
-    }
+    persistConfigFromForm();
+    saveBtn.textContent = 'Salvo! ✅';
+    setTimeout(() => { saveBtn.textContent = originalText; }, 3000);
   } catch (error) {
-    localStorage.setItem('bsqaConfig', JSON.stringify(config));
-    saveBtn.textContent = 'Salvo (local) ⚠️';
-    setTimeout(() => {
-      saveBtn.textContent = originalText;
-      // Não reabilite os botões aqui!
-    }, 3000);
-    markClean();
-    initialConfigSnapshot = getCurrentConfigSnapshot();
+    saveBtn.textContent = originalText;
+    alert('Erro ao salvar: ' + (error.message || 'Erro desconhecido'));
+  } finally {
+    saveBtn.disabled = false;
   }
 }
 
@@ -431,64 +666,51 @@ async function testApiConfig() {
   testResult.style.color = '#ffc107';
   testResult.style.border = '1px solid #ffc107';
   try {
-    const apiConfig = {
-      ...(document.getElementById('openaiEnabled').checked && {
-        OPENAI_API_KEY: document.getElementById('openaiApiKey').value
-      }),
-      ...(document.getElementById('stackspotEnabled').checked && {
-        Client_ID_stackspot: document.getElementById('stackspotClientId').value,
-        Client_Key_stackspot: document.getElementById('stackspotClientSecret').value,
-        Realm_stackspot: document.getElementById('stackspotRealm').value,
-        STACKSPOT_AGENT_ID: document.getElementById('stackspotAgentId').value
-      })
+    const ia_credentials = {
+      openai: document.getElementById('openaiEnabled').checked
+        ? { api_key: document.getElementById('openaiApiKey').value }
+        : null,
+      stackspot: document.getElementById('stackspotEnabled').checked
+        ? {
+            client_id: document.getElementById('stackspotClientId').value,
+            client_secret: document.getElementById('stackspotClientSecret').value,
+            realm: document.getElementById('stackspotRealm').value,
+            agent_id: document.getElementById('stackspotAgentId').value
+          }
+        : null
     };
-    const response = await fetch(window.ApiConfig.buildUrl('/api-config'), {
+    const testResponse = await fetch(window.ApiConfig.buildUrl('/test-api-config'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(apiConfig)
+      body: JSON.stringify({ ia_credentials })
     });
-    if (response.ok) {
-      const testResponse = await fetch(window.ApiConfig.buildUrl('/test-api-config'), { method: 'POST' });
-      if (testResponse.ok) {
-        const testData = await testResponse.json();
-        if (testData.success) {
-          let resultHtml = `✅ ${testData.message}<br><br>`;
-          if (testData.results && testData.results.length > 0) {
-            resultHtml += '<strong>Detalhes dos testes:</strong><br>';
-            testData.results.forEach(result => {
-              const icon = result.status === 'success' ? '✅' : '❌';
-              const color = result.status === 'success' ? '#4caf50' : '#f44336';
-              resultHtml += `<span style="color: ${color};">${icon} ${result.service}: ${result.message}</span><br>`;
-            });
-          }
-          testResult.innerHTML = `<div data-testid="config-test-success">${resultHtml}</div>`;
-          testResult.style.background = 'rgba(76, 175, 80, 0.2)';
-          testResult.style.color = '#4caf50';
-          testResult.style.border = '1px solid #4caf50';
-        } else {
-          let resultHtml = `❌ ${testData.message}<br><br>`;
-          if (testData.results && testData.results.length > 0) {
-            resultHtml += '<strong>Detalhes dos testes:</strong><br>';
-            testData.results.forEach(result => {
-              const icon = result.status === 'success' ? '✅' : '❌';
-              const color = result.status === 'success' ? '#4caf50' : '#f44336';
-              resultHtml += `<span style="color: ${color};">${icon} ${result.service}: ${result.message}</span><br>`;
-            });
-          }
-          testResult.innerHTML = `<div data-testid="config-test-error">${resultHtml}</div>`;
-          testResult.style.background = 'rgba(244, 67, 54, 0.2)';
-          testResult.style.color = '#f44336';
-          testResult.style.border = '1px solid #f44336';
-        }
-      } else {
-        const errorData = await testResponse.json();
-        testResult.innerHTML = `<div data-testid="config-test-error-api">❌ Erro ao testar configurações: ${errorData.detail}</div>`;
-        testResult.style.background = 'rgba(244, 67, 54, 0.2)';
-        testResult.style.color = '#f44336';
-        testResult.style.border = '1px solid #f44336';
+    const testData = await testResponse.json().catch(() => ({}));
+    if (testResponse.ok && testData.success) {
+      let resultHtml = `✅ ${testData.message || 'Conexão OK'}<br><br>`;
+      if (testData.results && testData.results.length > 0) {
+        resultHtml += '<strong>Detalhes dos testes:</strong><br>';
+        testData.results.forEach(result => {
+          const icon = result.status === 'success' ? '✅' : '❌';
+          const color = result.status === 'success' ? '#4caf50' : '#f44336';
+          resultHtml += `<span style="color: ${color};">${icon} ${result.service}: ${result.message}</span><br>`;
+        });
       }
+      testResult.innerHTML = `<div data-testid="config-test-success">${resultHtml}</div>`;
+      testResult.style.background = 'rgba(76, 175, 80, 0.2)';
+      testResult.style.color = '#4caf50';
+      testResult.style.border = '1px solid #4caf50';
     } else {
-      testResult.innerHTML = '<div data-testid="config-test-error-save">❌ Erro ao salvar configurações de API</div>';
+      const msg = testData.message || testData.detail || 'Falha ao testar';
+      let resultHtml = `❌ ${msg}<br><br>`;
+      if (testData.results && testData.results.length > 0) {
+        resultHtml += '<strong>Detalhes dos testes:</strong><br>';
+        testData.results.forEach(result => {
+          const icon = result.status === 'success' ? '✅' : '❌';
+          const color = result.status === 'success' ? '#4caf50' : '#f44336';
+          resultHtml += `<span style="color: ${color};">${icon} ${result.service}: ${result.message}</span><br>`;
+        });
+      }
+      testResult.innerHTML = `<div data-testid="config-test-error">${resultHtml}</div>`;
       testResult.style.background = 'rgba(244, 67, 54, 0.2)';
       testResult.style.color = '#f44336';
       testResult.style.border = '1px solid #f44336';
@@ -580,5 +802,67 @@ function checkUrlAnchor() {
         }, 3000);
       }
     }, 500);
+  }
+}
+
+// Função para testar conexão com Jira (usa credenciais do form via headers; não grava no backend)
+async function testJiraConnection() {
+  const testResult = document.getElementById('testJiraResult');
+  testResult.style.display = 'block';
+  testResult.innerHTML = '<div data-testid="config-test-jira-loading">🔄 Testando conexão com Jira...</div>';
+  testResult.style.background = 'rgba(255, 193, 7, 0.2)';
+  testResult.style.color = '#ffc107';
+  testResult.style.border = '1px solid #ffc107';
+
+  const baseUrl = (document.getElementById('jiraBaseUrl').value || '').trim();
+  const email = (document.getElementById('jiraUserEmail').value || '').trim();
+  const token = (document.getElementById('jiraApiToken').value || '').trim();
+  if (!baseUrl || !email || !token) {
+    testResult.innerHTML = '<div data-testid="config-test-jira-error">❌ Preencha URL, email e token do Jira.</div>';
+    testResult.style.background = 'rgba(244, 67, 54, 0.2)';
+    testResult.style.color = '#f44336';
+    testResult.style.border = '1px solid #f44336';
+    return;
+  }
+
+  const authHeader = btoa(`${email}:${token}`);
+  const headers = {
+    'Content-Type': 'application/json',
+    'X-Jira-Auth': authHeader,
+    'X-Jira-Base-Url': baseUrl
+  };
+
+  try {
+    const testResponse = await fetch(window.ApiConfig.buildUrl('/jira/test-connection'), {
+      method: 'POST',
+      headers
+    });
+
+    const testData = await testResponse.json().catch(() => ({}));
+    if (testResponse.ok && testData.success) {
+      const user = testData.user || {};
+      JiraAuth.save(baseUrl, email, token, user.displayName, user.emailAddress);
+      const userNameEl = document.getElementById('userName');
+      const userEmailEl = document.getElementById('userEmail');
+      const userCompanyEl = document.getElementById('userCompany');
+      if (user.displayName && !userNameEl.value?.trim()) userNameEl.value = user.displayName;
+      if (user.emailAddress && !userEmailEl.value?.trim()) userEmailEl.value = user.emailAddress;
+      if (!userCompanyEl.value?.trim()) userCompanyEl.value = getInstanceNameFromBaseUrl(baseUrl) || '';
+      testResult.innerHTML = `<div data-testid="config-test-jira-success">✅ ${testData.message}</div>`;
+      testResult.style.background = 'rgba(76, 175, 80, 0.2)';
+      testResult.style.color = '#4caf50';
+      testResult.style.border = '1px solid #4caf50';
+    } else {
+      const msg = testData.error || testData.detail || testData.message || 'Falha ao conectar com Jira';
+      testResult.innerHTML = `<div data-testid="config-test-jira-error">❌ ${msg}</div>`;
+      testResult.style.background = 'rgba(244, 67, 54, 0.2)';
+      testResult.style.color = '#f44336';
+      testResult.style.border = '1px solid #f44336';
+    }
+  } catch (error) {
+    testResult.innerHTML = `<div data-testid="config-test-jira-error-general">❌ Erro ao testar conexão: ${error.message}</div>`;
+    testResult.style.background = 'rgba(244, 67, 54, 0.2)';
+    testResult.style.color = '#f44336';
+    testResult.style.border = '1px solid #f44336';
   }
 } 

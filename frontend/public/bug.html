@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BSQA Card Writer - Bug/Sub-Bug</title>
+  
+  <!-- Preload de componentes críticos -->
+  <link rel="preload" href="components/header.html" as="fetch" crossorigin>
+  <link rel="preload" href="components/footer.html" as="fetch" crossorigin>
+  
+  <link rel="stylesheet" href="assets/style.css">
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico">
+</head>
+<body>
+  <div id="header" data-testid="bug-header-container"></div>
+  <div class="skeleton skeleton-header"></div>
+  <div class="container" data-testid="bug-main-container">
+    <!-- Breadcrumbs -->
+    <div class="breadcrumbs" data-testid="bug-breadcrumbs-container">
+      <!-- Breadcrumbs serão preenchidos dinamicamente -->
+    </div>
+    
+    <h1 data-testid="bug-title">🐛 Abertura de Bug/Sub-Bug</h1>
+    <p class="subtitle" data-testid="bug-subtitle">Descreva o problema encontrado e gere um Bug/Sub-Bug estruturado no Jira</p>
+    
+    <form id="bugForm" data-testid="bug-form">
+      <!-- Select Tipo de Issue -->
+      <div class="form-group" data-testid="bug-form-group-issue-type">
+        <label for="issue_type" data-testid="bug-label-issue-type">
+          📋 Tipo de Issue
+        </label>
+        <select id="issue_type" name="issue_type" required data-testid="bug-select-issue-type">
+          <option value="bug" data-testid="bug-option-bug">🐛 Bug</option>
+          <option value="sub_bug" data-testid="bug-option-sub-bug">🔗 Sub-Bug</option>
+        </select>
+      </div>
+      
+      <!-- Input Issue Pai (visível apenas para Sub-Bug) -->
+      <div class="form-group" id="parent-key-group" style="display: none;" data-testid="bug-form-group-parent-key">
+        <label for="parent_key" data-testid="bug-label-parent-key">
+          🔗 Issue Pai
+        </label>
+        <input 
+          type="text" 
+          id="parent_key" 
+          name="parent_key" 
+          placeholder="Ex: PKGS-1160"
+          pattern="^[A-Z]+-\d+$"
+          data-testid="bug-input-parent-key"
+        >
+        <small class="hint" data-testid="bug-hint-parent-format">Formato: PROJETO-NUMERO (ex: PKGS-1160)</small>
+      </div>
+      
+      <!-- Input Projeto -->
+      <div class="form-group" data-testid="bug-form-group-project">
+        <label for="project_key" data-testid="bug-label-project">
+          📁 Projeto
+        </label>
+        <input 
+          type="text" 
+          id="project_key" 
+          name="project_key" 
+          placeholder="Ex: PKGS"
+          pattern="^[A-Z]+$"
+          required
+          data-testid="bug-input-project"
+        >
+        <small class="hint" data-testid="bug-hint-project-format">Apenas letras maiúsculas (ex: PKGS)</small>
+      </div>
+      
+      <!-- Textarea Descrição -->
+      <label style="width: 100%;" data-testid="bug-label-description">
+        <textarea 
+          id="description" 
+          name="description" 
+          rows="10" 
+          placeholder="Descreva o problema encontrado. Inclua:
+- Descrição do problema
+- Severidade
+- Prioridade
+- Ambiente/Browser/Versão do app
+- Passos para reproduzir
+- Resultado esperado vs Resultado obtido
+- Logs e evidências"
+          required
+          data-testid="bug-textarea-description"
+        ></textarea>
+      </label>
+      
+      <!-- Upload de Anexos (múltiplos arquivos) -->
+      <div class="form-group" data-testid="bug-form-group-attachments">
+        <label data-testid="bug-label-attachments">
+          📎 Anexos (Evidências)
+        </label>
+        <div class="drop-zone" id="attachmentsDropZone" data-testid="bug-drop-zone-attachments">
+          Arraste e solte arquivos aqui (vídeos, imagens, logs, ZIP)<br>
+          <span style="color: #ffffff; text-decoration: underline;">Escolha arquivos</span>
+          <input 
+            type="file" 
+            id="attachmentsInput" 
+            name="attachments" 
+            multiple
+            accept="image/*,video/*,.log,.txt,.zip,.rar,.7z,.gz"
+            data-testid="bug-file-input-attachments"
+          >
+          <div class="drop-feedback" id="attachmentsFeedback" style="display:none;" data-testid="bug-drop-feedback-attachments"></div>
+          <button 
+            class="drop-remove-btn" 
+            id="attachmentsRemoveBtn" 
+            style="display:none;" 
+            title="Remover todos os arquivos" 
+            data-testid="bug-button-remove-attachments"
+          >×</button>
+        </div>
+        <small class="hint" data-testid="bug-hint-attachments">Tipos aceitos: Imagens, Vídeos, Logs (.log, .txt), Arquivos compactados (.zip, .rar, .7z, .gz). Tamanho máximo: 100MB por arquivo.</small>
+      </div>
+      
+      <!-- Select IA -->
+      <div class="form-group" data-testid="bug-form-group-ai">
+        <label for="ai_service" data-testid="bug-label-ai-service">
+          🤖 Serviço de IA
+        </label>
+        <select id="ai_service" name="ai_service" required data-testid="bug-select-ai-service">
+          <option value="" data-testid="bug-option-ai-loading">Carregando...</option>
+        </select>
+      </div>
+      
+      <!-- Botão Submit -->
+      <button type="submit" class="submit-btn" data-testid="bug-button-submit">
+        🚀 Criar Bug/Sub-Bug
+      </button>
+    </form>
+    
+    <!-- Área de Resultado -->
+    <div id="output" data-testid="bug-output-container"></div>
+  </div>
+  <div id="footer" data-testid="bug-footer-container"></div>
+  <div class="skeleton skeleton-footer"></div>
+  <script type="module" src="js/main.js"></script>
+  <script src="js/apiConfig.js"></script>
+  <script type="module" src="js/bug.js"></script>
+</body>
+</html>

@@ -1,10 +1,10 @@
 import { loadCommonComponents, loadThemeFromConfig } from './main.js';
+import { initJiraAuth } from './jira-auth.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
   loadThemeFromConfig();
-  
-  // Adicionar animações e interações específicas da home
+  initJiraAuth(); // Botão de conta no header (index não redireciona)
   addHomeInteractions();
 });
 

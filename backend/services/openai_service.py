@@ -1,10 +1,11 @@
 import os
 from openai import OpenAI
 from backend.services.ia_base import IAServiceBase
+from typing import Optional
 
 class OpenAIService(IAServiceBase):
-    def __init__(self):
-        self.api_key = os.getenv("OPENAI_API_KEY")
+    def __init__(self, api_key: Optional[str] = None):
+        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             raise RuntimeError("OpenAI API key not configured.")
         self.client = OpenAI(api_key=self.api_key)

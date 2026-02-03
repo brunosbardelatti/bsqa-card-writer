@@ -6,4 +6,4 @@ PyPDF2
 requests
 python-multipart
 chardet
-
+python-dateutil

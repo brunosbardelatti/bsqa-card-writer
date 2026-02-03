@@ -5,6 +5,19 @@ from dotenv import load_dotenv
 CONFIG_FILE = "config/user_config.json"
 ENV_FILE = "config/.env"
 
+# Credenciais Jira não são mais lidas/gravadas em user_config; ficam apenas no navegador (sessionStorage).
+
+
+def _sanitize_jira_integration(jira: dict) -> dict:
+    """Mantém em integrations.jira apenas enabled, subtaskIssueTypeId, requestTimeout."""
+    if not jira or not isinstance(jira, dict):
+        return jira
+    return {
+        k: v for k, v in jira.items()
+        if k in ("enabled", "subtaskIssueTypeId", "requestTimeout")
+    }
+
+
 def migrate_old_config(old):
     # Detecta se já está no novo formato
     if 'user' in old and 'preferences' in old and 'ia' in old:
@@ -43,6 +56,8 @@ def load_user_config():
             with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
                 data = json.load(f)
                 data = migrate_old_config(data)
+                if "integrations" in data and "jira" in data["integrations"]:
+                    data["integrations"]["jira"] = _sanitize_jira_integration(data["integrations"]["jira"])
                 return data
         return get_default_config()
     except Exception as e:
@@ -51,6 +66,10 @@ def load_user_config():
 
 def save_user_config(config):
     try:
+        config = dict(config)
+        if "integrations" in config and "jira" in config["integrations"]:
+            config["integrations"] = dict(config["integrations"])
+            config["integrations"]["jira"] = _sanitize_jira_integration(config["integrations"]["jira"])
         with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
             json.dump(config, f, indent=2, ensure_ascii=False)
         return True
@@ -104,9 +123,18 @@ def load_env_config():
 def save_env_config(env_config):
     try:
         os.makedirs(os.path.dirname(ENV_FILE), exist_ok=True)
+        
+        # Carregar configurações existentes
+        existing_config = load_env_config()
+        
+        # Fazer merge: atualizar com novas configurações, mantendo as existentes
+        merged_config = {**existing_config, **env_config}
+        
+        # Salvar configurações mescladas
         with open(ENV_FILE, 'w', encoding='utf-8') as f:
-            for key, value in env_config.items():
+            for key, value in merged_config.items():
                 f.write(f"{key}={value}\n")
+        
         # Recarregar variáveis de ambiente
         load_dotenv(dotenv_path=ENV_FILE, override=True)
         return True

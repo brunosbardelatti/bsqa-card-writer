@@ -1,4 +1,5 @@
-import { loadCommonComponents, loadThemeFromConfig, applyTheme, generateAnalysisOptionsHTML, getAnalysisPlaceholder } from './main.js';
+import { loadCommonComponents, loadThemeFromConfig, applyTheme, generateAnalysisOptionsHTML, getAnalysisPlaceholder, buildIaCredentialsForRequest } from './main.js';
+import { initJiraAuth } from './jira-auth.js';
 
 // Flag para controlar se a página foi recarregada
 window.pageReloaded = true;
@@ -6,6 +7,7 @@ window.pageReloaded = true;
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
   loadThemeFromConfig();
+  initJiraAuth({ redirectIfUnauthenticated: true }); // Redireciona para config se credenciais Jira não configuradas
   await loadDefaultAI(true); // Aplicar configurações padrão no carregamento inicial
   bindFormEvents();
   await loadAnalysisTypes(); // Carregar tipos de análise disponíveis
@@ -168,11 +170,16 @@ function bindFormEvents() {
     }
     formData.append('service', service);
     formData.append('analyse_type', analyse_type);
+    const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
+    const ia = config.ia || {};
     if (service === 'stackspot') {
-      const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
-      formData.append('streaming', config.streaming || false);
-      formData.append('stackspot_knowledge', config.stackspotKnowledge || false);
-      formData.append('return_ks_in_response', config.returnKsInResponse || false);
+      formData.append('streaming', (ia.stackspot && ia.stackspot.streaming) || false);
+      formData.append('stackspot_knowledge', (ia.stackspot && ia.stackspot.stackspotKnowledge) || false);
+      formData.append('return_ks_in_response', (ia.stackspot && ia.stackspot.returnKsInResponse) || false);
+    }
+    const iaCredentials = buildIaCredentialsForRequest(config);
+    if (iaCredentials) {
+      formData.append('ia_credentials', JSON.stringify(iaCredentials));
     }
     try {
       const res = await fetch(window.ApiConfig.buildUrl('/analyze'), {
@@ -234,32 +241,14 @@ async function loadDefaultAI(applyDefaults = true) {
     const preferences = config.preferences || {};
     const ia = config.ia || {};
     
-    // Carregar configurações de API do servidor
-    let apiConfig = {};
-    try {
-      const response = await fetch(window.ApiConfig.buildUrl('/api-config'));
-      if (response.ok) {
-        apiConfig = await response.json();
-      }
-    } catch (error) {
-      // Log seguro - não expor detalhes do erro em produção
-      if (window.safeErrorLog) {
-        window.safeErrorLog('Erro ao carregar configurações de API:', error);
-      }
-    }
-    
-    // Determinar quais IAs estão habilitadas
+    // Determinar quais IAs estão habilitadas (apenas localStorage bsqaConfig)
     const enabledAIs = [];
-    
-    // Verificar OpenAI
-    if (ia.openai && ia.openai.enabled && apiConfig.OPENAI_API_KEY) {
+    if (ia.openai && ia.openai.enabled && (ia.openai.apiKey || '').trim()) {
       enabledAIs.push({ value: 'openai', label: 'OpenAI' });
     }
-    
-    // Verificar StackSpot
-    if (ia.stackspot && ia.stackspot.enabled && 
-        apiConfig.Client_ID_stackspot && apiConfig.Client_Key_stackspot && 
-        apiConfig.Realm_stackspot && apiConfig.STACKSPOT_AGENT_ID) {
+    if (ia.stackspot && ia.stackspot.enabled &&
+        (ia.stackspot.clientId || '').trim() && (ia.stackspot.clientSecret || '').trim() &&
+        (ia.stackspot.realm || '').trim() && (ia.stackspot.agentId || '').trim()) {
       enabledAIs.push({ value: 'stackspot', label: 'StackSpot AI' });
     }
     

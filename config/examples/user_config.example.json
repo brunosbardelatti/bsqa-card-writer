@@ -7,6 +7,8 @@
   "preferences": {
     "defaultAI": "stackspot",
     "defaultAnalyseType": "swagger_postman",
+    "defaultCardFunction": "query_card",
+    "defaultJiraFields": ["summary", "description"],
     "autoCopy": false,
     "clearAfterSuccess": true,
     "theme": "dark"
@@ -21,6 +23,12 @@
       "streaming": false,
       "stackspotKnowledge": false,
       "returnKsInResponse": false
+    }
+  },
+  "integrations": {
+    "jira": {
+      "enabled": true,
+      "defaultFields": ["summary", "description"]
     }
   }
 }
