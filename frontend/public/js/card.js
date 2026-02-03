@@ -1149,12 +1149,10 @@ async function handleSearchSubtasks(parentKey) {
       console.warn('Não foi possível buscar o summary do card pai:', parentError);
     }
     
-    // Agora buscar as subtasks
+    // Agora buscar as subtasks (credenciais Jira via headers do navegador)
     const response = await fetch(window.ApiConfig.buildUrl('/jira/subtasks'), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: { ...JiraAuth.getHeaders() },
       body: JSON.stringify({
         parent_key: parentKey,
         max_results: 100
