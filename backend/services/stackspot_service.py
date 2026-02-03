@@ -1,13 +1,20 @@
 import os
 import requests
 from backend.services.ia_base import IAServiceBase
+from typing import Optional
 
 class StackSpotService(IAServiceBase):
-    def __init__(self):
-        self.client_id = os.getenv("Client_ID_stackspot")
-        self.client_secret = os.getenv("Client_Key_stackspot")
-        self.realm = os.getenv("Realm_stackspot")
-        self.agent_id = os.getenv("STACKSPOT_AGENT_ID")
+    def __init__(
+        self,
+        client_id: Optional[str] = None,
+        client_secret: Optional[str] = None,
+        realm: Optional[str] = None,
+        agent_id: Optional[str] = None,
+    ):
+        self.client_id = client_id or os.getenv("Client_ID_stackspot")
+        self.client_secret = client_secret or os.getenv("Client_Key_stackspot")
+        self.realm = realm or os.getenv("Realm_stackspot")
+        self.agent_id = agent_id or os.getenv("STACKSPOT_AGENT_ID")
         if not all([self.client_id, self.client_secret, self.realm, self.agent_id]):
             raise RuntimeError("StackSpot credentials not configured.")
 

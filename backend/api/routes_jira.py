@@ -59,7 +59,8 @@ class CardWithAIRequest(BaseModel):
     )
     ai_service: str = Field(..., description="Serviço de IA (openai ou stackspot)")
     create_subtask: bool = Field(default=True, description="Criar subtask automaticamente")
-    
+    ia_credentials: Optional[dict] = Field(None, description="Credenciais de IA (openai/stackspot) enviadas pelo front")
+
     @validator('card_number')
     def validate_card_format(cls, v):
         if not validate_card_number(v):
@@ -167,7 +168,7 @@ Descrição:
         
         prompt = prompt_template.format(requirements=card_content)
         
-        ia_service = get_ia_service(request.ai_service)
+        ia_service = get_ia_service(request.ai_service, credentials=request.ia_credentials)
         ia_result = ia_service.generate_response(prompt)
         
         # Extrair mensagem se for dict (StackSpot)

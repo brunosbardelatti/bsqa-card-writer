@@ -1,8 +1,13 @@
-from fastapi import APIRouter, HTTPException
-from backend.utils.config_utils import load_user_config, save_user_config, load_env_config, save_env_config
+from typing import Optional
+from fastapi import APIRouter, HTTPException, Body
+from backend.utils.config_utils import load_user_config, load_env_config
 from backend.services.ia_factory import test_api_services
 
 router = APIRouter()
+
+# Rotas /config e /api-config mantidas apenas por compatibilidade opcional.
+# A configuração de usuário (preferências, IA, Jira) é gerenciada no navegador (localStorage/sessionStorage);
+# o frontend não chama mais GET/POST /config nem GET/POST /api-config no fluxo de Config.
 
 @router.get("/config")
 async def get_config():
@@ -10,14 +15,9 @@ async def get_config():
 
 @router.post("/config")
 async def update_config(config: dict):
-    # Substituir completamente a configuração em vez de apenas atualizar
-    # Isso garante que chaves não presentes no config sejam removidas
-    if save_user_config(config):
-        return {"success": True, "message": "Configurações salvas com sucesso"}
-    else:
-        raise HTTPException(status_code=500, detail="Erro ao salvar configurações")
+    # Config de usuário é gerenciada no navegador; não grava em user_config.json para evitar recriar o arquivo.
+    return {"success": True, "message": "Configurações salvas com sucesso"}
 
-# Chaves Jira não são mais expostas nem gravadas via api-config; credenciais ficam no navegador (sessionStorage).
 JIRA_KEYS = {"JIRA_BASE_URL", "JIRA_USER_EMAIL", "JIRA_API_TOKEN", "JIRA_SUBTASK_ISSUE_TYPE_ID", "JIRA_REQUEST_TIMEOUT", "JIRA_BUG_ISSUE_TYPE_ID", "JIRA_SUB_BUG_ISSUE_TYPE_ID"}
 
 
@@ -29,16 +29,14 @@ async def get_api_config():
 
 @router.post("/api-config")
 async def update_api_config(api_config: dict):
-    # Não gravar Jira no .env; credenciais Jira ficam apenas no navegador (sessionStorage).
-    filtered = {k: v for k, v in api_config.items() if k not in JIRA_KEYS}
-    if save_env_config(filtered):
-        return {"success": True, "message": "Configurações de API salvas com sucesso"}
-    else:
-        raise HTTPException(status_code=500, detail="Erro ao salvar configurações de API")
+    # Credenciais de API são gerenciadas no navegador; não grava em .env para evitar recriar o arquivo.
+    return {"success": True, "message": "Configurações de API salvas com sucesso"}
 
 @router.post("/test-api-config")
-async def test_api_config():
+async def test_api_config(body: Optional[dict] = Body(None)):
+    """Aceita opcionalmente ia_credentials no body para testar sem .env."""
     try:
-        return test_api_services()
+        credentials = (body or {}).get("ia_credentials")
+        return test_api_services(credentials=credentials)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro ao testar configurações: {str(e)}") 

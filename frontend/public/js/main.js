@@ -51,7 +51,7 @@ window.isDevelopment = isDevelopment;
  * - 1.4.0: Adicionado botão Bug na navegação (Abertura de Bug/Sub-Bug)
  * - 1.5.0: Adicionado botão Dashboard na navegação (Dashboard de Métricas QA)
  */
-const COMPONENTS_VERSION = '1.5.0'; // Adicionado botão Dashboard no header
+const COMPONENTS_VERSION = '1.6.0'; // Menu: Home e Tools primeiro (sem credenciais); Config removido do menu (acesso pelo dropdown)
 const CACHE_KEY_PREFIX = 'bsqa-component-';
 
 /**
@@ -356,12 +356,38 @@ export function loadThemeFromConfig() {
   try {
     const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
     const preferences = config.preferences || {};
-    if (preferences.theme) {
-      applyTheme(preferences.theme);
-    }
+    const theme = preferences.theme || 'dark';
+    applyTheme(theme);
   } catch (error) {
     safeErrorLog('Erro ao carregar tema:', error);
+    applyTheme('dark');
   }
+}
+
+/**
+ * Monta objeto ia_credentials para enviar ao backend (analyze, card-with-ai, bug/create, test-api-config).
+ * Formato: { openai: { api_key }, stackspot: { client_id, client_secret, realm, agent_id } }
+ * @param {Object} config - Objeto bsqaConfig (localStorage)
+ * @returns {Object|null} ia_credentials ou null se vazio
+ */
+export function buildIaCredentialsForRequest(config) {
+  if (!config || !config.ia) return null;
+  const ia = config.ia;
+  const openai = ia.openai && ia.openai.enabled && (ia.openai.apiKey || '').trim()
+    ? { api_key: ia.openai.apiKey }
+    : null;
+  const stackspot = ia.stackspot && ia.stackspot.enabled &&
+    (ia.stackspot.clientId || '').trim() && (ia.stackspot.clientSecret || '').trim() &&
+    (ia.stackspot.realm || '').trim() && (ia.stackspot.agentId || '').trim()
+    ? {
+        client_id: ia.stackspot.clientId,
+        client_secret: ia.stackspot.clientSecret,
+        realm: ia.stackspot.realm,
+        agent_id: ia.stackspot.agentId
+      }
+    : null;
+  if (!openai && !stackspot) return null;
+  return { openai, stackspot };
 }
 
 export function openConfig() {

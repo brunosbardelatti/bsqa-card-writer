@@ -1,5 +1,6 @@
 # backend/api/routes_bug.py
 
+import json
 from base64 import b64decode
 from fastapi import APIRouter, HTTPException, File, UploadFile, Form, Header
 from fastapi.responses import JSONResponse
@@ -76,6 +77,7 @@ async def create_bug(
     parent_key: Optional[str] = Form(None),
     ai_service: str = Form(...),
     files: Optional[List[UploadFile]] = File(None),
+    ia_credentials: Optional[str] = Form(None),
     x_jira_auth: Optional[str] = Header(None, alias="X-Jira-Auth"),
     x_jira_base_url: Optional[str] = Header(None, alias="X-Jira-Base-Url"),
 ):
@@ -134,12 +136,18 @@ async def create_bug(
             }
             return JSONResponse(status_code=400, content=result)
     
+    credentials_ia = None
+    if ia_credentials and ia_credentials.strip():
+        try:
+            credentials_ia = json.loads(ia_credentials)
+        except json.JSONDecodeError:
+            pass
     try:
         # Step 2: Organizar descrição com IA
         prompt_template = load_prompt_template("sub_bug_writer")
         prompt = prompt_template.format(requirements=request.description)
         
-        ia_service = get_ia_service(request.ai_service)
+        ia_service = get_ia_service(request.ai_service, credentials=credentials_ia)
         ia_result = ia_service.generate_response(prompt)
         
         # Extrair mensagem se for dict (StackSpot)

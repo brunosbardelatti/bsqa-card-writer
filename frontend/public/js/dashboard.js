@@ -57,12 +57,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   initJiraAuth({
     onLoginSuccess: () => loadProjects(),
     onLogout: dashboardOnLogout,
-    showSuccess
+    showSuccess,
+    redirectIfUnauthenticated: true
   });
 
-  if (!JiraAuth.isAuthenticated()) {
-    showLoginModal();
-  } else {
+  if (JiraAuth.isAuthenticated()) {
     await loadProjects();
   }
 

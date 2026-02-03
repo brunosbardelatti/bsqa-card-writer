@@ -1,5 +1,5 @@
 // card.js - Lógica da página de integração Jira
-import { loadCommonComponents, loadThemeFromConfig, generateBreadcrumbs } from './main.js';
+import { loadCommonComponents, loadThemeFromConfig, generateBreadcrumbs, buildIaCredentialsForRequest } from './main.js';
 import { JiraAuth, showLoginModal, initJiraAuth } from './jira-auth.js';
 
 // Flag para controlar se a página foi recarregada
@@ -8,10 +8,7 @@ window.pageReloaded = true;
 document.addEventListener('DOMContentLoaded', async () => {
   await loadCommonComponents();
   loadThemeFromConfig();
-  initJiraAuth();
-  if (!JiraAuth.isAuthenticated()) {
-    showLoginModal();
-  }
+  initJiraAuth({ redirectIfUnauthenticated: true });
   await loadEnabledAIs();
   bindFormEvents();
   updateSelectAllState(); // Inicializar estado do "Selecionar todos"
@@ -29,33 +26,15 @@ async function loadEnabledAIs() {
   if (!aiSelect) return;
 
   try {
-    // Carregar configurações do localStorage
     const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
     const ia = config.ia || {};
-    
-    // Carregar configurações de API do servidor
-    let apiConfig = {};
-    try {
-      const response = await fetch(window.ApiConfig.buildUrl('/api-config'));
-      if (response.ok) {
-        apiConfig = await response.json();
-      }
-    } catch (error) {
-      console.error('Erro ao carregar configurações de API:', error);
-    }
-    
-    // Determinar quais IAs estão habilitadas
     const enabledAIs = [];
-    
-    // Verificar OpenAI
-    if (ia.openai && ia.openai.enabled && apiConfig.OPENAI_API_KEY) {
+    if (ia.openai && ia.openai.enabled && (ia.openai.apiKey || '').trim()) {
       enabledAIs.push({ value: 'openai', label: 'OpenAI' });
     }
-    
-    // Verificar StackSpot
-    if (ia.stackspot && ia.stackspot.enabled && 
-        apiConfig.Client_ID_stackspot && apiConfig.Client_Key_stackspot && 
-        apiConfig.Realm_stackspot && apiConfig.STACKSPOT_AGENT_ID) {
+    if (ia.stackspot && ia.stackspot.enabled &&
+        (ia.stackspot.clientId || '').trim() && (ia.stackspot.clientSecret || '').trim() &&
+        (ia.stackspot.realm || '').trim() && (ia.stackspot.agentId || '').trim()) {
       enabledAIs.push({ value: 'stackspot', label: 'StackSpot AI' });
     }
     
@@ -257,6 +236,9 @@ async function handleFormSubmit() {
     if (cardFunction === 'query_and_create') {
       payload.ai_service = aiService;
       payload.create_subtask = true;
+      const config = JSON.parse(localStorage.getItem('bsqaConfig') || '{}');
+      const iaCreds = buildIaCredentialsForRequest(config);
+      if (iaCreds) payload.ia_credentials = iaCreds;
     }
 
     // Fazer request

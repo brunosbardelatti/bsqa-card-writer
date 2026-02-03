@@ -1,3 +1,5 @@
+import json
+from typing import Optional
 from fastapi import APIRouter, File, UploadFile, Form, HTTPException
 from fastapi.responses import JSONResponse
 from backend.services.ia_factory import get_ia_service
@@ -22,7 +24,8 @@ async def analyze(
     analyse_type: str = Form(...),
     streaming: bool = Form(False),
     stackspot_knowledge: bool = Form(False),
-    return_ks_in_response: bool = Form(False)
+    return_ks_in_response: bool = Form(False),
+    ia_credentials: Optional[str] = Form(None),
 ):
     if file and requirements:
         raise HTTPException(status_code=400, detail="Use only one input method: file or text.")
@@ -52,8 +55,14 @@ async def analyze(
     # Todos os templates usam {requirements} como placeholder
     prompt = prompt_template.format(requirements=content)
 
+    credentials = None
+    if ia_credentials and ia_credentials.strip():
+        try:
+            credentials = json.loads(ia_credentials)
+        except json.JSONDecodeError:
+            pass
     try:
-        ia_service = get_ia_service(service)
+        ia_service = get_ia_service(service, credentials=credentials)
         result = ia_service.generate_response(prompt, streaming=streaming, stackspot_knowledge=stackspot_knowledge, return_ks_in_response=return_ks_in_response)
         return JSONResponse(content={"result": result})
     except Exception as e:
