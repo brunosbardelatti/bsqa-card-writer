@@ -257,12 +257,29 @@ let originalJiraConfig = {};
 let originalOpenAIConfig = {};
 let originalStackSpotConfig = {};
 
-// Função para aplicar o estado dos campos baseado nos checkboxes habilitados
-function applyFieldStates() {
+// Aplica collapse/expand das seções Jira, OpenAI e StackSpot conforme as flags "Habilitar"
+function applySectionCollapse() {
   const jiraEnabled = document.getElementById('jiraEnabled').checked;
   const openaiEnabled = document.getElementById('openaiEnabled').checked;
   const stackspotEnabled = document.getElementById('stackspotEnabled').checked;
-  
+
+  const jiraBody = document.getElementById('jiraConfigBody');
+  const openaiBody = document.getElementById('openaiConfigBody');
+  const stackspotBody = document.getElementById('stackspotConfigBody');
+
+  if (jiraBody) jiraBody.classList.toggle('collapsed', !jiraEnabled);
+  if (openaiBody) openaiBody.classList.toggle('collapsed', !openaiEnabled);
+  if (stackspotBody) stackspotBody.classList.toggle('collapsed', !stackspotEnabled);
+}
+
+// Função para aplicar o estado dos campos baseado nos checkboxes habilitados
+function applyFieldStates() {
+  applySectionCollapse();
+
+  const jiraEnabled = document.getElementById('jiraEnabled').checked;
+  const openaiEnabled = document.getElementById('openaiEnabled').checked;
+  const stackspotEnabled = document.getElementById('stackspotEnabled').checked;
+
   // Aplicar estado dos campos Jira
   const jiraFields = ['jiraBaseUrl', 'jiraUserEmail', 'jiraApiToken', 'jiraSubtaskIssueTypeId', 'jiraBugIssueTypeId', 'jiraSubBugIssueTypeId', 'jiraRequestTimeout'];
   const jiraDefaults = { jiraRequestTimeout: '30', jiraBugIssueTypeId: '10004', jiraSubBugIssueTypeId: '10271' };

@@ -76,15 +76,17 @@
     </div>
     <div class="config-section" id="jira-config" data-testid="config-section-jira">
       <h2 data-testid="config-section-jira-title">🎫 Configurações do Jira</h2>
-      <fieldset style="border: 2px solid #ff9800; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;" data-testid="config-fieldset-jira">
+      <fieldset class="config-fieldset-toggle" style="border: 2px solid #ff9800; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;" data-testid="config-fieldset-jira">
         <legend style="color: #ff9800; font-weight: bold; padding: 0 0.5rem;" data-testid="config-legend-jira">Jira Cloud API</legend>
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+        <div class="config-section-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
           <label>🔑 Configurações do Jira <span title="Configurações necessárias para integração com Jira" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
           <div style="display: flex; align-items: center;">
             <input type="checkbox" id="jiraEnabled" style="margin-right: 0.5rem;" data-testid="config-checkbox-jira-enabled">
             <label for="jiraEnabled" style="margin: 0; font-size: 0.9em;">Habilitar Jira</label>
           </div>
         </div>
+        <p class="config-section-collapsed-hint" id="jiraCollapsedHint" data-testid="config-jira-collapsed-hint">Marque para exibir e configurar credenciais do Jira.</p>
+        <div id="jiraConfigBody" class="config-section-body collapsed" data-testid="config-jira-body">
         <p class="config-hint" style="font-size: 0.85em; color: var(--muted-text); margin-bottom: 0.75rem;">As credenciais Jira ficam apenas no seu navegador (sessão) e não são enviadas ao servidor.</p>
         <div class="config-item">
           <label for="jiraBaseUrl">URL Base do Jira <span title="URL da sua instância Jira Cloud (ex: https://empresa.atlassian.net)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
@@ -114,16 +116,17 @@
           <label for="jiraRequestTimeout">Timeout de Requisição (segundos) <span title="Tempo máximo de espera para requisições ao Jira (padrão: 30 segundos)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
           <input type="number" id="jiraRequestTimeout" placeholder="30" value="30" data-testid="config-input-jira-request-timeout">
         </div>
-      </fieldset>
-      <!-- Botão Jira: apenas testar conexão -->
-      <div class="config-item" style="margin-top: 1rem;">
-        <div style="display: flex; gap: 1rem; justify-content: center;">
-          <button onclick="testJiraConnection()" class="primary-btn config-jira-action-btn" data-testid="config-button-test-jira-connection">
-            🧪 Testar conexão Jira
-          </button>
+        <!-- Botão Jira: testar conexão (dentro do bloco colapsável) -->
+        <div class="config-item" style="margin-top: 1rem;">
+          <div style="display: flex; gap: 1rem; justify-content: center;">
+            <button onclick="testJiraConnection()" class="primary-btn config-jira-action-btn" data-testid="config-button-test-jira-connection">
+              🧪 Testar conexão Jira
+            </button>
+          </div>
+          <div id="testJiraResult" style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 4px; display: none;" data-testid="config-test-jira-result-container"></div>
         </div>
-        <div id="testJiraResult" style="margin-top: 0.5rem; padding: 0.5rem; border-radius: 4px; display: none;" data-testid="config-test-jira-result-container"></div>
-      </div>
+        </div>
+      </fieldset>
     </div>
     <div class="config-section" id="ai-config" data-testid="config-section-ai">
       <h2 data-testid="config-section-ai-title">🤖 Configurações de IA</h2>
@@ -141,15 +144,17 @@
         </select>
         <div id="defaultAIWarning" style="display:none; color: #f44336; font-size: 0.95em; margin-top: 0.5rem;" data-testid="config-warning-default-ai"></div>
       </div>
-      <fieldset style="border: 2px solid #4caf50; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;" data-testid="config-fieldset-openai">
+      <fieldset class="config-fieldset-toggle" style="border: 2px solid #4caf50; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;" data-testid="config-fieldset-openai">
         <legend style="color: #4caf50; font-weight: bold; padding: 0 0.5rem;" data-testid="config-legend-openai">OpenAI</legend>
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+        <div class="config-section-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
           <label>🔑 Configurações OpenAI <span title="Configurações necessárias para usar a OpenAI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
           <div style="display: flex; align-items: center;">
             <input type="checkbox" id="openaiEnabled" style="margin-right: 0.5rem;" data-testid="config-checkbox-openai-enabled">
             <label for="openaiEnabled" style="margin: 0; font-size: 0.9em;">Habilitar OpenAI</label>
           </div>
         </div>
+        <p class="config-section-collapsed-hint" id="openaiCollapsedHint" data-testid="config-openai-collapsed-hint">Marque para exibir e configurar credenciais da OpenAI.</p>
+        <div id="openaiConfigBody" class="config-section-body collapsed" data-testid="config-openai-body">
         <div class="config-item">
           <label for="openaiApiKey">API Key <span title="Sua chave de API da OpenAI (obrigatório para usar OpenAI)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
           <input type="password" id="openaiApiKey" placeholder="sk-..." disabled data-testid="config-input-openai-api-key">
@@ -158,16 +163,19 @@
           <label for="maxTokens">Máximo de Tokens <span title="Número máximo de tokens para gerar a resposta. Valores maiores geram respostas mais detalhadas" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
           <input type="text" id="maxTokens" placeholder="1000" value="1000" data-testid="config-input-max-tokens">
         </div>
+        </div>
       </fieldset>
-      <fieldset style="border: 2px solid #2196f3; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;" data-testid="config-fieldset-stackspot">
+      <fieldset class="config-fieldset-toggle" style="border: 2px solid #2196f3; border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem;" data-testid="config-fieldset-stackspot">
         <legend style="color: #2196f3; font-weight: bold; padding: 0 0.5rem;" data-testid="config-legend-stackspot">StackSpot AI</legend>
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+        <div class="config-section-header" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
           <label>🔑 Configurações StackSpot AI <span title="Configurações necessárias para usar o StackSpot AI" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
           <div style="display: flex; align-items: center;">
             <input type="checkbox" id="stackspotEnabled" style="margin-right: 0.5rem;" data-testid="config-checkbox-stackspot-enabled">
             <label for="stackspotEnabled" style="margin: 0; font-size: 0.9em;">Habilitar StackSpot AI</label>
           </div>
         </div>
+        <p class="config-section-collapsed-hint" id="stackspotCollapsedHint" data-testid="config-stackspot-collapsed-hint">Marque para exibir e configurar credenciais do StackSpot AI.</p>
+        <div id="stackspotConfigBody" class="config-section-body collapsed" data-testid="config-stackspot-body">
         <div class="config-item">
           <label for="stackspotClientId">Client ID <span title="ID do cliente StackSpot (obrigatório)" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
           <input type="text" id="stackspotClientId" placeholder="seu-client-id" disabled data-testid="config-input-stackspot-client-id">
@@ -198,6 +206,7 @@
             <input type="checkbox" id="returnKsInResponse" data-testid="config-checkbox-return-ks">
             <label for="returnKsInResponse">Retornar KS na resposta <span title="Inclui informações do Knowledge Source (KS) na resposta gerada" style="color: var(--accent-color); cursor: help;">ℹ️</span></label>
           </div>
+        </div>
         </div>
       </fieldset>
       <!-- Botão de ação -->

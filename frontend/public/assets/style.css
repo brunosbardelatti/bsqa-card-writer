@@ -997,6 +997,24 @@ textarea:focus, input[type="text"]:focus, input[type="email"]:focus, input[type=
   margin-bottom: 1rem;
   font-size: 1.4em;
 }
+/* Seções colapsáveis: corpo oculto quando a flag "Habilitar" está desmarcada */
+.config-section-body {
+  overflow: hidden;
+  transition: opacity 0.2s ease;
+}
+.config-section-body.collapsed {
+  display: none;
+}
+.config-section-collapsed-hint {
+  display: none;
+  font-size: 0.9em;
+  color: var(--muted-text);
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+}
+.config-fieldset-toggle:has(.config-section-body.collapsed) .config-section-collapsed-hint {
+  display: block;
+}
 .config-item {
   margin-bottom: 1rem;
 }
